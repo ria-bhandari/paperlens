@@ -1,0 +1,1566 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="theme-color" content="#f2f4f7">
+<meta name="color-scheme" content="light dark">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Paperlens</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Paperlens">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="description" content="Understand any research paper fast: overview, key figures, mind map, flashcards and games.">
+<style>
+:root{
+  --bg:#f2f4f7; --card:#ffffff; --ink:#121a2f; --muted:#5b6479; --line:#d9dee8; --edge:#7b859c;
+  --blue:#2447d6; --blue-ink:#ffffff; --blue-soft:#e6ebfc;
+  --mark:#ffe066; --mark-ink:#121a2f;
+  --good:#16694a; --good-soft:#dff3e9; --bad:#b02a20; --bad-soft:#fbe4e1;
+  --serif:Charter,"Bitstream Charter","Sitka Text",Cambria,"Iowan Old Style",serif;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+  --hh:56px; --wash-c:#2447d6; color-scheme:light;
+}
+:root[data-theme=dark]{
+  color-scheme:dark;
+  --bg:#0d1220; --card:#151c30; --ink:#e9edf7; --muted:#98a2ba; --line:#263050; --edge:#6a779c;
+  --blue:#86a2ff; --blue-ink:#0d1220; --blue-soft:#1c2850;
+  --mark:#ffd93d; --mark-ink:#121a2f;
+  --good:#4fd39a; --good-soft:#12362a; --bad:#ff7d72; --bad-soft:#3d1a1a;
+}
+/* ---------- themes: each has a light and a dark variant ---------- */
+:root[data-palette=spring]{--bg:#eff6ef;--card:#fbfefb;--ink:#14261c;--muted:#4f6256;--line:#d3e3d5;--edge:#72877a;--blue:#27724a;--blue-ink:#ffffff;--blue-soft:#dff0e3;--mark:#ffc4da;--wash-c:#5fb37c}
+:root[data-palette=spring][data-theme=dark]{--bg:#0d1711;--card:#14211a;--ink:#e5f1e8;--muted:#9ab0a0;--line:#243a2c;--edge:#5e7b68;--blue:#7fd49b;--blue-ink:#0d1711;--blue-soft:#1a3324;--mark:#f4a6c6;--wash-c:#5fb37c}
+:root[data-palette=golden]{--bg:#fbf2e2;--card:#fffcf5;--ink:#2b1b0d;--muted:#6a5642;--line:#ecdcbf;--edge:#907a5c;--blue:#a8480a;--blue-ink:#ffffff;--blue-soft:#fbe3c8;--mark:#ffcb5c;--wash-c:#f0a53a}
+:root[data-palette=golden][data-theme=dark]{--bg:#19120b;--card:#231910;--ink:#f6e8d5;--muted:#baa58b;--line:#3a2b1b;--edge:#7c6445;--blue:#ffb15c;--blue-ink:#19120b;--blue-soft:#3a2514;--mark:#f5b942;--wash-c:#f0a53a}
+:root[data-palette=fall]{--bg:#f3ede6;--card:#fffcf9;--ink:#2a1c17;--muted:#66554d;--line:#e1d3c6;--edge:#8c786b;--blue:#8c2f2a;--blue-ink:#ffffff;--blue-soft:#f3dcd5;--mark:#f0a766;--wash-c:#c0562f}
+:root[data-palette=fall][data-theme=dark]{--bg:#191110;--card:#231917;--ink:#f1e3db;--muted:#b7a094;--line:#3a2925;--edge:#7b6256;--blue:#f08a70;--blue-ink:#191110;--blue-soft:#3a1f1b;--mark:#e8a05a;--wash-c:#c0562f}
+:root[data-palette=winter]{--bg:#ecf3f7;--card:#fafdff;--ink:#0f2233;--muted:#4e6377;--line:#d0dfea;--edge:#6f869b;--blue:#0d6786;--blue-ink:#ffffff;--blue-soft:#dcedf5;--mark:#b6e3f4;--wash-c:#6fb8d6}
+:root[data-palette=winter][data-theme=dark]{--bg:#0a141b;--card:#111e28;--ink:#e2eef6;--muted:#91a8ba;--line:#21364a;--edge:#5a7891;--blue:#6cc3e4;--blue-ink:#0a141b;--blue-soft:#12304a;--mark:#8fd3ee;--wash-c:#6fb8d6}
+:root[data-palette=dusk]{--bg:#f3f0f8;--card:#fdfcff;--ink:#1d1632;--muted:#5d5675;--line:#ddd6ea;--edge:#7e7699;--blue:#5a35b8;--blue-ink:#ffffff;--blue-soft:#e8e1f8;--mark:#dcc3ff;--wash-c:#9b7bdc}
+:root[data-palette=dusk][data-theme=dark]{--bg:#120e1f;--card:#1a1530;--ink:#ece7f8;--muted:#a59dbf;--line:#2d2550;--edge:#6e6498;--blue:#b79bff;--blue-ink:#120e1f;--blue-soft:#2a2050;--mark:#c7a2ff;--wash-c:#9b7bdc}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 var(--sans);-webkit-font-smoothing:antialiased;min-height:100vh;
+  background-image:radial-gradient(1100px 460px at 85% -160px,color-mix(in srgb,var(--wash-c) 15%,transparent),transparent 72%),radial-gradient(800px 380px at -10% 0,color-mix(in srgb,var(--mark) 14%,transparent),transparent 70%);
+  background-repeat:no-repeat;transition:background-color .35s}
+:root[data-theme=dark] body{background-image:radial-gradient(1100px 460px at 85% -160px,color-mix(in srgb,var(--wash-c) 14%,transparent),transparent 72%)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+[hidden]{display:none!important}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px;border-radius:6px}
+h1,h2,h3{font-family:var(--serif);line-height:1.15;margin:0;letter-spacing:-.01em}
+p{margin:0}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+/* ---------- top bar ---------- */
+.top{position:sticky;top:0;z-index:30;height:var(--hh);display:flex;align-items:center;gap:8px;
+  padding:0 clamp(14px,3vw,28px);background:var(--bg);background:color-mix(in srgb,var(--bg) 82%,transparent);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:9px;background:none;border:0;padding:4px 6px 4px 0;
+  font:700 21px var(--serif);letter-spacing:-.02em}
+.brand svg{width:26px;height:26px}
+.spacer{flex:1}
+.icon-btn{width:44px;height:44px;border-radius:10px;border:1px solid transparent;background:none;display:grid;place-items:center;color:var(--muted)}
+.icon-btn:hover{background:var(--card);border-color:var(--line);color:var(--ink)}
+.icon-btn svg{width:20px;height:20px}
+
+.tabs{position:sticky;top:var(--hh);z-index:25;display:flex;gap:2px;overflow-x:auto;padding:0 clamp(14px,3vw,28px);
+  background:var(--bg);background:color-mix(in srgb,var(--bg) 82%,transparent);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{position:relative;border:0;background:none;padding:13px 14px;color:var(--muted);font-weight:600;white-space:nowrap}
+.tab:hover{color:var(--ink)}
+.tab[aria-selected=true]{color:var(--ink)}
+.tab[aria-selected=true]::after{content:"";position:absolute;left:10px;right:10px;bottom:-1px;height:4px;background:var(--mark);border-radius:4px 4px 0 0}
+.tab small{margin-left:6px;color:var(--muted);font-weight:500}
+
+main{max-width:1000px;margin:0 auto;padding:clamp(18px,3.5vw,40px) clamp(14px,3vw,28px) 80px}
+
+/* ---------- buttons & bits ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 18px;border-radius:10px;
+  border:1px solid var(--edge);background:var(--card);font-weight:600;transition:transform .08s,background .15s,border-color .15s}
+.btn:hover{border-color:var(--muted)}
+.btn:active{transform:translateY(1px)}
+.btn.primary{background:var(--blue);border-color:var(--blue);color:var(--blue-ink)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.small{min-height:40px;padding:0 14px;font-size:14px;border-radius:8px}
+.btn.ghost{background:none}
+.btn[disabled]{opacity:.45;pointer-events:none}
+.btn svg{width:18px;height:18px}
+.mark{background:linear-gradient(transparent 12%,var(--mark) 12%,var(--mark) 88%,transparent 88%);color:var(--mark-ink);padding:0 .22em;margin:0 -.22em;
+  -webkit-box-decoration-break:clone;box-decoration-break:clone;border-radius:3px}
+.chip{display:inline-block;padding:3px 10px;border-radius:6px;background:var(--blue-soft);color:var(--blue);font-size:13px;font-weight:600}
+.chip.plain{background:var(--card);border:1px solid var(--line);color:var(--muted)}
+.muted{color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:clamp(16px,2.4vw,24px)}
+.stack>*+*{margin-top:16px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.section-h{font-size:22px;margin:36px 0 14px}
+.section-h:first-child{margin-top:0}
+
+/* ---------- home ---------- */
+.hero{padding:clamp(8px,3vw,28px) 0 24px;max-width:720px}
+.hero h1{font-size:clamp(34px,6.4vw,58px)}
+.hero p{margin-top:16px;font-size:18px;color:var(--muted);max-width:56ch}
+.drop{display:block;border:2px dashed var(--edge);border-radius:14px;padding:clamp(26px,5vw,48px) 20px;text-align:center;background:var(--card);
+  transition:background .15s,border-color .15s;cursor:pointer}
+.drop:hover,.drop.over{border-color:var(--blue);background:var(--blue-soft)}
+.drop strong{display:block;font:700 22px var(--serif)}
+.drop span{display:block;margin-top:6px;color:var(--muted)}
+.drop svg{width:40px;height:40px;color:var(--blue);margin-bottom:10px}
+.options{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+@media(max-width:620px){.options{grid-template-columns:1fr}}
+.field label{display:block;font-size:14px;font-weight:600;margin-bottom:6px}
+.field input,.field select,.field textarea{width:100%;min-height:44px;padding:9px 12px;border-radius:10px;border:1px solid var(--edge);background:var(--card)}
+.field textarea{min-height:140px;resize:vertical}
+.field small{display:block;margin-top:6px;color:var(--muted);font-size:13px}
+details.paste{margin-top:14px}
+details.paste summary{cursor:pointer;color:var(--blue);font-weight:600;padding:6px 0}
+.notice{margin-top:14px;padding:12px 14px;border-radius:10px;background:var(--mark);color:var(--mark-ink);font-size:15px}
+.notice button{background:none;border:0;padding:0;font-weight:700;text-decoration:underline;color:inherit}
+.lib{display:grid;gap:10px}
+.lib-item{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--edge);border-radius:10px;background:var(--card);text-align:left;width:100%}
+.lib-item:hover{border-color:var(--blue)}
+.lib-item b{display:block;font-family:var(--serif);font-size:17px;line-height:1.25}
+.lib-item span{font-size:13px;color:var(--muted)}
+.lib-item .grow{flex:1;min-width:0}
+
+/* ---------- loading ---------- */
+.loading{max-width:560px;margin:6vh auto 0}
+.loading h2{font-size:30px}
+.steps{list-style:none;padding:0;margin:26px 0 0}
+.steps li{display:flex;align-items:center;gap:12px;padding:10px 0;color:var(--muted);border-bottom:1px solid var(--line)}
+.steps li i{width:22px;height:22px;border-radius:50%;border:2px solid var(--line);flex:none;display:grid;place-items:center;font-style:normal;font-size:13px}
+.steps li.now{color:var(--ink);font-weight:600}
+.steps li.now i{border-color:var(--blue);border-top-color:transparent;animation:spin .8s linear infinite}
+.steps li.done{color:var(--ink)}
+.steps li.done i{background:var(--good);border-color:var(--good);color:#fff}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ---------- progress / live preview ---------- */
+.prog{margin-top:22px}
+.prog .bar{height:10px}
+.prog .bar>i{background:var(--blue);transition:width .4s ease-out}
+.prog-meta{display:flex;justify-content:space-between;gap:12px;margin-top:8px;font-size:14px;color:var(--muted);font-variant-numeric:tabular-nums}
+.live{margin-top:26px;padding:16px 18px;border-left:5px solid var(--mark);background:var(--card);border-radius:0 10px 10px 0}
+.live b{font-family:var(--serif);font-size:19px;display:block}
+.live p{margin-top:8px;font:400 17px/1.5 var(--serif)}
+.live small{display:block;color:var(--muted);margin-bottom:6px}
+.sample{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:-8px 0 22px;padding:12px 16px;border-radius:10px;background:var(--mark);color:var(--mark-ink);font-size:15px}
+.sample .grow{flex:1;min-width:200px}
+.sample .btn{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.disclaimer{margin-top:28px;font-size:13.5px;color:var(--muted);max-width:60ch}
+.findings .pgc{margin-left:6px}
+.look{font-size:14.5px;padding:10px 12px;border-radius:8px;background:var(--blue-soft)}
+.look b{font-weight:700}
+.next-step{margin-top:36px;padding:20px;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+.next-step h3{font-size:20px;margin-bottom:4px}
+
+/* ---------- overview ---------- */
+.paper-head h1{font-size:clamp(28px,4.6vw,42px);max-width:30ch}
+.paper-head .meta{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.paper-head .authors{margin-top:10px;color:var(--muted)}
+.tldr{font:400 clamp(20px,2.6vw,25px)/1.5 var(--serif);margin-top:26px;max-width:46ch}
+.snap{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-top:26px}
+.snap div{background:var(--card);padding:14px 16px}
+.snap dt{font-size:13px;color:var(--muted);font-weight:600}
+.snap dd{margin:4px 0 0;font-weight:500}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:720px){.two{grid-template-columns:1fr}}
+.card h3{font-size:19px;margin-bottom:8px}
+.findings{list-style:none;padding:0;margin:0;display:grid;gap:12px}
+.findings li{padding-left:18px;border-left:4px solid var(--mark);font-size:17px}
+.plain{background:var(--blue-soft);border-color:transparent}
+.plain p{font-size:17px}
+.limits{margin:0;padding-left:20px}
+.limits li+li{margin-top:6px}
+.gloss{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.gloss div{padding:12px 14px;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+.gloss b{font-family:var(--serif)}
+.gloss p{font-size:14.5px;color:var(--muted);margin-top:2px}
+.readif{margin-top:28px;font-size:15px;color:var(--muted)}
+
+/* ---------- figures ---------- */
+.figs{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,430px),1fr));gap:18px}
+.fig{display:flex;flex-direction:column;padding:0;overflow:hidden}
+.fig-img{position:relative;height:300px;background:var(--bg);border-bottom:1px solid var(--line);overflow:hidden;display:grid;place-items:center;width:100%;border-left:0;border-right:0;border-top:0;padding:0}
+.fig-img img{width:100%;height:100%;object-fit:cover;object-position:top;display:block}
+.fig-img .ph{color:var(--muted);font-size:14px;padding:16px;text-align:center}
+.fig-img .pg{position:absolute;right:8px;bottom:8px;background:var(--ink);color:var(--bg);font-size:12px;font-weight:600;padding:3px 8px;border-radius:6px}
+.fig-body{padding:16px 18px 18px;display:flex;flex-direction:column;gap:8px}
+.fig-body h3{font-size:19px}
+.fig-body .why{font-size:15px;color:var(--muted)}
+.fig-body .take{font-weight:600;font-size:15.5px}
+.lightbox{position:fixed;inset:0;z-index:60;background:rgba(8,12,24,.86);display:grid;place-items:center;padding:20px}
+.lightbox img{max-width:min(960px,100%);max-height:100%;border-radius:8px;background:#fff}
+.lightbox button{position:absolute;top:14px;right:14px}
+
+/* ---------- mind map ---------- */
+.mm-wrap{border:1px solid var(--line);border-radius:12px;background:var(--card);overflow:hidden}
+.mm-bar{display:flex;gap:6px;flex-wrap:wrap;padding:10px;border-bottom:1px solid var(--line);align-items:center}
+.mm-bar .grow{flex:1}
+#mm{display:block;width:100%;height:min(66vh,620px);touch-action:none;cursor:grab;background-image:radial-gradient(var(--line) 1px,transparent 1px);background-size:22px 22px}
+#mm:active{cursor:grabbing}
+.mm-note{padding:12px 16px;border-top:1px solid var(--line);min-height:56px;font-size:15px}
+.mm-note b{font-family:var(--serif)}
+
+/* ---------- flashcards ---------- */
+.fc-top{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.fc-top .grow{flex:1}
+.pill{min-height:40px;padding:6px 14px;border-radius:999px;border:1px solid var(--edge);background:var(--card);font-size:14px;font-weight:600;color:var(--muted)}
+.pill[aria-pressed=true]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.bar{height:8px;background:var(--line);border-radius:8px;overflow:hidden}
+.bar>i{display:block;height:100%;background:var(--good);width:0;transition:width .3s}
+.fc-stage{perspective:1400px;margin:22px auto 0;max-width:640px}
+.fc{position:relative;width:100%;height:clamp(280px,46vh,380px);transform-style:preserve-3d;-webkit-transform-style:preserve-3d;transition:transform .45s cubic-bezier(.3,.7,.2,1);cursor:pointer}
+.fc.flip{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:14px;border:1px solid var(--line);background:var(--card);
+  padding:26px;display:flex;flex-direction:column;justify-content:center;box-shadow:6px 6px 0 var(--line)}
+.face .tag{position:absolute;top:16px;left:20px;font-size:13px;font-weight:600;color:var(--muted)}
+.face .hint{position:absolute;bottom:14px;right:20px;font-size:13px;color:var(--muted)}
+.face.front{font:600 clamp(20px,3vw,26px)/1.35 var(--serif)}
+.face.back{transform:rotateY(180deg);font-size:clamp(17px,2.4vw,20px);line-height:1.5;background:var(--blue-soft);border-color:transparent;box-shadow:6px 6px 0 var(--mark)}
+.fc-act{display:flex;gap:10px;justify-content:center;margin-top:28px}
+.fc-act{flex-wrap:wrap}
+.fc-act .btn{min-width:120px}
+.btn.hard{color:var(--ink)}
+.btn.again{color:var(--bad)}
+.btn.got{color:var(--good)}
+.keys{text-align:center;margin-top:14px;font-size:13px;color:var(--muted)}
+.done{text-align:center;padding:50px 20px}
+.done h2{font-size:32px}
+.done p{margin:10px 0 22px;color:var(--muted)}
+
+/* ---------- games ---------- */
+.hub{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+.game-tile{text-align:left;border:1px solid var(--line);background:var(--card);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:8px;min-height:190px;transition:transform .12s,border-color .12s}
+.game-tile:hover{border-color:var(--blue);transform:translateY(-2px)}
+.game-tile h3{font-size:22px}
+.game-tile p{color:var(--muted);font-size:15px;flex:1}
+.game-tile .best{font-size:13px;font-weight:600}
+.game-tile[disabled]{opacity:.5;pointer-events:none}
+.hud{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:12px;font-weight:600}
+.hud .grow{flex:1}
+.hearts{color:var(--bad);letter-spacing:2px;font-size:20px}
+.hearts .off{color:var(--line)}
+.timer{height:8px;background:var(--line);border-radius:8px;overflow:hidden;margin-bottom:22px}
+.timer>i{display:block;height:100%;width:100%;background:var(--blue);transition:width .1s linear}
+.timer>i.low{background:var(--bad)}
+.q{font:600 clamp(21px,3.2vw,28px)/1.3 var(--serif);margin-bottom:20px;max-width:34ch}
+.opts{display:grid;gap:10px}
+.opt{display:flex;gap:12px;align-items:flex-start;text-align:left;padding:14px 16px;border-radius:10px;border:1.5px solid var(--edge);background:var(--card);font-size:16.5px;transition:border-color .1s,background .1s}
+.opt:hover{border-color:var(--blue)}
+.opt kbd{flex:none;width:26px;height:26px;border-radius:6px;background:var(--bg);display:grid;place-items:center;font:600 13px var(--sans);color:var(--muted)}
+.opt.right{border-color:var(--good);background:var(--good-soft)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.opt .mk{margin-left:auto;font-weight:800;font-size:18px;line-height:1.2;padding-left:8px}
+.opt.right .mk{color:var(--good)}.opt.wrong .mk{color:var(--bad)}
+.opt.dim{opacity:.55}
+.opts.tf{grid-template-columns:1fr 1fr}
+.opts.tf .opt{justify-content:center;font:700 22px var(--serif);padding:24px}
+.explain{margin-top:18px;padding:14px 16px;border-radius:10px;background:var(--card);border-left:5px solid var(--mark)}
+.explain p+p{margin-top:12px}
+.score-big{font:700 clamp(54px,12vw,96px)/1 var(--serif)}
+.match-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(min-width:760px){.match-grid{grid-template-columns:repeat(4,1fr)}}
+.mcard{min-height:92px;padding:12px;border-radius:10px;border:1.5px solid var(--edge);background:var(--card);font-size:15px;line-height:1.35;display:grid;place-items:center;text-align:center;transition:opacity .3s,transform .15s}
+.mcard.term{font:700 17px var(--serif)}
+.mcard.sel{border-color:var(--blue);background:var(--blue-soft);transform:scale(1.03)}
+.mcard.gone{opacity:0;pointer-events:none;transform:scale(.9)}
+.mcard.shake{animation:shake .35s;border-color:var(--bad)}
+@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+/* ---------- chat ---------- */
+.msgs{display:flex;flex-direction:column;gap:14px;margin:18px 0 12px;min-height:120px}
+.msg{display:flex}
+.msg.user{justify-content:flex-end}
+.bubble{max-width:min(680px,92%);padding:12px 16px;border-radius:14px;line-height:1.55;overflow-wrap:anywhere}
+.msg.user .bubble{background:var(--ink);color:var(--bg);border-bottom-right-radius:4px;white-space:pre-wrap}
+.msg.ai .bubble{background:var(--card);border:1px solid var(--line);border-bottom-left-radius:4px}
+.bubble p+p,.bubble ul+p,.bubble p+ul,.bubble ol+p,.bubble p+ol{margin-top:10px}
+.bubble ul,.bubble ol{margin:0;padding-left:22px}
+.bubble li+li{margin-top:4px}
+.bubble code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.9em;background:var(--bg);padding:1px 5px;border-radius:4px}
+.pgc{border:0;background:var(--mark);color:var(--mark-ink);font-size:13px;font-weight:700;padding:4px 9px;min-height:28px;border-radius:6px;margin:0 2px;vertical-align:baseline}
+.pgc:hover{filter:brightness(.94)}
+.pgc.off{background:var(--bg);color:var(--muted);border:1px solid var(--line);cursor:default}
+.typing{display:inline-flex;gap:4px;padding:4px 0}
+.typing i{width:7px;height:7px;border-radius:50%;background:var(--muted);animation:blink 1s infinite}
+.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+@keyframes blink{0%,80%,100%{opacity:.25}40%{opacity:1}}
+.starters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.starters p{width:100%}
+.starters .pill{text-align:left;color:var(--ink)}
+.starters .pill:hover{border-color:var(--blue)}
+.composer{position:sticky;bottom:0;display:flex;gap:8px;align-items:flex-end;padding:12px 0 calc(12px + env(safe-area-inset-bottom));background:var(--bg);background:color-mix(in srgb,var(--bg) 88%,transparent);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border-top:1px solid var(--line)}
+.composer textarea{flex:1;resize:none;min-height:44px;max-height:160px;padding:10px 14px;border-radius:12px;border:1px solid var(--edge);background:var(--card);line-height:1.4}
+.composer .btn{min-height:44px}
+.bubble.bad{border-color:var(--bad)}
+
+/* ---------- modal & toast ---------- */
+.scrim{position:fixed;inset:0;z-index:50;background:rgba(8,12,24,.55);display:grid;place-items:center;padding:16px}
+.modal{width:min(520px,100%);max-height:92vh;overflow:auto;background:var(--bg);border-radius:14px;padding:24px;border:1px solid var(--line)}
+.modal h2{font-size:24px;margin-bottom:6px}
+.modal .field{margin-top:16px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:70;background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:10px;font-weight:600;max-width:90vw}
+.err{max-width:560px;margin:8vh auto 0}
+.err h2{font-size:28px}
+.err p{margin:12px 0 22px;color:var(--muted)}
+
+@media (pointer:coarse){.btn.small,.pill{min-height:44px}.tab{padding:15px 16px}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
+/* ---------- appearance picker ---------- */
+.seg{display:inline-flex;border:1px solid var(--edge);border-radius:10px;overflow:hidden;background:var(--card)}
+.seg button{border:0;background:none;min-height:44px;padding:0 20px;font-weight:600;color:var(--muted)}
+.seg button+button{border-left:1px solid var(--edge)}
+.seg button[aria-checked=true]{background:var(--ink);color:var(--bg)}
+.themes{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:10px}
+.theme{display:flex;flex-direction:column;gap:8px;text-align:left;padding:12px;border-radius:12px;border:1.5px solid var(--edge);background:var(--card);min-height:96px}
+.theme:hover{border-color:var(--blue)}
+.theme[aria-checked=true]{border-color:var(--blue);box-shadow:0 0 0 2px var(--blue)}
+.theme .dots{display:flex}
+.theme .dots i{width:26px;height:26px;border-radius:50%;border:2px solid var(--card);margin-right:-8px;box-shadow:0 0 0 1px var(--line)}
+.theme b{font-family:var(--serif);font-size:16px}
+.theme small{color:var(--muted);font-size:13px;line-height:1.3}
+.check{display:flex;gap:12px;align-items:flex-start;margin-top:16px;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--card);cursor:pointer}
+.check input{width:22px;height:22px;margin-top:2px;accent-color:var(--blue)}
+.check small{display:block;color:var(--muted);font-size:13.5px}
+.logo-mark{fill:var(--mark)}
+
+</style>
+</head>
+<body>
+<header class="top">
+  <button class="brand" id="brand" aria-label="Paperlens home">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><rect x="2" y="2" width="28" height="28" rx="8" fill="#121a2f"/><rect class="logo-mark" x="7" y="19" width="18" height="6" rx="1.5"/><circle cx="14.5" cy="13.5" r="5" fill="none" stroke="#fff" stroke-width="2.4"/><path d="M18.3 17.3 23 22" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg>
+    Paperlens
+  </button>
+  <span class="spacer"></span>
+  <button class="btn small" id="btn-install" hidden title="Install Paperlens as an app">Install app</button>
+  <button class="icon-btn" id="btn-look" aria-label="Appearance and themes" title="Themes">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 0 0 0 18c1.1 0 1.8-.8 1.8-1.7 0-.5-.2-.8-.4-1.2-.3-.4-.4-.8-.4-1.2 0-1 .8-1.7 1.8-1.7H17a4 4 0 0 0 4-4C21 6.6 17 3 12 3z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7.2" r="1"/><circle cx="14.5" cy="7.2" r="1"/></svg>
+  </button>
+  <button class="icon-btn" id="btn-theme" aria-label="Toggle light and dark theme" title="Light / dark">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+  </button>
+  <button class="icon-btn" id="btn-settings" aria-label="Settings" title="Settings">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>
+  </button>
+</header>
+<nav class="tabs" id="tabs" role="tablist" aria-label="Paper sections" hidden></nav>
+<main id="app"></main>
+<script>
+const DEMO = {
+  meta:{title:"Attention Is All You Need",authors:"Vaswani, Shazeer, Parmar, Uszkoreit, Jones, Gomez, Kaiser, Polosukhin",venue_year:"NeurIPS 2017",field:"Machine learning",paper_type:"Method paper",
+    one_liner:"A translation model built only from attention layers beats recurrent and convolutional models while training far faster."},
+  overview:{
+    tldr:"The authors drop recurrence and convolution entirely and build a sequence model, the Transformer, from attention alone. It set new translation records on two WMT 2014 benchmarks at a fraction of the training cost of earlier systems.",
+    plain_english:"Earlier translation systems read a sentence word by word, which made them slow to train and forgetful over long distances. The Transformer lets every word look at every other word at once and learn which ones matter. Because that work can be done in parallel, training is much faster.",
+    problem:"Recurrent networks process tokens one step at a time, so they cannot be parallelised within a sequence, and signals between distant words must pass through many steps.",
+    approach:"Stack six encoder and six decoder layers made of multi-head self-attention and small feed-forward networks, with residual connections, layer normalisation and sinusoidal position encodings to supply word order.",
+    key_findings:[
+      {text:"The big Transformer reaches 28.4 BLEU on WMT 2014 English-to-German, more than 2 BLEU above the previous best, including ensembles.",page:1},
+      {text:"It reaches 41.8 BLEU on English-to-French after 3.5 days on eight GPUs, a small fraction of the training cost of prior top models.",page:8},
+      {text:"Multi-head attention matters: a single head loses about 0.9 BLEU, and too many heads also hurts.",page:9},
+      {text:"The architecture also transfers to English constituency parsing with little tuning.",page:9}],
+    why_it_matters:"It replaced recurrence as the default way to model sequences and became the foundation for later large language models.",
+    limitations:["Self-attention cost grows quadratically with sequence length, so very long inputs are expensive.","Evidence is mostly from machine translation; parsing results are a brief extension.","Position information is injected by hand-designed encodings rather than learned structure."],
+    read_if:"You want the original design of the Transformer, or you need to understand scaled dot-product and multi-head attention from first principles.",
+    snapshot:[{label:"Task",value:"Machine translation (EN-DE, EN-FR)"},{label:"Core idea",value:"Attention replaces recurrence"},{label:"Data",value:"WMT 2014 translation sets"},{label:"Compute",value:"8 P100 GPUs, 3.5 days (big model)"},{label:"Headline result",value:"28.4 BLEU EN-DE, 41.8 BLEU EN-FR"}]},
+  glossary:[
+    {term:"Self-attention",definition:"Each position in a sequence weighs every other position to build its own representation."},
+    {term:"Multi-head attention",definition:"Several attention operations run in parallel on different learned projections, then are combined."},
+    {term:"Scaled dot-product",definition:"Attention scores are query-key dot products divided by the square root of the key dimension."},
+    {term:"Positional encoding",definition:"Sine and cosine signals added to embeddings so the model knows token order."},
+    {term:"BLEU",definition:"A score comparing machine translations to human references; higher is better."},
+    {term:"Residual connection",definition:"A layer's input is added to its output to ease training of deep stacks."}],
+  figures:[
+    {label:"Figure 1",check:"Does every arrow in the diagram match a component the text later describes?",pdf_page:3,kind:"diagram",title:"The Transformer architecture",what_it_shows:"Encoder stack on the left, decoder stack on the right, each built from attention and feed-forward blocks with residual connections.",why_it_matters:"It is the blueprint for the whole model and is reused almost unchanged in later work.",takeaway:"Attention plus feed-forward layers, stacked, is the entire model."},
+    {label:"Figure 2",check:"Check which dimensions are shared across heads and how the outputs are combined.",pdf_page:4,kind:"diagram",title:"Scaled dot-product and multi-head attention",what_it_shows:"The computation steps of one attention operation and how several heads are run in parallel and concatenated.",why_it_matters:"This is the novel building block the paper contributes.",takeaway:"Queries, keys and values are projected h times and attended to in parallel."},
+    {label:"Table 1",check:"Which regime (n versus d) makes self-attention cheaper, and do real sentences fall in it?",pdf_page:6,kind:"table",title:"Layer type comparison",what_it_shows:"Per-layer complexity, sequential operations and maximum path length for self-attention, recurrent and convolutional layers.",why_it_matters:"It argues theoretically why attention is easier to parallelise and learns long-range links better.",takeaway:"Self-attention connects any two positions in constant steps."},
+    {label:"Table 2",check:"Are compared systems trained on the same data, and is cost reported on a like-for-like basis?",pdf_page:8,kind:"table",title:"Translation quality and training cost",what_it_shows:"BLEU scores and training FLOPs for the Transformer versus earlier state-of-the-art systems on EN-DE and EN-FR.",why_it_matters:"It is the main evidence for the paper's central claim.",takeaway:"Higher BLEU at a fraction of the compute."},
+    {label:"Table 3",check:"Single-run dev scores: are the differences larger than run-to-run noise?",pdf_page:9,kind:"table",title:"Architecture variations",what_it_shows:"Ablations that change heads, key size, model size, dropout and position encoding and report the effect on development BLEU.",why_it_matters:"It shows which design choices actually carry the performance.",takeaway:"Head count and key size matter; bigger models and dropout help."}],
+  mindmap:{label:"Attention Is All You Need",children:[
+    {label:"Problem",note:"Recurrent models are sequential and slow, and long-range dependencies are hard.",children:[{label:"Sequential computation"},{label:"Long-distance dependencies"}]},
+    {label:"Key idea",note:"Model sequences using attention only.",children:[{label:"Self-attention",note:"Every token attends to every other token.",children:[{label:"Queries, keys, values"},{label:"Scaled by sqrt(d_k)"}]},{label:"Multi-head attention",children:[{label:"8 heads in base model"}]},{label:"Positional encoding",children:[{label:"Sine and cosine"}]}]},
+    {label:"Architecture",children:[{label:"Encoder: 6 layers"},{label:"Decoder: 6 layers",children:[{label:"Masked self-attention"},{label:"Encoder-decoder attention"}]},{label:"Residuals and layer norm"}]},
+    {label:"Training",children:[{label:"WMT 2014 EN-DE, EN-FR"},{label:"Adam with warmup schedule"},{label:"Dropout and label smoothing"}]},
+    {label:"Results",children:[{label:"28.4 BLEU EN-DE"},{label:"41.8 BLEU EN-FR"},{label:"Lower training cost"},{label:"Generalises to parsing"}]},
+    {label:"Limits",children:[{label:"Quadratic cost in length"},{label:"Mostly translation evidence"}]}]},
+  flashcards:[
+    {front:"What problem with recurrent networks motivates the Transformer?",back:"They process tokens sequentially, preventing parallelism within a sequence and making long-range dependencies hard to learn.",type:"concept",difficulty:1},
+    {front:"What does self-attention compute?",back:"For each position, a weighted sum of value vectors from all positions, with weights from query-key compatibility.",type:"concept",difficulty:1},
+    {front:"Why are dot products scaled by 1/sqrt(d_k)?",back:"For large d_k the dot products grow large and push the softmax into regions with tiny gradients; scaling counteracts that.",type:"method",difficulty:2},
+    {front:"Why use multi-head attention instead of one head?",back:"Different heads can attend to information from different representation subspaces at different positions, which a single averaged head cannot.",type:"method",difficulty:2},
+    {front:"How does the Transformer know word order?",back:"Sinusoidal positional encodings are added to the input embeddings.",type:"method",difficulty:1},
+    {front:"What BLEU did the big Transformer get on WMT 2014 EN-DE?",back:"28.4, over 2 BLEU above the best previous results including ensembles.",type:"result",difficulty:1},
+    {front:"What is the training cost headline for EN-FR?",back:"41.8 BLEU after 3.5 days on eight GPUs, a small fraction of earlier best models' training cost.",type:"result",difficulty:2},
+    {front:"What happens when the number of heads is reduced to one?",back:"Quality drops by about 0.9 BLEU; too many heads also reduces quality.",type:"result",difficulty:3},
+    {front:"Residual connection",back:"Adds a sub-layer's input to its output so gradients flow easily through deep stacks.",type:"term",difficulty:1},
+    {front:"Name one limitation the authors' design leaves open.",back:"Self-attention cost is quadratic in sequence length, which makes very long sequences costly.",type:"critique",difficulty:2},
+    {front:"What is the masked self-attention in the decoder for?",back:"It prevents a position from attending to later positions so predictions depend only on known outputs.",type:"method",difficulty:2},
+    {front:"BLEU",back:"A metric comparing machine output to reference translations by n-gram overlap; higher is better.",type:"term",difficulty:1}],
+  games:{
+    quiz:[
+      {question:"Which component does the Transformer remove entirely from earlier sequence models?",options:["Embeddings","Recurrence and convolution","Softmax","Dropout"],answer_index:1,explanation:"The title claim is literal: the model uses attention and feed-forward layers only."},
+      {question:"Why divide dot products by the square root of d_k?",options:["To make the model smaller","To keep softmax out of regions with tiny gradients","To speed up matrix multiplication","To normalise sentence length"],answer_index:1,explanation:"Large dot products would saturate the softmax, so they are scaled down."},
+      {question:"What supplies word-order information?",options:["Recurrent state","Convolution kernels","Positional encodings added to embeddings","A separate parser"],answer_index:2,explanation:"With no recurrence, order must be injected; the authors use sine and cosine functions."},
+      {question:"What BLEU did the big model score on English-to-German?",options:["20.1","25.2","28.4","41.8"],answer_index:2,explanation:"41.8 is the English-to-French score."},
+      {question:"What is a disadvantage of self-attention noted in the paper's analysis?",options:["Cannot be parallelised","Quadratic cost with sequence length","Needs recurrence for training","Cannot model long-range links"],answer_index:1,explanation:"Cost per layer is O(n squared times d), which is the usual criticism."},
+      {question:"What did Table 3's ablations show about the number of heads?",options:["More is always better","One head is fine","Single-head is worse, and too many heads also hurt","Heads have no effect"],answer_index:2,explanation:"There is a sweet spot: a single head lost about 0.9 BLEU, and too many heads also degraded quality."}],
+    fact_or_fiction:[
+      {statement:"The Transformer relies on recurrent layers to model word order.",is_true:false,explanation:"It uses positional encodings instead; there is no recurrence."},
+      {statement:"Multi-head attention runs several attention operations in parallel.",is_true:true,explanation:"Heads use different learned projections and are concatenated."},
+      {statement:"The paper reports state-of-the-art results on English-to-French translation.",is_true:true,explanation:"41.8 BLEU for a single model."},
+      {statement:"Training the big model took several weeks on hundreds of GPUs.",is_true:false,explanation:"It took 3.5 days on eight GPUs."},
+      {statement:"The authors also applied the model to English constituency parsing.",is_true:true,explanation:"Section 6.3 shows it generalises well to parsing."},
+      {statement:"Self-attention connects any two positions with a constant number of sequential operations.",is_true:true,explanation:"This is the argument made in Table 1."}],
+    match:[
+      {term:"Self-attention",definition:"Tokens weigh all other tokens"},
+      {term:"Multi-head",definition:"Parallel attention on different projections"},
+      {term:"Positional encoding",definition:"Injects word order"},
+      {term:"BLEU",definition:"Translation quality score"},
+      {term:"Residual connection",definition:"Adds input to output"},
+      {term:"Scaled dot-product",definition:"Divide scores by sqrt(d_k)"}]}
+};
+
+const PALETTES = {
+ "paper": {
+  "name": "Paper",
+  "note": "Clean and neutral",
+  "dots": {
+   "L": [
+    "#f2f4f7",
+    "#2447d6",
+    "#ffe066"
+   ],
+   "D": [
+    "#0d1220",
+    "#86a2ff",
+    "#ffd93d"
+   ]
+  },
+  "bg": [
+   "#f2f4f7",
+   "#0d1220"
+  ],
+  "branch": [
+   "#2447d6",
+   "#0b7a6e",
+   "#b4570b",
+   "#7c3aed",
+   "#be185d",
+   "#4d7c0f",
+   "#0369a1",
+   "#a16207"
+  ]
+ },
+ "spring": {
+  "name": "Spring",
+  "note": "Fresh green, blossom pink",
+  "dots": {
+   "L": [
+    "#eff6ef",
+    "#27724a",
+    "#ffc4da"
+   ],
+   "D": [
+    "#0d1711",
+    "#7fd49b",
+    "#f4a6c6"
+   ]
+  },
+  "bg": [
+   "#eff6ef",
+   "#0d1711"
+  ],
+  "branch": [
+   "#1f8452",
+   "#9d2557",
+   "#1e8078",
+   "#5c7c1d",
+   "#57259d",
+   "#9d5725",
+   "#256b9d",
+   "#8c7221"
+  ]
+ },
+ "golden": {
+  "name": "Golden hour",
+  "note": "Warm light, amber glow",
+  "dots": {
+   "L": [
+    "#fbf2e2",
+    "#a8480a",
+    "#ffcb5c"
+   ],
+   "D": [
+    "#19120b",
+    "#ffb15c",
+    "#f5b942"
+   ]
+  },
+  "bg": [
+   "#fbf2e2",
+   "#19120b"
+  ],
+  "branch": [
+   "#9d5525",
+   "#9d2543",
+   "#916c22",
+   "#25759d",
+   "#61259d",
+   "#1f8430",
+   "#9d3925",
+   "#7c741d"
+  ]
+ },
+ "fall": {
+  "name": "Fall",
+  "note": "Oxblood, pumpkin, woodsmoke",
+  "dots": {
+   "L": [
+    "#f3ede6",
+    "#8c2f2a",
+    "#f0a766"
+   ],
+   "D": [
+    "#191110",
+    "#f08a70",
+    "#e8a05a"
+   ]
+  },
+  "bg": [
+   "#f3ede6",
+   "#191110"
+  ],
+  "branch": [
+   "#9d3525",
+   "#9d6525",
+   "#647c1d",
+   "#1f8462",
+   "#7f259d",
+   "#25759d",
+   "#887320",
+   "#9d2543"
+  ]
+ },
+ "winter": {
+  "name": "Winter",
+  "note": "Frost and clear skies",
+  "dots": {
+   "L": [
+    "#ecf3f7",
+    "#0d6786",
+    "#b6e3f4"
+   ],
+   "D": [
+    "#0a141b",
+    "#6cc3e4",
+    "#8fd3ee"
+   ]
+  },
+  "bg": [
+   "#ecf3f7",
+   "#0a141b"
+  ],
+  "branch": [
+   "#25759d",
+   "#25439d",
+   "#1f8462",
+   "#57259d",
+   "#9d4d25",
+   "#9d2561",
+   "#41841f",
+   "#8c7221"
+  ]
+ },
+ "dusk": {
+  "name": "Dusk",
+  "note": "Lavender evening",
+  "dots": {
+   "L": [
+    "#f3f0f8",
+    "#5a35b8",
+    "#dcc3ff"
+   ],
+   "D": [
+    "#120e1f",
+    "#b79bff",
+    "#c7a2ff"
+   ]
+  },
+  "bg": [
+   "#f3f0f8",
+   "#120e1f"
+  ],
+  "branch": [
+   "#57259d",
+   "#9d2561",
+   "#1e8078",
+   "#916c22",
+   "#25579d",
+   "#41841f",
+   "#9d3925",
+   "#1f8452"
+  ]
+ }
+};
+
+/* =====================================================================
+   Paperlens — core
+   ===================================================================== */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const arr = x => Array.isArray(x) ? x : [];
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const ls = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } },
+  del(k) { try { localStorage.removeItem(k); } catch (e) {} }
+};
+const ICON = {
+  gear:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
+  moon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>',
+  upload:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m0 0L7 9m5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>',
+  dl:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12m0 0 5-5m-5 5-5-5"/><path d="M4 18v1a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-1"/></svg>'
+};
+
+const S = {
+  settings: Object.assign({ key: '', model: 'claude-sonnet-5-5', audience: 'adjacent' }, ls.get('pl.settings', {})),
+  paper: null, tab: 'overview',
+  pdf: null, pdfReady: Promise.resolve(), pageImgs: {},
+  cleanups: [], keys: null, abort: null, lastSrc: null,
+  srcFile: null, srcText: null, srcCache: null, chats: {}
+};
+
+/* ---------- theme ---------- */
+const SEASON = m => (m >= 2 && m <= 4) ? 'spring' : (m >= 5 && m <= 7) ? 'golden' : (m >= 8 && m <= 10) ? 'fall' : 'winter';
+function currentPalette() { const p = ls.get('pl.palette', 'paper'); return p === 'seasonal' ? SEASON(new Date().getMonth()) : (PALETTES[p] ? p : 'paper'); }
+function applyLook() {
+  const r = document.documentElement, id = currentPalette(), dark = r.getAttribute('data-theme') === 'dark';
+  r.setAttribute('data-palette', id);
+  document.querySelector('meta[name=theme-color]')?.setAttribute('content', PALETTES[id].bg[dark ? 1 : 0]);
+}
+function setTheme(t) { document.documentElement.setAttribute('data-theme', t); ls.set('pl.theme', t); applyLook(); }
+function setPalette(p) { ls.set('pl.palette', p); applyLook(); if (S.paper && S.tab === 'mindmap') showPaper('mindmap'); }
+setTheme(ls.get('pl.theme', matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
+
+function openLook() {
+  $('.scrim')?.remove();
+  const el = document.createElement('div'); el.className = 'scrim';
+  const mode = () => document.documentElement.getAttribute('data-theme');
+  el.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="lk">
+    <h2 id="lk">Appearance</h2>
+    <p class="muted">Pick a look that's easy on your eyes. It's remembered on this device.</p>
+    <div class="seg" role="radiogroup" aria-label="Mode" style="margin-top:18px">
+      <button role="radio" data-m="light">Light</button><button role="radio" data-m="dark">Dark</button></div>
+    <div class="themes" role="radiogroup" aria-label="Theme" id="themes"></div>
+    <label class="check"><input type="checkbox" id="seas"><span><b>Follow the seasons</b><small id="seas-n"></small></span></label>
+    <div class="row" style="margin-top:20px"><button class="btn primary" id="done">Done</button></div></div>`;
+  document.body.appendChild(el);
+  const sync = () => {
+    const pal = ls.get('pl.palette', 'paper'), m = mode();
+    $$('[data-m]', el).forEach(b => b.setAttribute('aria-checked', b.dataset.m === m));
+    $('#themes', el).innerHTML = Object.entries(PALETTES).map(([id, t]) => `<button class="theme" role="radio" aria-checked="${pal === id}" data-p="${id}">
+      <span class="dots">${t.dots[m === 'dark' ? 'D' : 'L'].map(c => `<i style="background:${c}"></i>`).join('')}</span><b>${esc(t.name)}</b><small>${esc(t.note)}</small></button>`).join('');
+    $$('[data-p]', el).forEach(b => b.onclick = () => { setPalette(b.dataset.p); sync(); $(`[data-p="${b.dataset.p}"]`, el).focus(); });
+    $('#seas', el).checked = pal === 'seasonal';
+    $('#seas-n', el).textContent = 'Spring, golden hour, fall and winter, matched to the time of year' + (pal === 'seasonal' ? '. Right now: ' + PALETTES[currentPalette()].name + '.' : '.');
+  };
+  $$('[data-m]', el).forEach(b => b.onclick = () => { setTheme(b.dataset.m); sync(); $(`[data-m="${b.dataset.m}"]`, el).focus(); });
+  $('#seas', el).onchange = e => { setPalette(e.target.checked ? 'seasonal' : currentPalette()); sync(); };
+  $('#done', el).onclick = () => el.remove();
+  el.addEventListener('click', e => { if (e.target === el) el.remove(); });
+  sync(); $('[aria-checked=true][data-p]', el)?.focus();
+}
+
+/* ---------- small UI helpers ---------- */
+function toast(msg) {
+  const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; t.setAttribute('role', 'status');
+  document.body.appendChild(t); setTimeout(() => t.remove(), 2600);
+}
+function teardown() { S.cleanups.forEach(f => { try { f(); } catch (e) {} }); S.cleanups = []; S.keys = null; }
+function download(name, text, type) {
+  const blob = text instanceof Blob ? text : new Blob([text], { type: type || 'text/plain' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+const slug = s => String(s || 'paper').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 50) || 'paper';
+document.addEventListener('keydown', e => {
+  if (e.target.closest?.('input,textarea,select')) return;
+  if ($('.scrim') || $('.lightbox')) { if (e.key === 'Escape') { $('.scrim')?.remove(); $('.lightbox')?.remove(); } return; }
+  if (S.keys) S.keys(e);
+});
+
+/* ---------- settings modal ---------- */
+function openSettings(msg) {
+  $('.scrim')?.remove();
+  const el = document.createElement('div'); el.className = 'scrim';
+  el.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="st">
+    <h2 id="st">Settings</h2>
+    <p class="muted">${esc(msg || 'Paperlens sends your paper straight from this page to the Anthropic API. Nothing goes through any other server.')}</p>
+    ${/iphone|ipad/i.test(navigator.userAgent) && !navigator.standalone ? `<p class="muted" style="margin-top:10px"><b>Install on iPhone or iPad:</b> tap the Share button in Safari, then Add to Home Screen.</p>` : ''}
+    <div class="field"><label for="k">Anthropic API key</label>
+      <input id="k" type="password" autocomplete="off" placeholder="sk-ant-…" value="${esc(S.settings.key)}">
+      <small>Stored only in this browser. Get one at console.anthropic.com.</small></div>
+    <div class="field"><label for="m">Model</label>
+      <input id="m" list="models" value="${esc(S.settings.model)}">
+      <datalist id="models"><option value="claude-sonnet-5-5"><option value="claude-opus-5-5"><option value="claude-haiku-5-5"></datalist>
+      <small>Sonnet is a good balance. Opus is deeper but slower. Haiku is fastest.</small></div>
+    <div class="row" style="margin-top:22px"><button class="btn primary" id="sv">Save</button><button class="btn ghost" id="cn">Cancel</button><span class="spacer"></span>
+      <button class="btn ghost small" id="wipe">Clear saved data</button></div></div>`;
+  document.body.appendChild(el);
+  el.addEventListener('click', e => { if (e.target === el) el.remove(); });
+  $('#cn', el).onclick = () => el.remove();
+  $('#sv', el).onclick = () => {
+    S.settings.key = $('#k', el).value.trim(); S.settings.model = $('#m', el).value.trim() || 'claude-sonnet-5-5';
+    ls.set('pl.settings', S.settings); el.remove(); toast('Settings saved'); if (!S.paper && !S.abort) showHome();
+  };
+  $('#wipe', el).onclick = () => {
+    if (!confirm('Remove your API key and all saved papers from this browser?')) return;
+    ['pl.settings', 'pl.lib'].forEach(ls.del); Object.keys(localStorage).filter(k => k.startsWith('pl.best.')).forEach(ls.del);
+    S.settings = { key: '', model: 'claude-sonnet-5-5', audience: 'adjacent' }; el.remove(); toast('Cleared'); showHome();
+  };
+  setTimeout(() => $('#k', el).focus(), 30);
+}
+
+/* ---------- PDF page rendering (pdf.js loaded on demand) ---------- */
+const PDFJS = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
+function ensurePdfJs() {
+  if (window.pdfjsLib && pdfjsLib.GlobalWorkerOptions.workerSrc) return Promise.resolve();
+  return new Promise((res, rej) => {
+    const s = document.createElement('script'); s.src = PDFJS + 'pdf.min.js';
+    s.onload = async () => { try { const r = await fetch(PDFJS + 'pdf.worker.min.js'); pdfjsLib.GlobalWorkerOptions.workerSrc = URL.createObjectURL(await r.blob()); res(); } catch (e) { rej(e); } };
+    s.onerror = () => rej(new Error('pdf.js could not be loaded'));
+    document.head.appendChild(s);
+  });
+}
+function attachPdf(file) {
+  S.srcFile = file; S.srcText = null; S.pdf = null; S.pageImgs = {};
+  S.pdfReady = (async () => {
+    try { await ensurePdfJs(); S.pdf = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise; }
+    catch (e) { console.warn('Page previews unavailable:', e); S.pdf = null; }
+  })();
+  return S.pdfReady;
+}
+async function getPageImg(n) {
+  await S.pdfReady;
+  if (!S.pdf || !n || n < 1 || n > S.pdf.numPages) return null;
+  if (S.pageImgs[n]) return S.pageImgs[n];
+  try {
+    const page = await S.pdf.getPage(n), vp = page.getViewport({ scale: 1.6 });
+    const c = document.createElement('canvas'); c.width = vp.width; c.height = vp.height;
+    await page.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
+    return (S.pageImgs[n] = c.toDataURL('image/jpeg', 0.88));
+  } catch (e) { console.warn(e); return null; }
+}
+
+/* ---------- analysis: prompt ---------- */
+const AUDIENCES = {
+  adjacent: 'a researcher from a neighbouring field: define specialist terms briefly and keep the rigour',
+  expert: 'a specialist in this exact field: be technical and precise, no hand-holding',
+  newcomer: 'a curious newcomer: use plain language and short everyday analogies, define every technical term'
+};
+function buildSystem(aud) {
+  return `You are Paperlens, an expert analyst who helps researchers in any field grasp a paper fast. Read the paper carefully and respond with ONE JSON object and nothing else: no prose before or after, no code fences.
+
+Accuracy rules: only state what the paper supports. Quote numbers exactly as the paper reports them. If the paper does not say something, leave it out rather than guess. Write in plain text only: no markdown, no LaTeX; use unicode for symbols (α, ², ≈, √).
+Audience: ${AUDIENCES[aud] || AUDIENCES.adjacent}.
+Be concise and specific. Prefer concrete facts, numbers and names over general statements.
+
+JSON schema (keys in this exact order):
+{
+ "meta": { "title": str, "authors": str (short, e.g. "Vaswani et al."), "venue_year": str or "", "field": str, "paper_type": str (e.g. "Randomised trial", "Method paper", "Review", "Theory"), "one_liner": str (max 25 words) },
+ "overview": {
+   "tldr": str (2 to 3 sentences, the whole paper in brief),
+   "plain_english": str (3 to 4 sentences, no jargon),
+   "problem": str (1 to 2 sentences: the gap or question),
+   "approach": str (1 to 3 sentences: what they did),
+   "key_findings": [3 to 5 {"text": str (one sentence, include numbers), "page": integer or null (1-based PDF page where the paper states it, counting from the first page of the PDF file and NOT the printed page number)}],
+   "why_it_matters": str (1 to 2 sentences),
+   "limitations": [2 to 4 strings, caveats stated by authors or evident from the design],
+   "read_if": str (one sentence: who should read the full paper and why),
+   "snapshot": [4 to 6 {"label": str, "value": str}] such as Study type, Sample or data, Method, Main result, Setting
+ },
+ "glossary": [5 to 8 {"term": str, "definition": str (max 20 words)}],
+ "figures": [3 to 6 of the most important figures, tables, key equations or diagrams, in order of appearance:
+   {"label": str (e.g. "Figure 2", "Table 1"), "pdf_page": integer (1-based index of the PDF page where it appears, counting from the first page of the PDF file and NOT the printed page number; null if unknown), "page_area": "top"|"middle"|"bottom" (roughly where on that page it sits), "kind": "figure"|"table"|"equation"|"diagram", "title": str, "what_it_shows": str (1 to 2 sentences), "why_it_matters": str (1 sentence), "takeaway": str (max 15 words), "check": str (one thing a critical reader should scrutinize in this item, such as axes, error bars, sample size or baselines; max 20 words)}],
+ "mindmap": { "label": str (short paper name, max 5 words), "children": [5 to 7 branches such as Problem, Method, Data, Results, Implications, Limitations; each {"label": str (max 6 words), "note": str (optional, one sentence of detail), "children": [2 to 4 items, each optionally with 1 to 3 children of its own]}] },
+ "flashcards": [16 to 22 {"front": str (a question or term), "back": str (answer in 1 to 3 sentences), "type": "concept"|"method"|"result"|"term"|"critique", "difficulty": 1|2|3}] mixing all five types, covering the paper's logic from start to finish,
+ "games": {
+   "quiz": [10 multiple-choice questions {"question": str, "options": [exactly 4 plausible strings], "answer_index": 0 to 3 (vary position), "explanation": str (1 to 2 sentences)}] about understanding, not trivia; wrong options must be plausible,
+   "fact_or_fiction": [12 {"statement": str, "is_true": bool, "explanation": str}] with about half false; false statements should be subtle but clearly wrong according to the paper,
+   "match": [exactly 6 {"term": str (max 4 words), "definition": str (max 8 words)}] of the paper's key concepts
+ }
+}`;
+}
+
+/* ---------- analysis: run ---------- */
+const STAGES = [
+  ['"meta"', 'Reading the paper'], ['"overview"', 'Writing the overview'], ['"figures"', 'Finding the key figures'],
+  ['"mindmap"', 'Drawing the mind map'], ['"flashcards"', 'Making flashcards'], ['"games"', 'Building the games']
+];
+function fileToB64(file) {
+  return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(',')[1]); r.onerror = () => rej(new Error('Could not read that file.')); r.readAsDataURL(file); });
+}
+function friendlyError(status, msg) {
+  if (status === 401) return 'The API key was rejected. Open Settings and check that it is correct.';
+  if (status === 403) return 'This key is not allowed to use that model or feature. ' + msg;
+  if (status === 404) return 'That model name was not found. Open Settings and pick a valid model. ' + msg;
+  if (status === 413) return 'The file is too large for the API. Try a smaller PDF (under about 24 MB and 100 pages).';
+  if (status === 429) return 'Rate limit reached. Wait a minute and try again.';
+  if (status === 529 || status >= 500) return 'The API is busy right now. Try again in a moment.';
+  return msg || ('Request failed (' + status + ').');
+}
+function parseModelJSON(text) {
+  let t = text.trim().replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '');
+  const a = t.indexOf('{'), b = t.lastIndexOf('}');
+  if (a < 0 || b < a) throw new Error('The model did not return structured data.');
+  return JSON.parse(t.slice(a, b + 1));
+}
+
+/* ---------- shared: stream a Messages API call ---------- */
+async function streamMessages({ system, messages, max_tokens, onText, signal }) {
+  let res;
+  try {
+    res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST', signal,
+      headers: { 'content-type': 'application/json', 'x-api-key': S.settings.key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({ model: S.settings.model, max_tokens, stream: true, system, messages })
+    });
+  } catch (e) {
+    if (e.name === 'AbortError') throw e;
+    throw new Error('Could not reach api.anthropic.com. Check your connection and any ad or privacy blockers.');
+  }
+  if (!res.ok) { let m = ''; try { m = (await res.json()).error?.message || ''; } catch (e) {} throw new Error(friendlyError(res.status, m)); }
+  const reader = res.body.getReader(), dec = new TextDecoder();
+  let buf = '', text = '', stop = '';
+  for (;;) {
+    const { done, value } = await reader.read(); if (done) break;
+    buf += dec.decode(value, { stream: true });
+    let i;
+    while ((i = buf.indexOf('\n')) >= 0) {
+      const line = buf.slice(0, i).trim(); buf = buf.slice(i + 1);
+      if (!line.startsWith('data:')) continue;
+      const d = line.slice(5).trim(); if (!d) continue;
+      let ev; try { ev = JSON.parse(d); } catch (e) { continue; }
+      if (ev.type === 'content_block_delta' && ev.delta?.type === 'text_delta') { text += ev.delta.text; onText && onText(text); }
+      else if (ev.type === 'message_delta' && ev.delta?.stop_reason) stop = ev.delta.stop_reason;
+      else if (ev.type === 'error') throw new Error(ev.error?.message || 'The stream was interrupted.');
+    }
+  }
+  return { text, stop };
+}
+
+async function analyze(src) {
+  if (!S.settings.key) { openSettings('Add your Anthropic API key to analyze a paper.'); return; }
+  S.lastSrc = src; teardown();
+  const label = src.pdf ? src.pdf.name : 'pasted text';
+  showLoading(label);
+  const ctrl = S.abort = new AbortController();
+  try {
+    const content = [];
+    if (src.pdf) {
+      if (src.pdf.size > 24 * 1024 * 1024) throw new Error('That PDF is larger than 24 MB. Try a smaller or compressed copy.');
+      content.push({ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: await fileToB64(src.pdf) } });
+      attachPdf(src.pdf);
+    } else {
+      S.srcFile = null; S.srcText = src.text; S.pdf = null; S.pageImgs = {}; S.pdfReady = Promise.resolve();
+      content.push({ type: 'text', text: 'PAPER TEXT:\n\n' + src.text.slice(0, 450000) });
+    }
+    content.push({ type: 'text', text: 'Analyze this paper and return the JSON object described in your instructions.' });
+
+    const { text, stop } = await streamMessages({ system: buildSystem(S.settings.audience), messages: [{ role: 'user', content }], max_tokens: 16000, onText: updateStages, signal: ctrl.signal });
+    let data;
+    try { data = parseModelJSON(text); }
+    catch (e) { throw new Error(stop === 'max_tokens' ? 'The analysis was cut off because the paper is very dense. Try again or choose a faster model.' : 'The response could not be read. Try again.'); }
+    const paper = normalize(data);
+    paper.id = 'p' + Date.now().toString(36);
+    saveToLibrary(paper);
+    S.abort = null; S.paper = paper; updateStages(text, true);
+    setTimeout(() => showPaper('overview'), 350);
+  } catch (e) {
+    S.abort = null;
+    if (e.name === 'AbortError') { showHome(); return; }
+    showError(e.message || String(e));
+  }
+}
+
+function normalize(d) {
+  const m = d.meta || {}, o = d.overview || {}, g = d.games || {};
+  const title = m.title || 'Untitled paper';
+  return {
+    meta: { title, authors: m.authors || '', venue: m.venue_year || '', field: m.field || '', type: m.paper_type || '', oneLiner: m.one_liner || '' },
+    ov: {
+      tldr: o.tldr || m.one_liner || '', plain: o.plain_english || '', problem: o.problem || '', approach: o.approach || '',
+      findings: arr(o.key_findings).map(f => typeof f === 'string' ? { t: f, p: null } : { t: f?.text || '', p: Number.isInteger(f?.page) ? f.page : null }).filter(f => f.t), why: o.why_it_matters || '', limits: arr(o.limitations).filter(Boolean),
+      readIf: o.read_if || '', snapshot: arr(o.snapshot).filter(x => x && x.label && x.value)
+    },
+    glossary: arr(d.glossary).filter(x => x && x.term && x.definition),
+    figures: arr(d.figures).filter(f => f && (f.title || f.label)),
+    mindmap: d.mindmap && d.mindmap.label ? d.mindmap : { label: title, children: [] },
+    cards: arr(d.flashcards).filter(c => c && c.front && c.back),
+    quiz: arr(g.quiz).filter(q => q && q.question && arr(q.options).length >= 2 && Number.isInteger(q.answer_index) && q.answer_index < q.options.length),
+    fof: arr(g.fact_or_fiction).filter(f => f && f.statement && typeof f.is_true === 'boolean'),
+    match: arr(g.match).filter(p => p && p.term && p.definition).slice(0, 6)
+  };
+}
+
+/* ---------- library ---------- */
+function saveToLibrary(p) {
+  let lib = ls.get('pl.lib', []).filter(x => x.id !== p.id);
+  lib.unshift({ id: p.id, title: p.meta.title, field: p.meta.field, date: Date.now(), data: p });
+  lib = lib.slice(0, 15);
+  while (lib.length && !ls.set('pl.lib', lib)) lib.pop();
+}
+
+/* ---------- screens: home ---------- */
+const app = () => $('#app');
+function showHome() {
+  teardown(); S.paper = null; $('#tabs').hidden = true; document.title = 'Paperlens';
+  const lib = ls.get('pl.lib', []);
+  app().innerHTML = `
+  <section class="hero">
+    <h1>Read any paper in the time it takes to make coffee.</h1>
+    <p>Drop in a PDF and get the gist, the figures that matter, a mind map, flashcards and a game that makes it stick. Works in any field.</p>
+  </section>
+  <label class="drop" id="drop" tabindex="0">
+    ${ICON.upload}<strong>Drop a research paper here</strong><span>or click to choose a PDF (up to 24 MB). Takes about a minute.</span>
+    <input type="file" id="file" accept=".pdf,application/pdf,.txt,.md,text/plain" class="sr">
+  </label>
+  <div class="options">
+    <div class="field"><label for="aud">Explain it for</label>
+      <select id="aud">
+        <option value="adjacent">A researcher in a nearby field</option>
+        <option value="expert">A specialist in this field</option>
+        <option value="newcomer">A curious newcomer</option>
+      </select></div>
+    <div class="field"><label>&nbsp;</label><button class="btn ${S.settings.key ? '' : 'primary'}" id="demo" style="width:100%">See a finished example first</button></div>
+  </div>
+  <details class="paste"><summary>No PDF? Paste the text instead</summary>
+    <div class="field" style="margin-top:8px"><textarea id="txt" placeholder="Paste the paper's text here…"></textarea></div>
+    <button class="btn primary" id="gotxt" style="margin-top:10px">Analyze pasted text</button></details>
+  ${S.settings.key ? '' : `<div class="notice">The example works without a key. To analyze your own papers, add your Anthropic API key. <button id="needkey">Open settings</button></div>`}
+  ${lib.length ? `<h2 class="section-h" style="margin-top:44px">Your papers</h2><div class="lib">${lib.map(x => `
+     <div class="row" style="flex-wrap:nowrap;gap:8px"><button class="lib-item" data-open="${esc(x.id)}"><span class="grow"><b>${esc(x.title)}</b><span>${esc(x.field || 'Paper')} · ${new Date(x.date).toLocaleDateString()}</span></span></button>
+     <button class="icon-btn" data-del="${esc(x.id)}" aria-label="Remove ${esc(x.title)}" title="Remove">✕</button></div>`).join('')}</div>` : ''}`;
+  $('#aud').value = S.settings.audience;
+  $('#aud').onchange = e => { S.settings.audience = e.target.value; ls.set('pl.settings', S.settings); };
+  const drop = $('#drop'), inp = $('#file');
+  const take = f => {
+    if (!f) return;
+    if (/\.pdf$/i.test(f.name) || f.type === 'application/pdf') analyze({ pdf: f });
+    else if (/\.(txt|md)$/i.test(f.name) || f.type.startsWith('text/')) f.text().then(t => analyze({ text: t }));
+    else toast('Please choose a PDF or text file');
+  };
+  inp.onchange = () => take(inp.files[0]);
+  drop.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); inp.click(); } };
+  ['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
+  ['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
+  drop.addEventListener('drop', e => take(e.dataTransfer.files[0]));
+  $('#gotxt').onclick = () => { const t = $('#txt').value.trim(); if (t.length < 400) toast('Paste a bit more text (at least a few paragraphs)'); else analyze({ text: t }); };
+  $('#demo').onclick = () => { const p = normalize(DEMO); p.id = 'demo'; S.paper = p; S.pdf = null; S.srcFile = S.srcText = null; S.pageImgs = {}; S.pdfReady = Promise.resolve(); showPaper('overview'); };
+  $('#needkey')?.addEventListener('click', () => openSettings());
+  $$('[data-open]').forEach(b => b.onclick = () => {
+    const it = ls.get('pl.lib', []).find(x => x.id === b.dataset.open); if (!it) return;
+    S.paper = it.data; S.pdf = null; S.srcFile = S.srcText = null; S.pageImgs = {}; S.pdfReady = Promise.resolve(); showPaper('overview');
+  });
+  $$('[data-del]').forEach(b => b.onclick = () => { ls.set('pl.lib', ls.get('pl.lib', []).filter(x => x.id !== b.dataset.del)); showHome(); });
+}
+
+/* ---------- screens: loading & error ---------- */
+const EXPECT_CHARS = 17000;
+function showLoading(label) {
+  $('#tabs').hidden = true; S.progress = 0; S.t0 = Date.now();
+  app().innerHTML = `<div class="loading"><h2>Reading ${esc(label)}</h2>
+    <p class="muted" style="margin-top:8px">Most papers take 30 to 90 seconds. The overview appears below as soon as it's written.</p>
+    <div class="prog"><div class="bar" role="progressbar" aria-label="Analysis progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="pbar" style="width:2%"></i></div>
+      <div class="prog-meta"><span id="ptxt">Starting…</span><span id="eta"></span></div></div>
+    <div id="live" class="live" hidden><small>First look</small><b id="live-t"></b><p id="live-s"></p></div>
+    <ol class="steps" id="steps">${STAGES.map((s, i) => `<li data-i="${i}" class="${i === 0 ? 'now' : ''}"><i></i>${s[1]}</li>`).join('')}</ol>
+    <button class="btn ghost" id="cancel" style="margin-top:22px">Cancel</button></div>`;
+  $('#cancel').onclick = () => S.abort?.abort();
+  const tick = setInterval(() => {
+    if (!$('#eta')) return clearInterval(tick);
+    const el = (Date.now() - S.t0) / 1000, p = S.progress;
+    const m = Math.floor(el / 60), s = Math.floor(el % 60);
+    let eta = m + ':' + String(s).padStart(2, '0') + ' elapsed';
+    if (p > 12 && p < 99 && el > 8) { const left = Math.max(5, Math.round(el * (100 - p) / p / 5) * 5); eta += ' · about ' + left + ' s left'; }
+    $('#eta').textContent = eta;
+  }, 500);
+  S.cleanups.push(() => clearInterval(tick));
+}
+function jsonStr(raw) { try { return JSON.parse('"' + raw.replace(/\\$/, '') + '"'); } catch (e) { return raw; } }
+function updateStages(text, all) {
+  let cur = 0;
+  STAGES.forEach((s, i) => { if (new RegExp(s[0] + '\\s*:').test(text)) cur = i; });
+  $$('#steps li').forEach((li, i) => { li.className = all || i < cur ? 'done' : i === cur ? 'now' : ''; if (li.className === 'done') li.firstChild.textContent = '✓'; });
+  const pct = all ? 100 : Math.max(S.progress || 0, Math.min(96, text.length / EXPECT_CHARS * 100));
+  S.progress = pct;
+  const bar = $('#pbar'); if (bar) { bar.style.width = Math.max(2, pct) + '%'; bar.parentElement.setAttribute('aria-valuenow', Math.round(pct)); }
+  const t = $('#ptxt'); if (t) t.textContent = all ? 'Done' : STAGES[cur][1] + '… ' + Math.round(pct) + '%';
+  const title = /"title"\s*:\s*"((?:[^"\\]|\\.)*)"/.exec(text), tl = /"tldr"\s*:\s*"((?:[^"\\]|\\.)*)/.exec(text);
+  if (title && $('#live')) { $('#live').hidden = false; $('#live-t').textContent = jsonStr(title[1]); $('#live-s').textContent = tl ? jsonStr(tl[1]) : ''; }
+}
+function showError(msg) {
+  $('#tabs').hidden = true;
+  app().innerHTML = `<div class="err"><h2>That didn't work</h2><p>${esc(msg)}</p>
+    <div class="row"><button class="btn primary" id="retry" ${S.lastSrc ? '' : 'hidden'}>Try again</button><button class="btn" id="set">Open settings</button><button class="btn ghost" id="home">Back</button></div></div>`;
+  $('#retry').onclick = () => analyze(S.lastSrc); $('#set').onclick = () => openSettings(); $('#home').onclick = showHome;
+}
+
+/* ---------- screens: paper shell + tabs ---------- */
+const TABS = [['overview', 'Overview'], ['figures', 'Figures'], ['mindmap', 'Mind map'], ['cards', 'Flashcards'], ['play', 'Play'], ['chat', 'Chat']];
+function showPaper(tab) {
+  const p = S.paper; if (!p) return showHome();
+  document.title = p.meta.title + ' · Paperlens';
+  const counts = { figures: p.figures.length, cards: p.cards.length };
+  const t = $('#tabs'); t.hidden = false;
+  t.innerHTML = TABS.map(([id, name]) => `<button class="tab" role="tab" data-t="${id}" aria-selected="${id === tab}">${name}${counts[id] ? `<small>${counts[id]}</small>` : ''}</button>`).join('');
+  $$('.tab', t).forEach(b => b.onclick = () => showPaper(b.dataset.t));
+  teardown(); S.tab = tab; window.scrollTo(0, 0);
+  ({ overview: viewOverview, figures: viewFigures, mindmap: viewMindmap, cards: viewCards, play: viewPlay, chat: viewChat })[tab](p);
+}
+
+/* ---------- page chips: verify a claim in place ---------- */
+const pageChip = n => `<button class="pgc ${S.pdf || S.srcFile ? '' : 'off'}" data-pg="${n}" title="${S.pdf || S.srcFile ? 'Show this page' : 'Attach the PDF to preview this page'}">p. ${n}</button>`;
+document.addEventListener('click', async e => {
+  const b = e.target.closest?.('.pgc'); if (!b) return;
+  const n = +b.dataset.pg, url = await getPageImg(n);
+  url ? openLightbox(url, 'PDF page ' + n) : toast('Attach the original PDF (on the Figures tab) to preview pages');
+});
+
+/* ---------- view: overview ---------- */
+function viewOverview(p) {
+  const o = p.ov, m = p.meta;
+  app().innerHTML = `
+  ${p.id === 'demo' ? `<div class="sample"><span class="grow"><b>Sample paper.</b> This is a finished example of what Paperlens produces.</span><button class="btn small" id="own">Analyze your own</button></div>` : ''}
+  <div class="paper-head">
+    <div class="meta">${m.field ? `<span class="chip">${esc(m.field)}</span>` : ''}${m.type ? `<span class="chip plain">${esc(m.type)}</span>` : ''}${m.venue ? `<span class="chip plain">${esc(m.venue)}</span>` : ''}</div>
+    <h1 style="margin-top:14px">${esc(m.title)}</h1>
+    ${m.authors ? `<p class="authors">${esc(m.authors)}</p>` : ''}
+    ${o.tldr ? `<p class="tldr"><span class="mark">${esc(o.tldr)}</span></p>` : ''}
+    ${o.readIf ? `<p class="readif" style="margin-top:14px">${esc(o.readIf)}</p>` : ''}
+  </div>
+  ${o.snapshot.length ? `<dl class="snap" style="margin-bottom:0">${o.snapshot.map(s => `<div><dt>${esc(s.label)}</dt><dd>${esc(s.value)}</dd></div>`).join('')}</dl>` : ''}
+  ${o.findings.length ? `<h2 class="section-h" style="margin-top:40px">What they found</h2><ul class="findings">${o.findings.map(f => `<li>${esc(f.t)}${f.p ? pageChip(f.p) : ''}</li>`).join('')}</ul>` : ''}
+  <div class="two" style="margin-top:32px">
+    ${o.problem ? `<div class="card"><h3>The problem</h3><p>${esc(o.problem)}</p></div>` : ''}
+    ${o.approach ? `<div class="card"><h3>What they did</h3><p>${esc(o.approach)}</p></div>` : ''}
+  </div>
+  ${o.plain ? `<div class="card plain" style="margin-top:16px"><h3>In plain English</h3><p>${esc(o.plain)}</p></div>` : ''}
+  <div class="two" style="margin-top:16px">
+    ${o.why ? `<div class="card"><h3>Why it matters</h3><p>${esc(o.why)}</p></div>` : ''}
+    ${o.limits.length ? `<div class="card"><h3>Caveats</h3><ul class="limits">${o.limits.map(l => `<li>${esc(l)}</li>`).join('')}</ul></div>` : ''}
+  </div>
+  ${p.glossary.length ? `<h2 class="section-h">Terms worth knowing</h2><div class="gloss">${p.glossary.map(g => `<div><b>${esc(g.term)}</b><p>${esc(g.definition)}</p></div>`).join('')}</div>` : ''}
+  <div class="next-step"><h3>Want more than the gist?</h3><p class="muted">Check the evidence next, then lock it in.</p>
+    <div class="row" style="margin-top:14px"><button class="btn primary" id="go-figs">See the key figures</button><button class="btn" id="go-cards">Study the flashcards</button><button class="btn" id="go-chat">Ask a question</button></div></div>
+  <div class="row" style="margin-top:18px"><button class="btn small" id="copy">Copy summary</button><button class="btn small" id="md">${ICON.dl}Download notes (.md)</button></div>
+  <p class="disclaimer">Written by AI from the paper. Page links show where each claim comes from, so check anything important against the source.</p>`;
+  $('#go-figs').onclick = () => showPaper('figures'); $('#go-chat').onclick = () => showPaper('chat'); $('#own')?.addEventListener('click', showHome);
+  $('#go-cards').onclick = () => showPaper('cards');
+  $('#copy').onclick = () => navigator.clipboard.writeText(toMarkdown(p)).then(() => toast('Summary copied'), () => toast('Copy failed. Use the download instead.'));
+  $('#md').onclick = () => download(slug(p.meta.title) + '-notes.md', toMarkdown(p), 'text/markdown');
+}
+function toMarkdown(p) {
+  const o = p.ov, m = p.meta, L = [];
+  L.push('# ' + m.title); if (m.authors) L.push('*' + m.authors + (m.venue ? ' (' + m.venue + ')' : '') + '*');
+  if (o.tldr) L.push('', '**TL;DR:** ' + o.tldr);
+  if (o.snapshot.length) { L.push('', '## At a glance'); o.snapshot.forEach(s => L.push('- **' + s.label + ':** ' + s.value)); }
+  if (o.problem) L.push('', '## Problem', o.problem); if (o.approach) L.push('', '## Approach', o.approach);
+  if (o.findings.length) { L.push('', '## Key findings'); o.findings.forEach(f => L.push('- ' + f.t + (f.p ? ' (PDF p.' + f.p + ')' : ''))); }
+  if (o.plain) L.push('', '## In plain English', o.plain); if (o.why) L.push('', '## Why it matters', o.why);
+  if (o.limits.length) { L.push('', '## Caveats'); o.limits.forEach(f => L.push('- ' + f)); }
+  if (p.figures.length) { L.push('', '## Key figures'); p.figures.forEach(f => L.push('- **' + (f.label || '') + (f.pdf_page ? ' (PDF p.' + f.pdf_page + ')' : '') + ' ' + (f.title || '') + ':** ' + (f.what_it_shows || '') + ' ' + (f.takeaway ? 'Takeaway: ' + f.takeaway : ''))); }
+  if (p.glossary.length) { L.push('', '## Glossary'); p.glossary.forEach(g => L.push('- **' + g.term + ':** ' + g.definition)); }
+  return L.join('\n') + '\n';
+}
+
+/* ---------- view: figures ---------- */
+function viewFigures(p) {
+  if (!p.figures.length) { app().innerHTML = `<div class="done"><h2>No figures found</h2><p>This paper didn't expose clear figures or tables.</p></div>`; return; }
+  app().innerHTML = `
+  <div class="row" style="justify-content:space-between;margin-bottom:18px"><div><h2 style="font-size:26px">The figures that carry the paper</h2>
+    <p class="muted" style="margin-top:4px">The evidence behind the claims. Each card ends with something worth checking yourself.</p></div>
+    <label class="btn small" id="attach" hidden>Attach the PDF for page previews<input type="file" accept=".pdf" class="sr" id="attf"></label></div>
+  <div class="figs">${p.figures.map((f, i) => `
+    <article class="card fig">
+      <button class="fig-img" data-i="${i}" aria-label="Enlarge page for ${esc(f.label || f.title)}"><span class="ph">${f.pdf_page ? 'Loading page ' + esc(f.pdf_page) + '…' : 'No page reference'}</span>${f.pdf_page ? `<span class="pg">PDF page ${esc(f.pdf_page)}</span>` : ''}</button>
+      <div class="fig-body">
+        <div class="row" style="gap:6px"><span class="chip">${esc(f.label || f.kind || 'Figure')}</span>${f.kind ? `<span class="chip plain">${esc(f.kind)}</span>` : ''}</div>
+        <h3>${esc(f.title || '')}</h3>
+        ${f.what_it_shows ? `<p>${esc(f.what_it_shows)}</p>` : ''}
+        ${f.why_it_matters ? `<p class="why">${esc(f.why_it_matters)}</p>` : ''}
+        ${f.takeaway ? `<p class="take"><span class="mark">${esc(f.takeaway)}</span></p>` : ''}
+        ${f.check ? `<p class="look"><b>Look closely:</b> ${esc(f.check)}</p>` : ''}
+      </div></article>`).join('')}</div>`;
+  S.pdfReady.then(() => {
+    if (S.tab !== 'figures') return;
+    if (!S.pdf) {
+      $$('.fig-img .ph').forEach(ph => ph.textContent = 'Page preview needs the original PDF');
+      $('#attach').hidden = false;
+      $('#attf').onchange = e => { const f = e.target.files[0]; if (f) { attachPdf(f).then(() => showPaper('figures')); toast('Loading PDF…'); } };
+      return;
+    }
+    p.figures.forEach(async (f, i) => {
+      const btn = $(`.fig-img[data-i="${i}"]`); if (!btn) return;
+      const url = await getPageImg(f.pdf_page);
+      if (S.tab !== 'figures' || !btn.isConnected) return;
+      if (url) {
+        btn.innerHTML = `<img alt="PDF page ${esc(f.pdf_page)} containing ${esc(f.label || f.title)}" src="${url}" style="object-position:50% ${({ top: 0, middle: 50, bottom: 100 })[f.page_area] ?? 0}%"><span class="pg">PDF page ${esc(f.pdf_page)}</span>`;
+        btn.onclick = () => openLightbox(url, f.label || f.title);
+      } else btn.querySelector('.ph').textContent = f.pdf_page ? 'Page preview unavailable' : 'No page reference';
+    });
+  });
+}
+function openLightbox(url, alt) {
+  const el = document.createElement('div'); el.className = 'lightbox'; el.setAttribute('role', 'dialog');
+  el.innerHTML = `<button class="btn" aria-label="Close">Close</button><img src="${url}" alt="${esc(alt)}">`;
+  el.onclick = () => el.remove(); document.body.appendChild(el); $('button', el).focus();
+}
+
+/* =====================================================================
+   Paperlens — chat with the paper
+   ===================================================================== */
+const CHAT_STARTERS = [
+  'Explain the main result as if I have 2 minutes',
+  'What are the weakest points of this study?',
+  'Walk me through the methods step by step',
+  'What would I need to replicate this?',
+  'What should I read next to follow up on this?'
+];
+const PAGE_RE = /\(pp?\.\s*(\d+)[^)]*\)/g;
+
+function chatSystem(mode) {
+  const src = mode === 'pdf' ? 'The full paper is attached to the first message as a PDF.'
+    : mode === 'text' ? 'The full text of the paper is in the first message.'
+    : 'You only have saved notes about the paper (summary, figures, glossary), not the full text. Say so when a question needs detail the notes do not contain.';
+  const cite = mode === 'pdf' ? '\nWhen you rely on a specific part, cite the PDF page like (p. 4). Count pages from the first page of the PDF file, not the printed page number.' : '';
+  return `You are Paperlens, a research assistant answering questions about ONE paper. ${src}
+
+Ground every answer in the paper. If the paper does not say, state that plainly; you may then add general knowledge, clearly labelled as coming from outside the paper. Quote numbers exactly as the paper reports them, and never invent citations or results.
+Lead with the answer, then give the support. Be concise unless asked for depth.${cite}
+Format: short paragraphs, "-" bullets when useful, **bold** sparingly. No headings, no tables, no LaTeX; use unicode for symbols.
+Audience: ${AUDIENCES[S.settings.audience] || AUDIENCES.adjacent}.`;
+}
+async function chatSourceBlock() {
+  const cc = { type: 'ephemeral' };
+  if (S.srcFile) {
+    if (!S.srcCache || S.srcCache.f !== S.srcFile) S.srcCache = { f: S.srcFile, b: await fileToB64(S.srcFile) };
+    return { mode: 'pdf', block: { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: S.srcCache.b }, cache_control: cc } };
+  }
+  if (S.srcText) return { mode: 'text', block: { type: 'text', text: 'PAPER TEXT:\n\n' + S.srcText.slice(0, 450000), cache_control: cc } };
+  const p = S.paper, gl = p.glossary.map(g => '- ' + g.term + ': ' + g.definition).join('\n');
+  return { mode: 'notes', block: { type: 'text', text: 'SAVED NOTES ABOUT THE PAPER:\n\n' + toMarkdown(p) + (gl ? '\nGlossary\n' + gl + '\n' : ''), cache_control: cc } };
+}
+
+/* tiny, safe markdown: paragraphs, bullets, numbered lists, bold, code, page chips */
+function mdLite(text) {
+  const inline = s => s.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(PAGE_RE, (m, n) => `<button class="pgc" data-pg="${n}">${m.slice(1, -1)}</button>`);
+  return esc(text).split(/\n{2,}/).map(b => {
+    const lines = b.split('\n').filter(l => l.trim());
+    if (!lines.length) return '';
+    if (lines.every(l => /^\s*[-*•]\s+/.test(l))) return '<ul>' + lines.map(l => '<li>' + inline(l.replace(/^\s*[-*•]\s+/, '')) + '</li>').join('') + '</ul>';
+    if (lines.every(l => /^\s*\d+[.)]\s+/.test(l))) return '<ol>' + lines.map(l => '<li>' + inline(l.replace(/^\s*\d+[.)]\s+/, '')) + '</li>').join('') + '</ol>';
+    return '<p>' + lines.map(l => inline(l.replace(/^#+\s*(.*)$/, '<b>$1</b>'))).join('<br>') + '</p>';
+  }).join('');
+}
+
+function viewChat(p) {
+  const chat = S.chats[p.id] || (S.chats[p.id] = { msgs: [] });
+  const hasSrc = !!(S.srcFile || S.srcText);
+  let ctrl = null, draft = '';
+  S.cleanups.push(() => ctrl?.abort());
+
+  app().innerHTML = `
+  <div class="chat">
+    <div class="row" style="justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+      <div><h2 style="font-size:26px">Ask the paper</h2>
+      <p class="muted" style="margin-top:4px">${hasSrc ? 'Answers come from the full paper. Page references open the page.' : 'Answering from the saved notes only, so fine detail may be missing.'}</p></div>
+      <button class="btn small ghost" id="clear" ${chat.msgs.length ? '' : 'hidden'}>Clear chat</button>
+    </div>
+    ${hasSrc ? '' : `<div class="notice" style="margin:12px 0 0">Want answers from the whole paper? <label style="text-decoration:underline;font-weight:700;cursor:pointer">Attach the PDF<input type="file" accept=".pdf" id="chat-att" class="sr"></label></div>`}
+    <div class="msgs" id="msgs" aria-live="polite"></div>
+    <div class="starters" id="starters"></div>
+    <div class="composer"><textarea id="q" rows="1" placeholder="Ask anything about this paper…" aria-label="Your question"></textarea>
+      <button class="btn primary" id="send">Send</button><button class="btn" id="stop" hidden>Stop</button></div>
+  </div>`;
+
+  const msgsEl = $('#msgs'), q = $('#q');
+  const paint = () => {
+    msgsEl.innerHTML = chat.msgs.map((m, i) => m.role === 'user'
+      ? `<div class="msg user"><div class="bubble">${esc(m.content)}</div></div>`
+      : `<div class="msg ai"><div class="bubble ${m.error ? 'bad' : ''}" data-i="${i}">${m.content ? mdLite(m.content) : '<span class="typing"><i></i><i></i><i></i></span>'}</div></div>`).join('');
+    $('#starters').innerHTML = chat.msgs.length ? '' : `<p class="muted" style="margin-bottom:8px">Try one of these</p>` + CHAT_STARTERS.map(s => `<button class="pill" data-s="${esc(s)}">${esc(s)}</button>`).join('');
+    $('#clear').hidden = !chat.msgs.length;
+    $$('[data-s]').forEach(b => b.onclick = () => send(b.dataset.s));
+  };
+  const nearBottom = () => innerHeight + scrollY >= document.documentElement.scrollHeight - 160;
+  const busy = on => { $('#send') && ($('#send').hidden = on); $('#stop') && ($('#stop').hidden = !on); q && (q.disabled = on); };
+
+  async function send(text) {
+    text = (text ?? q.value).trim(); if (!text || ctrl) return;
+    if (!S.settings.key) { openSettings('Add your Anthropic API key to chat with the paper.'); return; }
+    q.value = ''; q.style.height = 'auto';
+    chat.msgs.push({ role: 'user', content: text }, { role: 'assistant', content: '' });
+    paint(); busy(true); scrollTo({ top: document.documentElement.scrollHeight });
+    ctrl = new AbortController();
+    const mine = ctrl, reply = chat.msgs[chat.msgs.length - 1];
+    try {
+      const { mode, block } = await chatSourceBlock();
+      const hist = chat.msgs.slice(0, -1).map(m => ({ role: m.role, content: m.content }));
+      hist[0] = { role: 'user', content: [block, { type: 'text', text: hist[0].content }] };
+      await streamMessages({
+        system: chatSystem(mode), messages: hist, max_tokens: 2500, signal: mine.signal,
+        onText: t => {
+          reply.content = t; const el = $(`.bubble[data-i="${chat.msgs.length - 1}"]`); if (!el) return;
+          const follow = nearBottom(); el.innerHTML = mdLite(t); if (follow) scrollTo({ top: document.documentElement.scrollHeight });
+        }
+      });
+    } catch (e) {
+      const aborted = e.name === 'AbortError';
+      if (!(aborted && reply.content)) {            // keep a partial answer, drop anything empty or failed
+        const i = chat.msgs.indexOf(reply); if (i > 0) chat.msgs.splice(i - 1, 2);
+        draft = text;
+        if (!aborted && $('#q')) toast(e.message || 'Something went wrong');
+      }
+    } finally {
+      ctrl = null;
+      if ($('#msgs')) { paint(); busy(false); const qq = $('#q'); if (draft) { qq.value = draft; draft = ''; } qq.focus(); }
+    }
+  }
+
+  $('#send').onclick = () => send();
+  $('#stop').onclick = () => ctrl?.abort();
+  $('#clear').onclick = () => { chat.msgs.length = 0; paint(); };
+  q.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); send(); } });
+  q.addEventListener('input', () => { q.style.height = 'auto'; q.style.height = Math.min(q.scrollHeight, 160) + 'px'; });
+  $('#chat-att')?.addEventListener('change', e => { const f = e.target.files[0]; if (f) { attachPdf(f); toast('PDF attached'); viewChat(p); } });
+  paint();
+}
+
+/* =====================================================================
+   Paperlens — mind map, flashcards, games
+   ===================================================================== */
+
+/* ---------- mind map ---------- */
+const branchColors = () => (PALETTES[document.documentElement.getAttribute('data-palette')] || PALETTES.paper).branch;
+const mix = (hex, t) => { const n = parseInt(hex.slice(1), 16), c = [n >> 16, (n >> 8) & 255, n & 255].map(v => Math.round(v + (255 - v) * t)); return '#' + c.map(v => v.toString(16).padStart(2, '0')).join(''); };
+function wrapText(s, max) {
+  const words = String(s).split(/\s+/), lines = []; let cur = '';
+  words.forEach(w => { if (!cur) cur = w; else if ((cur + ' ' + w).length <= max) cur += ' ' + w; else { lines.push(cur); cur = w; } });
+  if (cur) lines.push(cur);
+  if (lines.length > 4) { lines.length = 4; lines[3] = lines[3].replace(/.{0,2}$/, '…'); }
+  return lines;
+}
+function mmBuild(root) {
+  let id = 0;
+  const walk = (n, depth, branch) => {
+    const node = { id: id++, label: String(n.label || '…'), note: n.note || '', depth, branch, children: [] };
+    arr(n.children).forEach((c, i) => node.children.push(walk(c, depth + 1, depth === 0 ? i : branch)));
+    return node;
+  };
+  return walk(root, 0, 0);
+}
+function mmLayout(root, collapsed) {
+  const nodes = [], links = []; let cursor = 0; const gap = 12;
+  const place = n => {
+    const fs = n.depth === 0 ? 17 : n.depth === 1 ? 15 : 13.5, max = n.depth === 0 ? 16 : n.depth === 1 ? 20 : 26;
+    n.fs = fs; n.lines = wrapText(n.label, max);
+    n.w = Math.max(80, Math.max(...n.lines.map(l => l.length)) * fs * 0.57 + 30 + (n.children.length ? 14 : 0));
+    n.h = n.lines.length * (fs + 4) + 16;
+    const vis = collapsed.has(n.id) ? [] : n.children; n.vis = vis;
+    if (!vis.length) { n.y = cursor + n.h / 2; cursor += n.h + gap; }
+    else { vis.forEach(place); n.y = (vis[0].y + vis[vis.length - 1].y) / 2; }
+    nodes.push(n);
+  };
+  place(root);
+  const maxW = []; nodes.forEach(n => maxW[n.depth] = Math.max(maxW[n.depth] || 0, n.w));
+  const xs = [0]; for (let d = 1; d < maxW.length; d++) xs[d] = xs[d - 1] + maxW[d - 1] + 64;
+  nodes.forEach(n => { n.x = xs[n.depth]; n.vis.forEach(c => links.push([n, c])); });
+  return { nodes, links };
+}
+function mmColors(n) {
+  if (n.depth === 0) return { fill: '#121a2f', text: '#ffffff', stroke: '#8a94ab', link: '#8a94ab' };
+  const c = branchColors()[n.branch % 8];
+  return n.depth === 1 ? { fill: c, text: '#ffffff', stroke: c, link: c } : { fill: mix(c, 0.88), text: '#121a2f', stroke: c, link: c };
+}
+function mmMarkup(L, interactive) {
+  const links = L.links.map(([a, b]) => {
+    const x1 = a.x + a.w, y1 = a.y, x2 = b.x, y2 = b.y, mx = (x1 + x2) / 2;
+    return `<path d="M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}" fill="none" stroke="${mmColors(b).link}" stroke-width="${b.depth === 1 ? 2.5 : 1.6}" stroke-opacity=".7"/>`;
+  }).join('');
+  const nodes = L.nodes.map(n => {
+    const c = mmColors(n), tx = n.w / 2 - (n.children.length ? 5 : 0);
+    const text = n.lines.map((l, i) => `<tspan x="${tx}" y="${8 + n.fs + i * (n.fs + 4) - 2}">${esc(l)}</tspan>`).join('');
+    const badge = interactive && n.children.length ? `<g><circle cx="${n.w}" cy="${n.h / 2}" r="10" fill="#fff" stroke="${c.stroke}" stroke-width="1.5"/><text x="${n.w}" y="${n.h / 2 + 4}" text-anchor="middle" font-size="12" font-weight="700" fill="#121a2f">${n.vis.length ? '−' : '+' + n.children.length}</text></g>` : '';
+    return `<g class="mmn" data-id="${n.id}" transform="translate(${n.x},${n.y - n.h / 2})" style="cursor:pointer"><rect width="${n.w}" height="${n.h}" rx="${n.depth === 0 ? 14 : 9}" fill="${c.fill}" stroke="${c.stroke}" stroke-width="1.5"/>
+      <text text-anchor="middle" font-size="${n.fs}" font-weight="${n.depth < 2 ? 700 : 500}" fill="${c.text}" font-family="system-ui,-apple-system,Segoe UI,sans-serif">${text}</text>${badge}</g>`;
+  }).join('');
+  return links + nodes;
+}
+function mmBounds(L) {
+  let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+  L.nodes.forEach(n => { x0 = Math.min(x0, n.x); x1 = Math.max(x1, n.x + n.w + 12); y0 = Math.min(y0, n.y - n.h / 2); y1 = Math.max(y1, n.y + n.h / 2); });
+  return { x0, y0, x1, y1, w: x1 - x0, h: y1 - y0 };
+}
+
+function viewMindmap(p) {
+  if (!p.mindmap.children || !p.mindmap.children.length) { app().innerHTML = `<div class="done"><h2>No mind map</h2><p>The analysis didn't include one.</p></div>`; return; }
+  const root = mmBuild(p.mindmap), byId = {}; (function idx(n) { byId[n.id] = n; n.children.forEach(idx); })(root);
+  const collapsed = new Set(Object.values(byId).filter(n => n.depth >= 2 && n.children.length).map(n => n.id));
+  const V = { x: 0, y: 0, k: 1 }; let L = null, sel = null;
+  app().innerHTML = `
+  <h2 style="font-size:26px;margin-bottom:6px">Mind map</h2>
+  <p class="muted" style="margin-bottom:16px">Drag to move and scroll to zoom. Click a node to read its note and to open or close its branch.</p>
+  <div class="mm-wrap">
+    <div class="mm-bar">
+      <button class="btn small" id="z-in" aria-label="Zoom in">＋</button><button class="btn small" id="z-out" aria-label="Zoom out">－</button><button class="btn small" id="z-fit">Fit</button>
+      <button class="btn small" id="ex-all">Expand all</button><button class="btn small" id="col-all">Collapse</button>
+      <span class="grow"></span><button class="btn small" id="dl-svg">${ICON.dl}SVG</button><button class="btn small" id="dl-png">${ICON.dl}PNG</button>
+    </div>
+    <svg id="mm" role="img" aria-label="Mind map of ${esc(p.meta.title)}"><g id="mmg"></g></svg>
+    <div class="mm-note" id="mm-note"><span class="muted">Select a node to see its note.</span></div>
+  </div>`;
+  const svg = $('#mm'), g = $('#mmg');
+  const apply = () => g.setAttribute('transform', `translate(${V.x},${V.y}) scale(${V.k})`);
+  const draw = () => { L = mmLayout(root, collapsed); g.innerHTML = mmMarkup(L, true); apply(); };
+  const fit = () => {
+    const b = mmBounds(L), W = svg.clientWidth || 800, H = svg.clientHeight || 500;
+    V.k = Math.min((W - 60) / b.w, (H - 60) / b.h, 1.15); V.x = (W - b.w * V.k) / 2 - b.x0 * V.k; V.y = (H - b.h * V.k) / 2 - b.y0 * V.k; apply();
+  };
+  const zoom = (f, cx, cy) => {
+    const W = svg.clientWidth, H = svg.clientHeight; cx = cx ?? W / 2; cy = cy ?? H / 2;
+    const k = Math.max(0.25, Math.min(3, V.k * f)); V.x = cx - (cx - V.x) * (k / V.k); V.y = cy - (cy - V.y) * (k / V.k); V.k = k; apply();
+  };
+  const showNote = n => { $('#mm-note').innerHTML = `<b>${esc(n.label)}</b>${n.note ? ' — ' + esc(n.note) : '<span class="muted"> — no extra note for this node.</span>'}`; };
+  draw(); requestAnimationFrame(fit);
+  const onResize = () => fit(); addEventListener('resize', onResize); S.cleanups.push(() => removeEventListener('resize', onResize));
+
+  const toggle = n => {
+    if (!n.children.length) return;
+    const before = n.y * V.k + V.y;
+    collapsed.has(n.id) ? collapsed.delete(n.id) : collapsed.add(n.id);
+    draw(); const now = L.nodes.find(m => m.id === n.id); V.y += before - (now.y * V.k + V.y); apply();
+  };
+  let drag = null;
+  svg.addEventListener('pointerdown', e => { drag = { x: e.clientX, y: e.clientY, vx: V.x, vy: V.y, moved: false, id: e.target.closest('.mmn')?.dataset.id }; svg.setPointerCapture?.(e.pointerId); });
+  svg.addEventListener('pointermove', e => { if (!drag) return; const dx = e.clientX - drag.x, dy = e.clientY - drag.y; if (Math.abs(dx) + Math.abs(dy) > 4) drag.moved = true; if (drag.moved) { V.x = drag.vx + dx; V.y = drag.vy + dy; apply(); } });
+  svg.addEventListener('pointerup', () => { if (drag && !drag.moved && drag.id != null) { const n = byId[drag.id]; sel = n; showNote(n); toggle(n); } drag = null; });
+  svg.addEventListener('pointercancel', () => { drag = null; });
+  svg.addEventListener('wheel', e => { e.preventDefault(); const r = svg.getBoundingClientRect(); zoom(e.deltaY < 0 ? 1.12 : 1 / 1.12, e.clientX - r.left, e.clientY - r.top); }, { passive: false });
+  $('#z-in').onclick = () => zoom(1.25); $('#z-out').onclick = () => zoom(0.8); $('#z-fit').onclick = fit;
+  $('#ex-all').onclick = () => { collapsed.clear(); draw(); fit(); };
+  $('#col-all').onclick = () => { Object.values(byId).filter(n => n.depth >= 1 && n.children.length).forEach(n => collapsed.add(n.id)); draw(); fit(); };
+
+  const standalone = () => {
+    const b = mmBounds(L), pad = 30, W = Math.ceil(b.w + pad * 2), H = Math.ceil(b.h + pad * 2);
+    const bg = document.documentElement.getAttribute('data-theme') === 'dark' ? '#0d1220' : '#ffffff';
+    return { W, H, svg: `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><rect width="100%" height="100%" fill="${bg}"/><g transform="translate(${pad - b.x0},${pad - b.y0})">${mmMarkup(L, false)}</g></svg>` };
+  };
+  $('#dl-svg').onclick = () => download(slug(p.meta.title) + '-mindmap.svg', standalone().svg, 'image/svg+xml');
+  $('#dl-png').onclick = () => {
+    const s = standalone(), img = new Image(), sc = 2;
+    img.onload = () => { const c = document.createElement('canvas'); c.width = s.W * sc; c.height = s.H * sc; const x = c.getContext('2d'); x.scale(sc, sc); x.drawImage(img, 0, 0); c.toBlob(b => download(slug(p.meta.title) + '-mindmap.png', b), 'image/png'); };
+    img.onerror = () => toast('PNG export failed. Try SVG.');
+    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(s.svg);
+  };
+}
+
+/* ---------- flashcards ---------- */
+const CARD_TYPES = { concept: 'Concepts', method: 'Methods', result: 'Results', term: 'Terms', critique: 'Critique', missed: 'Missed in games' };
+function viewCards(p) {
+  if (!p.cards.length) { app().innerHTML = `<div class="done"><h2>No flashcards</h2><p>The analysis didn't include any.</p></div>`; return; }
+  const all = p.cards.map((c, i) => Object.assign({ i }, c));
+  const F = { type: 'all', shuffled: false, known: new Set(), queue: [], flipped: false, again: 0, hard: 0 };
+  const pool = () => all.filter(c => F.type === 'all' || c.type === F.type);
+  const rebuild = () => { const q = pool().filter(c => !F.known.has(c.i)); F.queue = F.shuffled ? shuffle(q) : q; F.flipped = false; };
+  rebuild();
+  const types = ['all', ...Object.keys(CARD_TYPES).filter(t => all.some(c => c.type === t))];
+  if (S.cardFilter && types.includes(S.cardFilter)) { F.type = S.cardFilter; rebuild(); }
+  S.cardFilter = null;
+
+  const render = () => {
+    const total = pool().length, done = pool().filter(c => F.known.has(c.i)).length, c = F.queue[0];
+    app().innerHTML = `
+    <div class="fc-top">${types.map(t => `<button class="pill" data-type="${t}" aria-pressed="${F.type === t}">${t === 'all' ? 'All' : CARD_TYPES[t]}</button>`).join('')}
+      <span class="grow"></span>
+      <button class="pill" id="shuf" aria-pressed="${F.shuffled}">Shuffle</button>
+      <button class="btn small" id="anki">${ICON.dl}Anki file</button></div>
+    <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="${total}" aria-valuenow="${done}"><i style="width:${total ? done / total * 100 : 0}%"></i></div>
+    <p class="muted" style="margin-top:8px;font-size:14px">${done} of ${total} learned · ${F.queue.length} left${F.again + F.hard ? ` · ${F.again + F.hard} to revisit` : ''}</p>
+    ${c ? `
+    <div class="fc-stage"><div class="fc ${F.flipped ? 'flip' : ''}" id="fc" role="button" tabindex="0" aria-label="Flashcard. Press to flip.">
+      <div class="face front"><span class="tag">${esc(CARD_TYPES[c.type] || 'Card')}</span>${esc(c.front)}<span class="hint">Click to flip</span></div>
+      <div class="face back"><span class="tag">Answer</span>${esc(c.back)}</div></div></div>
+    <div class="fc-act"><button class="btn again" id="again">Show again soon</button><button class="btn hard" id="hard">Hard, later</button><button class="btn got" id="got">I know this</button></div>
+    <p class="keys">Space flips · 1 again · 2 hard · 3 know it</p>` : `
+    <div class="done"><h2>${total ? 'That\'s the whole deck' : 'No cards in this set'}</h2><p>${total ? `You've been through all ${total} cards${F.again + F.hard ? ', and ' + (F.again + F.hard) + ' needed another look' : ' without a miss'}. Come back tomorrow to see what stuck.` : 'Choose another filter.'}</p>
+      ${total ? '<button class="btn primary" id="restart">Review again</button>' : ''}</div>`}`;
+    $$('[data-type]').forEach(b => b.onclick = () => { F.type = b.dataset.type; rebuild(); render(); });
+    $('#shuf').onclick = () => { F.shuffled = !F.shuffled; rebuild(); render(); };
+    $('#anki').onclick = () => download(slug(p.meta.title) + '-flashcards.txt', all.map(c => [c.front, c.back, c.type || ''].map(s => String(s).replace(/[\t\r\n]+/g, ' ')).join('\t')).join('\n'), 'text/plain');
+    $('#fc')?.addEventListener('click', flip);
+    $('#again')?.addEventListener('click', again); $('#hard')?.addEventListener('click', hard); $('#got')?.addEventListener('click', got);
+    $('#restart')?.addEventListener('click', () => { pool().forEach(c => F.known.delete(c.i)); F.again = 0; F.hard = 0; rebuild(); render(); });
+  };
+  const flip = () => { F.flipped = !F.flipped; $('#fc')?.classList.toggle('flip', F.flipped); };
+  const next = () => { F.flipped = false; render(); };
+  const got = () => { const c = F.queue.shift(); if (c) F.known.add(c.i); next(); };
+  const hard = () => { const c = F.queue.shift(); if (c) { F.hard++; F.queue.splice(Math.min(F.queue.length, 9), 0, c); } next(); };
+  const again = () => { const c = F.queue.shift(); if (c) { F.again++; F.queue.splice(Math.min(F.queue.length, 4), 0, c); } next(); };
+  S.keys = e => {
+    if (e.key === ' ' || e.key === 'Enter') { if (document.activeElement?.tagName === 'BUTTON') return; e.preventDefault(); if (F.queue[0]) flip(); }
+    else if (!F.queue[0]) return;
+    else if (e.key === 'ArrowRight' || e.key === '3') got(); else if (e.key === 'ArrowLeft' || e.key === '1') again(); else if (e.key === '2') hard();
+  };
+  render();
+}
+
+/* ---------- games ---------- */
+const best = { get: (m) => ls.get('pl.best.' + S.paper.id + '.' + m, null), set: (m, v) => ls.set('pl.best.' + S.paper.id + '.' + m, v) };
+function viewPlay(p) {
+  const nQ = p.quiz.length, nF = p.fof.length, nM = p.match.length;
+  const bq = best.get('quiz'), bf = best.get('fof'), bm = best.get('match');
+  app().innerHTML = `
+  <h2 style="font-size:26px;margin-bottom:6px">Play with the paper</h2>
+  <p class="muted" style="margin-bottom:20px">Three quick games built from this paper. Pick one and see how much stuck.</p>
+  <div class="hub">
+    <button class="game-tile" data-g="quiz" ${nQ < 3 ? 'disabled' : ''}><h3>Quiz blitz</h3><p>${nQ} questions, three lives, a clock, and streak bonuses. Wrong answers cost a life.</p><span class="best">${bq != null ? 'Best: ' + bq + ' pts' : 'No score yet'}</span></button>
+    <button class="game-tile" data-g="fof" ${nF < 3 ? 'disabled' : ''}><h3>Fact or fiction</h3><p>${nF} statements about the paper. Some are true, some are subtly wrong. Decide fast.</p><span class="best">${bf != null ? 'Best: ' + bf + ' pts' : 'No score yet'}</span></button>
+    <button class="game-tile" data-g="match" ${nM < 3 ? 'disabled' : ''}><h3>Pair up</h3><p>Match each key term with its meaning against the clock. Mistakes add time.</p><span class="best">${bm != null ? 'Best: ' + bm.toFixed(1) + ' s' : 'No time yet'}</span></button>
+  </div>`;
+  $$('.game-tile').forEach(b => b.onclick = () => ({ quiz: () => playQuiz('quiz'), fof: () => playQuiz('fof'), match: playMatch })[b.dataset.g]());
+}
+
+const RANKS = [[0, 'Reviewer 2 is not impressed'], [35, 'Skimmed the abstract'], [60, 'Read the methods, mostly'], [80, 'Solid grasp of the paper'], [95, 'Could have written this one']];
+const rankFor = pct => RANKS.filter(r => pct >= r[0]).pop()[1];
+
+function playQuiz(mode) {
+  teardown();
+  const p = S.paper, isQ = mode === 'quiz', secs = isQ ? 25 : 12;
+  const items = shuffle(isQ ? p.quiz : p.fof).map(it => isQ
+    ? { q: it.question, opts: shuffle(it.options.map((t, i) => ({ t, c: i === it.answer_index }))), why: it.explanation }
+    : { q: it.statement, opts: [{ t: 'True', c: it.is_true }, { t: 'False', c: !it.is_true }], why: it.explanation });
+  const G = { i: 0, lives: 3, score: 0, streak: 0, right: 0, answered: 0, left: secs, locked: false, missed: [] };
+  let timer = null;
+  const stop = () => { clearInterval(timer); timer = null; }; S.cleanups.push(stop);
+
+  const question = () => {
+    const it = items[G.i]; G.locked = false; G.left = secs;
+    app().innerHTML = `
+    <div class="hud"><span>${isQ ? 'Question' : 'Statement'} ${G.i + 1} of ${items.length}</span><span class="grow"></span>
+      <span>${G.streak > 1 ? 'Streak ×' + G.streak : ''}</span><span>${G.score} pts</span><span id="secs" aria-hidden="true">${secs}s</span>
+      <span class="hearts" aria-label="${G.lives} lives left">${'♥'.repeat(G.lives)}<span class="off">${'♥'.repeat(3 - G.lives)}</span></span></div>
+    <div class="timer"><i id="tbar"></i></div>
+    <p class="q">${isQ ? '' : 'True or false: '}${esc(it.q)}</p>
+    <div class="opts ${isQ ? '' : 'tf'}" id="opts">${it.opts.map((o, i) => `<button class="opt" data-i="${i}">${isQ ? `<kbd>${i + 1}</kbd>` : ''}<span>${esc(o.t)}</span></button>`).join('')}</div>
+    <div id="after"></div>`;
+    $$('.opt').forEach(b => b.onclick = () => answer(+b.dataset.i));
+    stop(); const t0 = Date.now();
+    timer = setInterval(() => {
+      G.left = secs - (Date.now() - t0) / 1000; const bar = $('#tbar'); if (!bar) return stop();
+      bar.style.width = Math.max(0, G.left / secs * 100) + '%'; const sc = $('#secs'); if (sc) sc.textContent = Math.max(0, Math.ceil(G.left)) + 's'; bar.classList.toggle('low', G.left < secs * 0.3);
+      if (G.left <= 0) answer(-1);
+    }, 100);
+  };
+  const answer = idx => {
+    if (G.locked) return; G.locked = true; stop();
+    const it = items[G.i], ok = idx >= 0 && it.opts[idx].c; G.answered++;
+    let gain = 0;
+    if (ok) { G.right++; G.streak++; gain = 100 + Math.min(G.streak - 1, 5) * 20 + Math.round(Math.max(0, G.left) / secs * 50); G.score += gain; }
+    else {
+      G.lives--; G.streak = 0;
+      const right = it.opts.find(o => o.c).t;
+      G.missed.push({ front: (isQ ? '' : 'True or false: ') + it.q, back: (isQ ? 'Answer: ' : 'This is ') + right + (isQ ? '' : '.') + (it.why ? '\n\n' + it.why : '') });
+    }
+    $$('.opt').forEach((b, i) => {
+      b.disabled = true;
+      if (it.opts[i].c) { b.classList.add('right'); b.insertAdjacentHTML('beforeend', '<span class="mk" aria-hidden="true">✓</span><span class="sr">Correct answer</span>'); }
+      else if (i === idx) { b.classList.add('wrong'); b.insertAdjacentHTML('beforeend', '<span class="mk" aria-hidden="true">✗</span><span class="sr">Your answer, incorrect</span>'); }
+      else b.classList.add('dim');
+    });
+    const over = G.lives <= 0 || G.i === items.length - 1;
+    $('#after').innerHTML = `<div class="explain"><p><b>${ok ? 'Correct' + (gain ? ' · +' + gain : '') : idx < 0 ? "Time's up" : 'Not quite'}</b></p>${it.why ? `<p>${esc(it.why)}</p>` : ''}</div>
+      <div class="row" style="margin-top:16px"><button class="btn primary" id="nx">${over ? 'See results' : 'Next'}</button></div>`;
+    $('#nx').focus(); $('#nx').onclick = () => { if (over) finish(); else { G.i++; question(); } };
+  };
+  const finish = () => {
+    stop(); S.keys = null;
+    const pct = G.answered ? Math.round(G.right / G.answered * 100) : 0, prev = best.get(mode), isBest = prev == null || G.score > prev;
+    if (isBest) best.set(mode, G.score);
+    app().innerHTML = `<div class="done"><p class="muted">${G.lives <= 0 ? 'Out of lives' : 'Finished'}</p><div class="score-big"><span class="mark">${G.score}</span></div>
+      <p>${G.right} of ${G.answered} correct (${pct}%) · ${esc(rankFor(pct))}${isBest ? ' · New best!' : ''}</p>
+      <div class="row" style="justify-content:center">${G.missed.length ? `<button class="btn primary" id="keep">Turn ${G.missed.length} missed into flashcards</button>` : ''}<button class="btn ${G.missed.length ? '' : 'primary'}" id="again">Play again</button><button class="btn" id="hub">All games</button></div></div>`;
+    $('#again').onclick = () => playQuiz(mode); $('#hub').onclick = () => showPaper('play');
+    $('#keep')?.addEventListener('click', () => { const have = new Set(p.cards.map(c => c.front)); G.missed.forEach(m => have.has(m.front) || p.cards.push({ front: m.front, back: m.back, type: 'missed', difficulty: 2 })); S.cardFilter = 'missed'; showPaper('cards'); });
+  };
+  S.keys = e => {
+    if (G.locked) { if (e.key === 'Enter' || e.key === ' ') { /* button has focus */ } return; }
+    const n = isQ ? +e.key - 1 : (e.key === 't' || e.key === 'T' || e.key === 'ArrowLeft') ? 0 : (e.key === 'f' || e.key === 'F' || e.key === 'ArrowRight') ? 1 : -9;
+    if (n >= 0 && n < items[G.i].opts.length) answer(n);
+  };
+  question();
+}
+
+function playMatch() {
+  teardown();
+  const p = S.paper, pairs = p.match;
+  const cards = shuffle(pairs.flatMap((x, i) => [{ pid: i, kind: 'term', t: x.term }, { pid: i, kind: 'def', t: x.definition }]));
+  let sel = null, left = pairs.length, penalty = 0, t0 = null, tick = null;
+  const stop = () => clearInterval(tick); S.cleanups.push(stop);
+  app().innerHTML = `
+  <div class="hud"><span>Match each term to its meaning</span><span class="grow"></span><span id="clock">0.0 s</span></div>
+  <div class="match-grid">${cards.map((c, i) => `<button class="mcard ${c.kind}" data-i="${i}">${esc(c.t)}</button>`).join('')}</div>`;
+  $$('.mcard').forEach(b => b.onclick = () => {
+    const i = +b.dataset.i, c = cards[i]; if (b.classList.contains('gone')) return;
+    if (!t0) { t0 = Date.now(); tick = setInterval(() => { $('#clock') ? $('#clock').textContent = ((Date.now() - t0) / 1000 + penalty).toFixed(1) + ' s' : stop(); }, 100); }
+    if (sel == null) { sel = i; b.classList.add('sel'); return; }
+    const sb = $(`.mcard[data-i="${sel}"]`), sc = cards[sel];
+    if (sel === i) { b.classList.remove('sel'); sel = null; return; }
+    if (sc.kind === c.kind) { sb.classList.remove('sel'); sel = i; b.classList.add('sel'); return; }
+    if (sc.pid === c.pid) {
+      sb.classList.remove('sel'); sb.classList.add('gone'); b.classList.add('gone'); sel = null; left--;
+      if (!left) finish();
+    } else {
+      penalty += 2; [sb, b].forEach(x => { x.classList.remove('sel'); x.classList.add('shake'); setTimeout(() => x.classList.remove('shake'), 400); }); sel = null;
+    }
+  });
+  const finish = () => {
+    stop(); const time = (Date.now() - t0) / 1000 + penalty, prev = best.get('match'), isBest = prev == null || time < prev;
+    if (isBest) best.set('match', time);
+    setTimeout(() => {
+      app().innerHTML = `<div class="done"><p class="muted">All pairs matched</p><div class="score-big"><span class="mark">${time.toFixed(1)} s</span></div>
+        <p>${penalty ? penalty / 2 + ' mistake' + (penalty > 2 ? 's' : '') + ' (+' + penalty + ' s)' : 'No mistakes'}${isBest ? ' · New best!' : ''}</p>
+        <div class="row" style="justify-content:center"><button class="btn primary" id="again">Play again</button><button class="btn" id="hub">All games</button></div></div>`;
+      $('#again').onclick = playMatch; $('#hub').onclick = () => showPaper('play');
+    }, 450);
+  };
+}
+
+/* ---------- boot ---------- */
+$('#brand').onclick = () => showHome();
+$('#btn-settings').onclick = () => openSettings();
+$('#btn-look').onclick = openLook;
+$('#btn-theme').onclick = () => { setTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'); };
+/* ---------- install as an app ---------- */
+let deferredInstall = null;
+addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredInstall = e; $('#btn-install').hidden = false; });
+$('#btn-install').onclick = async () => { if (!deferredInstall) return; deferredInstall.prompt(); try { await deferredInstall.userChoice; } catch (e) {} deferredInstall = null; $('#btn-install').hidden = true; };
+addEventListener('appinstalled', () => { $('#btn-install').hidden = true; toast('Paperlens installed'); });
+addEventListener('offline', () => toast('You are offline. Saved papers still work; new analyses need internet.'));
+addEventListener('online', () => toast('Back online'));
+if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+showHome();
+
+</script>
+</body>
+</html>
