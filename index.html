@@ -632,7 +632,7 @@ const ICON = {
 };
 
 const S = {
-  settings: Object.assign({ key: '', model: 'claude-sonnet-5-5', audience: 'adjacent' }, ls.get('pl.settings', {})),
+  settings: Object.assign({ key: '', model: 'claude-sonnet-5-5', audience: 'adjacent', workspace: '' }, ls.get('pl.settings', {})),
   paper: null, tab: 'overview',
   pdf: null, pdfReady: Promise.resolve(), pageImgs: {},
   cleanups: [], keys: null, abort: null, lastSrc: null,
@@ -709,6 +709,9 @@ function openSettings(msg) {
     <div class="field"><label for="k">Anthropic API key</label>
       <input id="k" type="password" autocomplete="off" placeholder="sk-ant-…" value="${esc(S.settings.key)}">
       <small>Stored only in this browser. Get one at console.anthropic.com.</small></div>
+    <div class="field"><label for="w">Workspace ID <span class="muted" style="font-weight:400">(only if asked for)</span></label>
+      <input id="w" autocomplete="off" placeholder="wrkspc_…" value="${esc(S.settings.workspace)}">
+      <small>Needed if you see "key is not scoped to a workspace". Find it on your workspace's page in the console, or create the key inside a workspace instead.</small></div>
     <div class="field"><label for="m">Model</label>
       <input id="m" list="models" value="${esc(S.settings.model)}">
       <datalist id="models"><option value="claude-sonnet-5-5"><option value="claude-opus-5-5"><option value="claude-haiku-5-5"></datalist>
@@ -719,13 +722,13 @@ function openSettings(msg) {
   el.addEventListener('click', e => { if (e.target === el) el.remove(); });
   $('#cn', el).onclick = () => el.remove();
   $('#sv', el).onclick = () => {
-    S.settings.key = $('#k', el).value.trim(); S.settings.model = $('#m', el).value.trim() || 'claude-sonnet-5-5';
+    S.settings.key = $('#k', el).value.trim(); S.settings.workspace = $('#w', el).value.trim(); S.settings.model = $('#m', el).value.trim() || 'claude-sonnet-5-5';
     ls.set('pl.settings', S.settings); el.remove(); toast('Settings saved'); if (!S.paper && !S.abort) showHome();
   };
   $('#wipe', el).onclick = () => {
     if (!confirm('Remove your API key and all saved papers from this browser?')) return;
     ['pl.settings', 'pl.lib'].forEach(ls.del); Object.keys(localStorage).filter(k => k.startsWith('pl.best.')).forEach(ls.del);
-    S.settings = { key: '', model: 'claude-sonnet-5-5', audience: 'adjacent' }; el.remove(); toast('Cleared'); showHome();
+    S.settings = { key: '', model: 'claude-sonnet-5-5', audience: 'adjacent', workspace: '' }; el.remove(); toast('Cleared'); showHome();
   };
   setTimeout(() => $('#k', el).focus(), 30);
 }
@@ -810,6 +813,7 @@ function fileToB64(file) {
   return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(',')[1]); r.onerror = () => rej(new Error('Could not read that file.')); r.readAsDataURL(file); });
 }
 function friendlyError(status, msg) {
+  if (status === 400 && /workspace/i.test(msg)) return 'Your key isn\'t tied to a workspace. Either create a new key inside a named workspace in the Anthropic console, or add that workspace\'s ID (starts with wrkspc_) in Settings.';
   if (status === 401) return 'The API key was rejected. Open Settings and check that it is correct.';
   if (status === 403) return 'This key is not allowed to use that model or feature. ' + msg;
   if (status === 404) return 'That model name was not found. Open Settings and pick a valid model. ' + msg;
@@ -831,7 +835,7 @@ async function streamMessages({ system, messages, max_tokens, onText, signal }) 
   try {
     res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST', signal,
-      headers: { 'content-type': 'application/json', 'x-api-key': S.settings.key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      headers: Object.assign({ 'content-type': 'application/json', 'x-api-key': S.settings.key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' }, S.settings.workspace ? { 'anthropic-workspace-id': S.settings.workspace } : {}),
       body: JSON.stringify({ model: S.settings.model, max_tokens, stream: true, system, messages })
     });
   } catch (e) {
