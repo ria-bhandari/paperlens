@@ -186,10 +186,9 @@ details.paste summary{cursor:pointer;color:var(--blue);font-weight:600;padding:6
 /* ---------- figures ---------- */
 .figs{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,430px),1fr));gap:18px}
 .fig{display:flex;flex-direction:column;padding:0;overflow:hidden}
-.fig-img{position:relative;height:300px;background:var(--bg);border-bottom:1px solid var(--line);overflow:hidden;display:grid;place-items:center;width:100%;border-left:0;border-right:0;border-top:0;padding:0}
-.fig-img img{width:100%;height:100%;object-fit:cover;object-position:top;display:block}
-.fig-img .ph{color:var(--muted);font-size:14px;padding:16px;text-align:center}
-.fig-img .pg{position:absolute;right:8px;bottom:8px;background:var(--ink);color:var(--bg);font-size:12px;font-weight:600;padding:3px 8px;border-radius:6px}
+.fig-img{position:relative;min-height:150px;background:var(--bg);border-bottom:1px solid var(--line);overflow:hidden;display:grid;place-items:center;width:100%;border-left:0;border-right:0;border-top:0;padding:0}
+.fig-img img{width:100%;height:auto;max-height:420px;object-fit:contain;display:block;background:#fff}
+.fig-img .ph{color:var(--muted);font-size:14px;padding:18px;text-align:center}
 .fig-body{padding:16px 18px 18px;display:flex;flex-direction:column;gap:8px}
 .fig-body h3{font-size:19px}
 .fig-body .why{font-size:15px;color:var(--muted)}
@@ -330,6 +329,9 @@ details.paste summary{cursor:pointer;color:var(--blue);font-weight:600;padding:6
 .check input{width:22px;height:22px;margin-top:2px;accent-color:var(--blue)}
 .check small{display:block;color:var(--muted);font-size:13.5px}
 .logo-mark{fill:var(--mark)}
+
+.unv{margin-top:34px;padding:14px 18px;border:1px dashed var(--edge);border-radius:12px}
+.unv summary{cursor:pointer;font-weight:600;min-height:32px;display:flex;align-items:center}
 
 </style>
 </head>
@@ -612,6 +614,193 @@ const PALETTES = {
 };
 
 /* =====================================================================
+   Paperlens — find the real figures and tables in a PDF.
+   The model only *names* a figure ("Figure 2"). We then look for its printed
+   caption in the PDF text, work out where the figure sits relative to that
+   caption, and crop it. If the caption isn't there, we don't show it.
+   ===================================================================== */
+const FIG_TYPES = { figure: 'fig', fig: 'fig', table: 'table', tab: 'table', algorithm: 'alg', alg: 'alg' };
+const FIG_CAP_RE = /^(?:extended data |supplementary |supp\.? )?(figure|fig|table|tab|algorithm|alg)\.?\s*(S?\d+|[IVXL]+)[a-z]?\b(.*)$/i;
+const FIG_VERB_RE = /^\s+(shows?|illustrates?|depicts?|presents?|summari[sz]es?|reports?|compares?|lists?|gives?|provides?|displays?|demonstrates?|indicates?|reveals?|and|or|is|are|can|has|have|also|in|for|to|of|with|that|where|which)\b/i;
+
+function figParseLabel(label) {
+  const m = FIG_CAP_RE.exec(String(label || '').trim());
+  return m ? { type: FIG_TYPES[m[1].toLowerCase()], id: m[2].toUpperCase() } : null;
+}
+
+/* ---- turn pdf.js text items into lines ("segments") in top-left page points ---- */
+function figLayout(items, vp) {
+  const raw = [];
+  for (const it of items) {
+    if (!it.str || !it.str.trim()) continue;
+    const [a, b, , d, e, f] = it.transform;
+    if (Math.abs(b) > 0.2 * Math.abs(a || 1)) continue;                     // rotated text: margin stamps, axis titles
+    const hgt = Math.abs(it.height || d) || 1;
+    const p1 = vp.convertToViewportPoint(e, f), p2 = vp.convertToViewportPoint(e + it.width, f + hgt);
+    raw.push({ s: it.str, x0: Math.min(p1[0], p2[0]), x1: Math.max(p1[0], p2[0]), top: Math.min(p1[1], p2[1]), bot: Math.max(p1[1], p2[1]) + 0.24 * hgt, h: hgt, font: it.fontName });   // + room for descenders (g, y, p)
+  }
+  raw.sort((p, q) => (p.top + p.bot) - (q.top + q.bot) || p.x0 - q.x0);
+  const rows = [];
+  for (const it of raw) {
+    const cy = (it.top + it.bot) / 2, row = rows[rows.length - 1];
+    if (row && Math.abs(cy - row.cy) <= 0.45 * Math.max(it.h, row.h)) { row.items.push(it); row.cy = (row.cy * (row.items.length - 1) + cy) / row.items.length; row.h = Math.max(row.h, it.h); }
+    else rows.push({ items: [it], cy, h: it.h });
+  }
+  const segs = [];
+  for (const row of rows) {
+    row.items.sort((p, q) => p.x0 - q.x0);
+    let cur = null;
+    for (const it of row.items) {
+      const len = it.s.length;
+      if (cur && it.x0 - cur.x1 <= 1.3 * Math.max(it.h, cur.size)) {
+        cur.text += (it.x0 - cur.x1 > 0.12 * it.h ? ' ' : '') + it.s; cur.x1 = Math.max(cur.x1, it.x1); cur.top = Math.min(cur.top, it.top); cur.bot = Math.max(cur.bot, it.bot);
+        cur.szSum += it.h * len; cur.chars += len; cur.size = cur.szSum / cur.chars; cur.fonts[it.font] = (cur.fonts[it.font] || 0) + len;
+      } else {
+        cur = { x0: it.x0, x1: it.x1, top: it.top, bot: it.bot, text: it.s, size: it.h, szSum: it.h * len, chars: len, firstFont: it.font, fonts: { [it.font]: len } };
+        segs.push(cur);
+      }
+    }
+  }
+  const sizeW = {}, fontW = {};
+  for (const s of segs) {
+    s.words = s.text.trim().split(/\s+/).length;
+    s.font = Object.entries(s.fonts).sort((p, q) => q[1] - p[1])[0][0];
+    if (s.words >= 4) { const k = Math.round(s.size * 2) / 2; sizeW[k] = (sizeW[k] || 0) + s.chars; fontW[s.font] = (fontW[s.font] || 0) + s.chars; }
+  }
+  const top1 = o => { const e = Object.entries(o).sort((p, q) => q[1] - p[1])[0]; return e ? e[0] : null; };
+  return { w: vp.width, h: vp.height, segs, body: +top1(sizeW) || 10, bodyFont: top1(fontW) };
+}
+
+/* ---- columns: one band per text column, plus the full text width ---- */
+function figBands(L) {
+  const prose = L.segs.filter(s => s.words >= 5 && Math.abs(s.size - L.body) <= 0.1 * L.body);
+  const ext = a => [Math.min(...a.map(s => s.x0)), Math.max(...a.map(s => s.x1))];
+  const full = prose.length ? ext(prose) : [36, L.w - 36];
+  const narrow = prose.filter(s => s.x1 - s.x0 < 0.62 * L.w);
+  const left = narrow.filter(s => (s.x0 + s.x1) / 2 < L.w / 2), right = narrow.filter(s => (s.x0 + s.x1) / 2 >= L.w / 2);
+  const two = left.length >= 4 && right.length >= 4;
+  return { full, cols: two ? [ext(left), ext(right)] : [full] };
+}
+function figBandFor(L, bands, cap) {
+  if (bands.cols.length === 1 || cap.x1 - cap.x0 >= 0.58 * L.w) return bands.full;
+  const c = (cap.x0 + cap.x1) / 2;
+  return bands.cols.find(b => c >= b[0] - 6 && c <= b[1] + 6) || bands.cols[c < L.w / 2 ? 0 : 1];
+}
+
+/* ---- a caption is its first line plus the tightly spaced lines that follow ---- */
+function figIsCaptionStart(L, s) {
+  const m = FIG_CAP_RE.exec(s.text.trim()); if (!m) return false;
+  const rest = m[3] || '';
+  if (FIG_VERB_RE.test(rest) && !/^\s*[.:|—–\-)]/.test(rest)) return false;
+  return /^\s*[.:|—–\-)]/.test(rest) || s.firstFont !== L.bodyFont;
+}
+function figCaptionBlock(L, cap, band) {
+  const lines = [cap]; let last = cap, text = cap.text;
+  const below = L.segs.filter(s => s !== cap && s.top >= cap.top + 0.5 * cap.size).sort((p, q) => p.top - q.top);
+  for (const s of below) {
+    if (lines.length >= 8) break;
+    if (Math.min(s.x1, band[1]) - Math.max(s.x0, band[0]) < 0.5 * (s.x1 - s.x0)) continue;      // other column
+    if (s.top - last.bot > 0.6 * cap.size) break;                                               // paragraph gap
+    if (Math.abs(s.size - cap.size) > 0.07 * cap.size || FIG_CAP_RE.test(s.text.trim())) break;
+    lines.push(s); last = s; text += ' ' + s.text;
+  }
+  return { top: cap.top, bot: last.bot, text, lines };
+}
+
+/* ---- where is the figure relative to its caption? ---- */
+function figRegion(L, bands, cap, blk, band, type) {
+  const bandW = band[1] - band[0], body = L.body;
+  const inBand = s => Math.min(s.x1, band[1]) - Math.max(s.x0, band[0]) >= 0.5 * (s.x1 - s.x0);
+  const colW = Math.min(bandW, ...bands.cols.map(b => b[1] - b[0]));            // a "full line" is judged against the narrowest column
+  const isProse = s => s.words >= 5 && Math.abs(s.size - body) <= 0.1 * body && s.x1 - s.x0 >= 0.5 * colW;
+  const mine = new Set(blk.lines), otherCaps = new Set();
+  for (const s of L.segs) if (!mine.has(s) && figIsCaptionStart(L, s)) { figCaptionBlock(L, s, figBandFor(L, bands, s)).lines.forEach(x => otherCaps.add(x)); }
+  const pool = L.segs.filter(s => !mine.has(s) && inBand(s));
+  const stop = s => isProse(s) || otherCaps.has(s);
+  const x0 = Math.max(0, band[0] - 4), x1 = Math.min(L.w, band[1] + 4);
+  const up = () => {
+    let edge = 0; for (const s of pool) if (s.bot <= blk.top + 1 && stop(s) && s.bot > edge) edge = s.bot;
+    for (let k = 0; k < 3 && edge > 0; k++) {                                                   // short last line of that paragraph
+      const t = pool.filter(s => !stop(s) && s.top >= edge - 1 && s.top - edge <= 0.45 * body && s.bot <= blk.top && Math.abs(s.size - body) <= 0.12 * body).sort((p, q) => p.top - q.top)[0];
+      if (!t) break; edge = t.bot;
+    }
+    return { dir: 'up', x0, x1, y0: edge ? edge + 2 : 0, y1: Math.min(L.h, blk.bot + 2), gfx: (blk.top - 2) - (edge ? edge + 2 : 0) };
+  };
+  const down = () => {
+    let edge = L.h; for (const s of pool) if (s.top >= blk.bot - 1 && stop(s) && s.top < edge) edge = s.top;
+    return { dir: 'down', x0, x1, y0: Math.max(0, blk.top - 2), y1: edge >= L.h ? L.h : edge - 2, gfx: (edge - 2) - (blk.bot + 2) };
+  };
+  const need = type === 'table' ? 24 : 40, order = type === 'table' ? [down, up] : [up, down];
+  for (const f of order) { const r = f(); if (r.gfx >= need && r.y1 - r.y0 <= 0.85 * L.h) return r; }
+  return null;
+}
+
+/* ---- find a figure by its printed caption anywhere in the PDF ---- */
+async function figGetLayout(pdf, n, cache) {
+  if (cache.has(n)) return cache.get(n);
+  const page = await pdf.getPage(n), vp = page.getViewport({ scale: 1 });
+  const tc = await page.getTextContent({ normalizeWhitespace: true });
+  const L = figLayout(tc.items, vp); L.page = n; cache.set(n, L); return L;
+}
+async function figLocate(pdf, f, cache) {
+  const parsed = figParseLabel(f.label) || figParseLabel(f.title); if (!parsed) return null;
+  const start = (String(f.caption_start || '').toLowerCase().match(/[a-z0-9]+/g) || []).slice(0, 10);
+  const claimed = Number.isInteger(f.pdf_page) && f.pdf_page >= 1 && f.pdf_page <= pdf.numPages ? f.pdf_page : 0;
+  const pages = Array.from({ length: pdf.numPages }, (_, i) => i + 1).sort((a, b) => Math.abs(a - (claimed || 1)) - Math.abs(b - (claimed || 1)) || a - b);
+  let best = null;
+  for (const n of pages) {
+    const L = await figGetLayout(pdf, n, cache), bands = figBands(L);
+    for (const s of L.segs) {
+      const m = FIG_CAP_RE.exec(s.text.trim()); if (!m) continue;
+      if (FIG_TYPES[m[1].toLowerCase()] !== parsed.type || m[2].toUpperCase() !== parsed.id) continue;
+      const rest = m[3] || '', punct = /^\s*[.:|—–\-)]/.test(rest), bold = s.firstFont !== L.bodyFont;
+      let score = (punct ? 3 : 0) + (bold ? 2 : 0) + (s.size < L.body * 0.98 ? 1 : 0) - (FIG_VERB_RE.test(rest) && !punct ? 3 : 0) + (n === claimed ? 0.5 : 0);
+      const band = figBandFor(L, bands, s), blk = figCaptionBlock(L, s, band);
+      if (start.length) { const words = new Set(blk.text.toLowerCase().match(/[a-z0-9]+/g) || []); score += 3 * start.filter(w => words.has(w)).length / start.length; }
+      if (score >= 2 && (!best || score > best.score)) best = { score, page: n, L, bands, cap: s, blk, band, parsed };
+    }
+    if (best && best.page === claimed && best.score >= 6) break;
+  }
+  if (!best) return null;
+  best.region = figRegion(best.L, best.bands, best.cap, best.blk, best.band, best.parsed.type);
+  return best;
+}
+
+/* ---- pixels: tighten a rendered crop to its content ---- */
+function figTrim(data, w, h, pad = 8) {
+  let x0 = w, y0 = h, x1 = -1, y1 = -1;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const i = (y * w + x) * 4;
+    if (data[i + 3] > 20 && (data[i] < 232 || data[i + 1] < 232 || data[i + 2] < 232)) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  }
+  if (x1 < 0) return null;
+  return { x: Math.max(0, x0 - pad), y: Math.max(0, y0 - pad), w: Math.min(w, x1 + pad + 1) - Math.max(0, x0 - pad), h: Math.min(h, y1 + pad + 1) - Math.max(0, y0 - pad) };
+}
+const figCanvases = new Map();
+async function figRender(pdf, n, scale) {
+  const key = n + '@' + scale;
+  if (figCanvases.has(key)) return figCanvases.get(key);
+  const page = await pdf.getPage(n), vp = page.getViewport({ scale });
+  const c = document.createElement('canvas'); c.width = Math.ceil(vp.width); c.height = Math.ceil(vp.height);
+  await page.render({ canvasContext: c.getContext('2d', { willReadFrequently: true }), viewport: vp }).promise;
+  figCanvases.set(key, c); if (figCanvases.size > 4) figCanvases.delete(figCanvases.keys().next().value);
+  return c;
+}
+async function figCrop(pdf, loc) {
+  const r = loc.region; if (!r) return null;
+  const scale = 2.4, src = await figRender(pdf, loc.page, scale);
+  const sx = Math.max(0, Math.floor(r.x0 * scale)), sy = Math.max(0, Math.floor(r.y0 * scale));
+  const sw = Math.min(src.width - sx, Math.ceil((r.x1 - r.x0) * scale)), sh = Math.min(src.height - sy, Math.ceil((r.y1 - r.y0) * scale));
+  if (sw < 20 || sh < 20) return null;
+  const tmp = document.createElement('canvas'); tmp.width = sw; tmp.height = sh;
+  const tx = tmp.getContext('2d', { willReadFrequently: true }); tx.drawImage(src, sx, sy, sw, sh, 0, 0, sw, sh);
+  const t = figTrim(tx.getImageData(0, 0, sw, sh).data, sw, sh); if (!t || t.w < 40 || t.h < 30) return null;
+  const out = document.createElement('canvas'); out.width = t.w; out.height = t.h;
+  out.getContext('2d').drawImage(tmp, t.x, t.y, t.w, t.h, 0, 0, t.w, t.h);
+  return out.toDataURL('image/jpeg', 0.92);
+}
+
+/* =====================================================================
    Paperlens — core
    ===================================================================== */
 const $ = (s, r = document) => r.querySelector(s);
@@ -636,7 +825,7 @@ const S = {
   paper: null, tab: 'overview',
   pdf: null, pdfReady: Promise.resolve(), pageImgs: {},
   cleanups: [], keys: null, abort: null, lastSrc: null,
-  srcFile: null, srcText: null, srcCache: null, chats: {}
+  srcFile: null, srcText: null, srcCache: null, chats: {}, figCache: new Map()
 };
 
 /* ---------- theme ---------- */
@@ -745,7 +934,7 @@ function ensurePdfJs() {
   });
 }
 function attachPdf(file) {
-  S.srcFile = file; S.srcText = null; S.pdf = null; S.pageImgs = {};
+  S.srcFile = file; S.srcText = null; S.pdf = null; S.pageImgs = {}; S.figCache = new Map(); figCanvases.clear();
   S.pdfReady = (async () => {
     try { await ensurePdfJs(); S.pdf = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise; }
     catch (e) { console.warn('Page previews unavailable:', e); S.pdf = null; }
@@ -792,8 +981,8 @@ JSON schema (keys in this exact order):
    "snapshot": [4 to 6 {"label": str, "value": str}] such as Study type, Sample or data, Method, Main result, Setting
  },
  "glossary": [5 to 8 {"term": str, "definition": str (max 20 words)}],
- "figures": [3 to 6 of the most important figures, tables, key equations or diagrams, in order of appearance:
-   {"label": str (e.g. "Figure 2", "Table 1"), "pdf_page": integer (1-based index of the PDF page where it appears, counting from the first page of the PDF file and NOT the printed page number; null if unknown), "page_area": "top"|"middle"|"bottom" (roughly where on that page it sits), "kind": "figure"|"table"|"equation"|"diagram", "title": str, "what_it_shows": str (1 to 2 sentences), "why_it_matters": str (1 sentence), "takeaway": str (max 15 words), "check": str (one thing a critical reader should scrutinize in this item, such as axes, error bars, sample size or baselines; max 20 words)}],
+ "figures": [up to 6 of the most important figures, tables, diagrams or algorithm boxes, in order of appearance. ONLY include items that have a numbered caption printed in the paper (such as "Figure 2", "Fig. 3", "Table 1", "Algorithm 1"). Never list ordinary text, paragraphs, headings, bullet lists or equations, and never invent an item; if the paper has fewer than 3 captioned items, list fewer.
+   {"label": str (exactly as printed in the caption, e.g. "Figure 2" or "Table 1"), "caption_start": str (the first 8 words of that caption, copied exactly), "pdf_page": integer (1-based index of the PDF page where the caption appears, counting from the first page of the PDF file and NOT the printed page number; null if unknown), "kind": "figure"|"table"|"diagram"|"algorithm", "title": str, "what_it_shows": str (1 to 2 sentences), "why_it_matters": str (1 sentence), "takeaway": str (max 15 words), "check": str (one thing a critical reader should scrutinize in this item, such as axes, error bars, sample size or baselines; max 20 words)}],
  "mindmap": { "label": str (short paper name, max 5 words), "children": [5 to 7 branches such as Problem, Method, Data, Results, Implications, Limitations; each {"label": str (max 6 words), "note": str (optional, one sentence of detail), "children": [2 to 4 items, each optionally with 1 to 3 children of its own]}] },
  "flashcards": [16 to 22 {"front": str (a question or term), "back": str (answer in 1 to 3 sentences), "type": "concept"|"method"|"result"|"term"|"critique", "difficulty": 1|2|3}] mixing all five types, covering the paper's logic from start to finish,
  "games": {
@@ -1082,46 +1271,67 @@ function toMarkdown(p) {
   if (o.findings.length) { L.push('', '## Key findings'); o.findings.forEach(f => L.push('- ' + f.t + (f.p ? ' (PDF p.' + f.p + ')' : ''))); }
   if (o.plain) L.push('', '## In plain English', o.plain); if (o.why) L.push('', '## Why it matters', o.why);
   if (o.limits.length) { L.push('', '## Caveats'); o.limits.forEach(f => L.push('- ' + f)); }
-  if (p.figures.length) { L.push('', '## Key figures'); p.figures.forEach(f => L.push('- **' + (f.label || '') + (f.pdf_page ? ' (PDF p.' + f.pdf_page + ')' : '') + ' ' + (f.title || '') + ':** ' + (f.what_it_shows || '') + ' ' + (f.takeaway ? 'Takeaway: ' + f.takeaway : ''))); }
+  if (p.figures.length) { L.push('', '## Key figures'); p.figures.forEach(f => L.push('- **' + (f.label || '') + ((f.loc?.page || f.pdf_page) ? ' (PDF p.' + (f.loc?.page || f.pdf_page) + ')' : '') + ' ' + (f.title || '') + ':** ' + (f.what_it_shows || '') + ' ' + (f.takeaway ? 'Takeaway: ' + f.takeaway : ''))); }
   if (p.glossary.length) { L.push('', '## Glossary'); p.glossary.forEach(g => L.push('- **' + g.term + ':** ' + g.definition)); }
   return L.join('\n') + '\n';
 }
 
 /* ---------- view: figures ---------- */
+function figCard(f, i) {
+  return `<article class="card fig" data-i="${i}">
+    <button class="fig-img" data-i="${i}" aria-label="Enlarge ${esc(f.label || f.title || 'figure')}"><span class="ph">Checking the PDF…</span></button>
+    <div class="fig-body">
+      <div class="row" style="gap:6px"><span class="chip">${esc(f.label || f.kind || 'Figure')}</span>${f.kind ? `<span class="chip plain">${esc(f.kind)}</span>` : ''}<span class="chip plain" data-pg hidden></span></div>
+      <h3>${esc(f.title || '')}</h3>
+      ${f.what_it_shows ? `<p>${esc(f.what_it_shows)}</p>` : ''}
+      ${f.why_it_matters ? `<p class="why">${esc(f.why_it_matters)}</p>` : ''}
+      ${f.takeaway ? `<p class="take"><span class="mark">${esc(f.takeaway)}</span></p>` : ''}
+      ${f.check ? `<p class="look"><b>Look closely:</b> ${esc(f.check)}</p>` : ''}
+      <div class="row fig-actions" hidden><button class="btn small" data-full>Open the full page</button></div>
+    </div></article>`;
+}
 function viewFigures(p) {
   if (!p.figures.length) { app().innerHTML = `<div class="done"><h2>No figures found</h2><p>This paper didn't expose clear figures or tables.</p></div>`; return; }
   app().innerHTML = `
   <div class="row" style="justify-content:space-between;margin-bottom:18px"><div><h2 style="font-size:26px">The figures that carry the paper</h2>
-    <p class="muted" style="margin-top:4px">The evidence behind the claims. Each card ends with something worth checking yourself.</p></div>
-    <label class="btn small" id="attach" hidden>Attach the PDF for page previews<input type="file" accept=".pdf" class="sr" id="attf"></label></div>
-  <div class="figs">${p.figures.map((f, i) => `
-    <article class="card fig">
-      <button class="fig-img" data-i="${i}" aria-label="Enlarge page for ${esc(f.label || f.title)}"><span class="ph">${f.pdf_page ? 'Loading page ' + esc(f.pdf_page) + '…' : 'No page reference'}</span>${f.pdf_page ? `<span class="pg">PDF page ${esc(f.pdf_page)}</span>` : ''}</button>
-      <div class="fig-body">
-        <div class="row" style="gap:6px"><span class="chip">${esc(f.label || f.kind || 'Figure')}</span>${f.kind ? `<span class="chip plain">${esc(f.kind)}</span>` : ''}</div>
-        <h3>${esc(f.title || '')}</h3>
-        ${f.what_it_shows ? `<p>${esc(f.what_it_shows)}</p>` : ''}
-        ${f.why_it_matters ? `<p class="why">${esc(f.why_it_matters)}</p>` : ''}
-        ${f.takeaway ? `<p class="take"><span class="mark">${esc(f.takeaway)}</span></p>` : ''}
-        ${f.check ? `<p class="look"><b>Look closely:</b> ${esc(f.check)}</p>` : ''}
-      </div></article>`).join('')}</div>`;
-  S.pdfReady.then(() => {
+    <p class="muted" style="margin-top:4px">Each one is matched to its numbered caption in your PDF and cropped from the page. Each card ends with something worth checking yourself.</p></div>
+    <label class="btn small" id="attach" hidden>Attach the PDF to see them<input type="file" accept=".pdf" class="sr" id="attf"></label></div>
+  <div class="figs" id="figs">${p.figures.map(figCard).join('')}</div>
+  <details class="unv" id="unv" hidden><summary id="unv-s"></summary>
+    <p class="muted" style="margin:8px 0 14px">The summary mentioned these, but no matching numbered caption was found in the PDF text. This can happen with scanned PDFs, or when an item isn't a numbered figure or table. Check them against the paper before relying on them.</p>
+    <div class="figs" id="unv-g"></div></details>`;
+  S.pdfReady.then(async () => {
     if (S.tab !== 'figures') return;
     if (!S.pdf) {
-      $$('.fig-img .ph').forEach(ph => ph.textContent = 'Page preview needs the original PDF');
+      $$('.fig-img .ph').forEach(ph => ph.textContent = 'Attach the original PDF to see and check this figure');
       $('#attach').hidden = false;
       $('#attf').onchange = e => { const f = e.target.files[0]; if (f) { attachPdf(f).then(() => showPaper('figures')); toast('Loading PDF…'); } };
       return;
     }
-    p.figures.forEach(async (f, i) => {
-      const btn = $(`.fig-img[data-i="${i}"]`); if (!btn) return;
-      const url = await getPageImg(f.pdf_page);
-      if (S.tab !== 'figures' || !btn.isConnected) return;
+    $$('.fig-img .ph').forEach(ph => ph.textContent = 'Finding it in the PDF…');
+    let bad = 0;
+    for (let i = 0; i < p.figures.length; i++) {
+      const f = p.figures[i], art = $(`.fig[data-i="${i}"]`); if (!art) return;
+      let loc = null;
+      try { loc = await figLocate(S.pdf, f, S.figCache); } catch (e) { console.warn(e); }
+      if (S.tab !== 'figures' || !art.isConnected) return;
+      if (!loc) {                                   // never show something we couldn't verify
+        bad++; art.querySelector('.fig-img')?.remove(); $('#unv-g').appendChild(art);
+        $('#unv').hidden = false; $('#unv-s').textContent = `Couldn't match ${bad} to the PDF`;
+        continue;
+      }
+      f.loc = { page: loc.page };
+      const pg = art.querySelector('[data-pg]'); pg.hidden = false; pg.textContent = 'PDF page ' + loc.page;
+      const full = art.querySelector('.fig-actions'); full.hidden = false;
+      full.querySelector('[data-full]').onclick = async () => { const u = await getPageImg(loc.page); u ? openLightbox(u, 'PDF page ' + loc.page) : toast('Could not render that page'); };
+      const btn = art.querySelector('.fig-img'); let url = null;
+      try { url = loc.region ? await figCrop(S.pdf, loc) : null; } catch (e) { console.warn(e); }
+      if (S.tab !== 'figures' || !art.isConnected) return;
       if (url) {
-        btn.innerHTML = `<img alt="PDF page ${esc(f.pdf_page)} containing ${esc(f.label || f.title)}" src="${url}" style="object-position:50% ${({ top: 0, middle: 50, bottom: 100 })[f.page_area] ?? 0}%"><span class="pg">PDF page ${esc(f.pdf_page)}</span>`;
+        btn.innerHTML = `<img alt="${esc((f.label || '') + ': ' + (f.title || ''))}" src="${url}">`;
         btn.onclick = () => openLightbox(url, f.label || f.title);
-      } else btn.querySelector('.ph').textContent = f.pdf_page ? 'Page preview unavailable' : 'No page reference';
-    });
+      } else btn.querySelector('.ph').textContent = 'Found on PDF page ' + loc.page + ', but it could not be cut out cleanly. Use "Open the full page".';
+    }
   });
 }
 function openLightbox(url, alt) {
