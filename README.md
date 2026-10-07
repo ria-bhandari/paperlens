@@ -2,7 +2,9 @@
 
 **Understand any research paper in minutes.** Drop in a PDF and get a clear overview, the figures that matter, an interactive mind map, flashcards, three games, and a chat that answers questions about the paper. Works for any field.
 
-**Live app:** `https://YOUR-USERNAME.github.io/paperlens/` *(replace with your own address once it's deployed)*
+### [Open Paperlens](https://ria-bhandari.github.io/paperlens/)
+
+`https://ria-bhandari.github.io/paperlens/`
 
 ---
 
@@ -21,38 +23,12 @@ Also: six themes (Paper, Spring, Golden hour, Fall, Winter, Dusk) with light and
 
 ---
 
-## How it works
-
-```
- your browser                                   Anthropic API
-┌──────────────────────┐   paper + question   ┌──────────────┐
-│ Paperlens (this app) │ ───────────────────▶ │    Claude    │
-│  key + library stay  │ ◀─────────────────── │              │
-│  on your device      │   structured answer  └──────────────┘
-└──────────────────────┘
-```
-
-There is **no Paperlens server**. The app is a single static page. When you analyse a paper, your browser sends it directly to the Anthropic API using **your own API key**, and the result is stored in your browser.
-
-- **Your key** is saved only in your browser's local storage on that device. It is never written into any file in this repository.
-- **Your papers** go to Anthropic and nowhere else.
-- **Cost:** you pay Anthropic for your own usage. Long papers cost more, and chat re-sends the paper with each question (with caching turned on to keep follow-ups cheaper). Check your usage in the Anthropic console.
-
----
-
 ## Getting started
 
-### 1. Get an API key
-Create one at [console.anthropic.com](https://console.anthropic.com).
-
-### 2. Open the app
-Use the live address above, or [run it locally](#run-it-locally).
-
-### 3. Add your key
-Click the **gear icon**, paste your key, and save. Do this once per device.
-
-### 4. Drop in a paper
-Drag a PDF onto the page (up to about 24 MB and 100 pages), or paste text instead. Analysis takes roughly 30 to 90 seconds, and the overview appears as it's written.
+1. **Get an API key** at [console.anthropic.com](https://console.anthropic.com).
+2. **[Open Paperlens](https://ria-bhandari.github.io/paperlens/).**
+3. **Add your key.** Click the gear icon, paste the key, and save. Do this once per device.
+4. **Drop in a paper.** Drag a PDF onto the page (up to about 24 MB and 100 pages), or paste the text instead. Analysis takes roughly 30 to 90 seconds, and the overview appears as it's written.
 
 No key yet? Click **See a finished example first** to try a sample paper with every feature.
 
@@ -60,7 +36,7 @@ No key yet? Click **See a finished example first** to try a sample paper with ev
 
 ## Install it as an app
 
-Paperlens is a Progressive Web App, so it can live on your desktop or home screen with its own icon and window.
+Paperlens can live on your desktop or home screen with its own icon and window.
 
 - **Chrome or Edge (desktop):** click the install icon in the address bar, or the **Install app** button in Paperlens.
 - **Android (Chrome):** tap **Install app** from the menu.
@@ -70,23 +46,13 @@ Once installed, the app opens instantly and works offline for reading saved pape
 
 ---
 
-## Deploy your own copy (GitHub Pages)
+## Your privacy and your key
 
-1. Create a **public** repository on GitHub (free Pages needs a public repo).
-2. Upload everything in this folder: `index.html`, `sw.js`, `manifest.webmanifest`, and the icon files. On a new empty repo, use **uploading an existing file**. Otherwise use **Add file, then Upload files**.
-3. Go to **Settings, then Pages**. Set the source to **Deploy from a branch**, branch **main**, folder **/ (root)**, and save.
-4. After about a minute your app is live at `https://YOUR-USERNAME.github.io/REPO-NAME/`.
+There is **no Paperlens server**. When you analyse a paper or ask a question, your browser sends it directly to the Anthropic API using **your own API key**.
 
-**Updating:** upload a new `index.html` with the same name and commit. GitHub can take a few minutes to publish it, then reload the app to see the change.
-
-## Run it locally
-
-Double-click `index.html` and it runs in your browser. For the full installable experience, serve it over HTTP:
-
-```bash
-python3 -m http.server 8000
-# then open http://localhost:8000
-```
+- **Your key** is saved only in your browser on that device. It is never sent anywhere except to Anthropic.
+- **Your papers** go to Anthropic and nowhere else. The app keeps the generated notes in your browser's saved library, not the PDF itself.
+- **Cost:** you pay Anthropic for your own usage. Long papers cost more, and chat re-sends the paper with each question (with caching turned on to keep follow-ups cheaper). Check your usage in the Anthropic console.
 
 ---
 
@@ -105,8 +71,8 @@ python3 -m http.server 8000
 ## Good to know
 
 - **Check the important bits.** Summaries, figures and answers are written by AI. Page links are there so you can verify claims against the source, and you should for anything that matters.
-- **Figure previews** are the real PDF pages rendered in your browser using [pdf.js](https://mozilla.github.io/pdf.js/), loaded from a CDN. They need an internet connection the first time.
-- **Papers reopened from your library** don't keep the PDF (it's not stored), so page previews are unavailable until you attach the PDF again from the Figures or Chat tab.
+- **Figure previews** are the real PDF pages rendered in your browser. They need an internet connection the first time.
+- **Papers reopened from your library** don't keep the PDF, so page previews are unavailable until you attach the PDF again from the Figures or Chat tab.
 - **Scanned PDFs** and very long documents may give weaker results than text-based PDFs.
 - **Model:** the default is `claude-sonnet-5-5`. You can change it in Settings (for example to an Opus model for more depth, or Haiku for speed).
 
@@ -119,30 +85,19 @@ python3 -m http.server 8000
 | "That model name was not found" | Open Settings and pick a valid model name. |
 | "Rate limit reached" or "busy" | Wait a minute and try again. |
 | PDF too large | Compress the PDF or split it. The limit is about 24 MB. |
-| Figures show no page images | The PDF isn't attached (reopened from the library) or pdf.js couldn't load. Attach the PDF on the Figures tab. |
-| No "Install app" button | Some browsers only offer install from a deployed address, not a local file. Safari uses Share, then Add to Home Screen. |
-
----
-
-## What's in this folder
-
-| File | Purpose |
-|---|---|
-| `index.html` | The whole app: interface, styles and logic in one file. |
-| `sw.js` | Service worker: makes the app load instantly and work offline. It never touches the Anthropic API. |
-| `manifest.webmanifest` | Tells browsers how to install the app (name, icons, colours). |
-| `icon-*.png`, `apple-touch-icon.png`, `favicon-32.png`, `icon.svg` | App icons. |
-
-To ship a change that must reach everyone immediately, edit `VERSION` at the top of `sw.js` so old cached copies are cleared.
+| Figures show no page images | The PDF isn't attached (reopened from the library) or the preview library couldn't load. Attach the PDF on the Figures tab. |
+| No "Install app" button | Not every browser offers it. On iPhone or iPad use Share, then Add to Home Screen. |
 
 ---
 
 ## FAQ
 
-**Does my paper get stored anywhere?** Only in your browser's saved library (as the generated notes, not the PDF) and with Anthropic when you analyse or chat. There is no other server.
+**Can anyone use it?** Yes, just open the link above. Each person uses their own API key and has their own private library on their own device.
 
-**Can several people share one deployment?** Yes. Everyone opens the same address, but each person uses their own API key and has their own private library on their own device.
-
-**Why do I need my own key?** Because there's no server to hold a shared one. Putting a key inside a public web page would expose it to everyone who visits, so Paperlens deliberately doesn't.
+**Why do I need my own key?** There's no server to hold a shared one, and a key placed inside a public web page would be exposed to every visitor, so Paperlens deliberately doesn't do that.
 
 **Does it work offline?** The app opens and saved papers can be read. Analysis and chat need internet.
+
+---
+
+© 2026 ria-bhandari. All rights reserved. The source in this repository is published only so the app can be hosted at the link above. Copying, redistributing or deploying your own copy is not permitted without permission.
