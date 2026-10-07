@@ -82,6 +82,7 @@ There is **no Paperlens server**. When you analyse a paper or ask a question, yo
 |---|---|
 | "The API key was rejected" | Open Settings and re-paste the key. Check it hasn't been revoked in the console. |
 | "Could not reach api.anthropic.com" | Check your connection, and look for an ad blocker or privacy extension blocking the request. |
+| "Your key isn't tied to a workspace" | In the Anthropic console, create a key inside a named workspace, or paste that workspace's ID (starts with `wrkspc_`) into the Workspace ID box in Settings. |
 | "That model name was not found" | Open Settings and pick a valid model name. |
 | "Rate limit reached" or "busy" | Wait a minute and try again. |
 | PDF too large | Compress the PDF or split it. The limit is about 24 MB. |
