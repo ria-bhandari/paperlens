@@ -18,9 +18,12 @@
 | **Flashcards** | Flip cards with *Show again soon*, *Hard, later* and *I know this*. Filter by type (concepts, methods, results, terms, critique). Export to Anki. |
 | **Play** | **Quiz blitz** (lives, a timer and streak bonuses), **Fact or fiction**, and **Pair up** (match terms to meanings against the clock). Questions you miss can be turned into flashcards in one click. |
 | **Chat** | Ask anything about the paper. Answers are grounded in the full PDF, and page references open the page so you can check them. |
-| **Library** | Every paper you analyze is saved on your own device, with your flashcard progress, best game scores and chat history. Search, sort, reopen where you left off, and export a backup. No account or login needed. |
+| **Library** | Every paper you analyze is saved on your own device, with your flashcard progress, best game scores and chat history. Sort papers into **folders** by discipline or project (drag and drop, or one tap), star them, mark them To read / Reading / Read, and search across titles, summaries, findings and your own notes. No account or login needed. |
+| **Notes** | A private notepad for each paper, saved as you type, with a place for "relevance to my research" and themes. Drop findings and chat answers straight in with **＋ note** and **Save to notes**. |
+| **Cite** | On every Overview: APA, BibTeX and RIS (imports into Zotero, Mendeley and EndNote). Details are editable, and a DOI is only included if it is printed in the paper itself. |
+| **Compare** | Select 2 to 8 papers and get a literature-review matrix: aim, method, findings and limitations side by side, oldest first, plus your own "relevance" and "theme" columns. Export to Excel (CSV), Markdown or BibTeX. |
 
-Also: six themes (Paper, Spring, Golden hour, Fall, Winter, Dusk) with light and dark modes and an optional "follow the seasons" setting, Markdown notes export, and an "explain it for" setting (nearby-field researcher, specialist, or newcomer).
+Equations are typeset like LaTeX, so $e^{x}$ shows as a proper formula. Also: six themes (Paper, Spring, Golden hour, Fall, Winter, Dusk) with light and dark modes and an optional "follow the seasons" setting, Markdown notes export, and an "explain it for" setting (nearby-field researcher, specialist, or newcomer).
 
 ---
 
@@ -88,6 +91,8 @@ There is **no Paperlens server**. When you analyse a paper or ask a question, yo
 
 - **Check the important bits.** Summaries, figures and answers are written by AI. Page links are there so you can verify claims against the source, and you should for anything that matters.
 - **Figure previews** are the real PDF pages rendered in your browser. They need an internet connection the first time.
+- **Equations** are written by the AI in LaTeX and drawn with [KaTeX](https://katex.org). KaTeX loads from the internet the first time (then it is remembered); until it loads, or offline, formulas show as readable text such as eˣ. Services that read your paper as extracted text (OpenRouter, Gemini and others) see equations as they come out of the PDF, which can be scrambled, so Anthropic and OpenAI are better for maths-heavy papers.
+- **Folders, notes and statuses** are stored with your library on this device, and are included in **Export backup**. Deleting a folder never deletes its papers.
 - **Your library is per browser and per device.** A different browser, a private window, or cleared browsing data means a fresh, empty library, and some browsers clear data for sites you rarely visit. Installing Paperlens as an app and exporting a backup now and then keeps your papers safe.
 - **Scanned PDFs** and very long documents may give weaker results than text-based PDFs.
 - **Model:** the default for Anthropic is `claude-sonnet-5-5`. You can change the model in Settings (for example Opus for more depth, or Haiku for speed). Model names change often, so use **Test connection** to check one works.
@@ -101,6 +106,7 @@ There is **no Paperlens server**. When you analyse a paper or ask a question, yo
 | "Could not reach …" | Check your connection, and look for an ad blocker or privacy extension. If it names a service other than Anthropic or OpenRouter, that service may not allow requests from web pages (a browser rule called CORS). OpenAI often blocks them: use OpenRouter instead, or enter a proxy address in Settings. |
 | "Your key isn't tied to a workspace" | In the Anthropic console, create a key inside a named workspace, or paste that workspace's ID (starts with `wrkspc_`) into the Workspace ID box in Settings. |
 | "…could not find that model" | Open Settings, copy the exact model name from the service's own model list, and press **Test connection**. |
+| A formula shows as plain text | KaTeX hasn't loaded (offline or blocked). Readable text such as eˣ is shown instead, and the real formula appears once it loads. |
 | My papers disappeared | The library lives in one browser on one device. Check you're in the same browser and not a private window, or use Library, then Import backup. |
 | "Rate limit reached" or "busy" | Wait a minute and try again. |
 | PDF too large | Compress the PDF or split it. The limit is about 24 MB. |

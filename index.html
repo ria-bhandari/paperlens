@@ -359,6 +359,56 @@ details.paste summary{cursor:pointer;color:var(--blue);font-weight:600;padding:6
 
 @media (max-width:420px){.brand-t{display:none}.top{gap:4px}.icon-btn{width:40px}}
 
+/* ---------- folders, selection, matrix, notes ---------- */
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--c,var(--muted));margin-right:7px;flex:none}
+.fbar{display:flex;gap:8px;overflow-x:auto;padding:10px 2px 12px;position:sticky;top:var(--hh);z-index:12;background:var(--bg);background:color-mix(in srgb,var(--bg) 90%,transparent);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);scrollbar-width:thin;margin-bottom:6px}
+.fchip{flex:none;display:inline-flex;align-items:center;min-height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--edge);background:var(--card);font-weight:600;white-space:nowrap}
+.fchip .n{margin-left:8px;color:var(--muted);font-weight:500;font-size:13px}
+.fchip:hover{border-color:var(--blue)}
+.fchip[aria-selected=true]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.fchip[aria-selected=true] .n{color:inherit;opacity:.8}
+.fchip.over{border-color:var(--blue);background:var(--blue-soft);transform:scale(1.05)}
+.fchip.add{border-style:dashed;color:var(--muted)}
+.fhead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:6px 0 10px}
+.fhead h2{font-size:24px;display:flex;align-items:center}
+details.exp summary{list-style:none;cursor:pointer}details.exp summary::-webkit-details-marker{display:none}
+details.exp[open] summary{background:var(--card)}
+.suggest{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:6px 0 12px;padding:10px 12px;border:1px dashed var(--edge);border-radius:10px}
+.selbar{position:sticky;bottom:12px;z-index:14;display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 14px;margin:0 0 12px;border-radius:12px;background:var(--ink);color:var(--bg);box-shadow:0 6px 24px rgba(0,0,0,.25)}
+.selbar .btn{border-color:var(--bg)}.selbar .btn.primary{background:var(--mark);border-color:var(--mark);color:var(--mark-ink)}.selbar .btn.ghost,.selbar .btn:not(.primary){background:transparent;color:var(--bg)}
+.selbar .muted{color:inherit;opacity:.8}
+.libc{position:relative;padding-left:clamp(44px,5vw,56px)}
+.libc-sel{position:absolute;left:0;top:0;bottom:0;width:clamp(40px,5vw,50px);display:grid;place-items:start center;padding-top:20px;cursor:pointer}
+.libc-sel input{width:20px;height:20px;accent-color:var(--blue)}
+.libc[draggable=true]{cursor:default}
+.fcp{display:inline-flex;align-items:center}
+.btn.star{font-size:18px;padding:0 12px}.btn.star[aria-pressed=true]{color:var(--ink);background:var(--mark);border-color:var(--mark);color:var(--mark-ink)}
+.st-toread{border-color:var(--blue);color:var(--blue)}.st-reading{background:var(--blue-soft);border-color:var(--blue);color:var(--blue)}.st-read{background:var(--good-soft);border-color:var(--good);color:var(--good)}
+.lib-list.compact .libc-prog,.lib-list.compact .libc-meta,.lib-list.compact .libc-authors{display:none}
+.lib-list.compact{gap:8px}.lib-list.compact .libc{padding-top:10px;padding-bottom:10px}.lib-list.compact .libc-sel{padding-top:12px}
+.addnote{margin-left:8px;border:1px solid var(--edge);background:var(--card);color:var(--muted);border-radius:6px;font-size:12.5px;font-weight:600;padding:2px 8px;min-height:28px;vertical-align:baseline}
+.addnote:hover{color:var(--ink);border-color:var(--ink)}
+.aicol{display:flex;flex-direction:column;align-items:flex-start;gap:4px;max-width:min(680px,92%)}.aicol .bubble{max-width:100%}.aicol .addnote{margin-left:4px}
+.cite-apa{font-family:var(--serif);font-size:16.5px;line-height:1.5}
+.cmp-wrap{overflow:auto;border:1px solid var(--line);border-radius:12px;background:var(--card);max-height:75vh}
+table.cmp{border-collapse:separate;border-spacing:0;min-width:1500px;width:100%}
+table.cmp th,table.cmp td{vertical-align:top;text-align:left;padding:12px 14px;border-bottom:1px solid var(--line);border-right:1px solid var(--line);font-size:14.5px;min-width:220px}
+table.cmp thead th{position:sticky;top:0;z-index:2;background:var(--bg);font-family:var(--serif);font-size:15px}
+table.cmp tbody th{position:sticky;left:0;z-index:1;background:var(--card);min-width:230px;font-weight:600}
+table.cmp thead th:first-child{left:0;z-index:3}
+table.cmp td textarea,table.cmp td input{width:100%;min-height:44px;padding:8px 10px;border-radius:8px;border:1px solid var(--edge);background:var(--bg)}
+.small-select{min-height:40px;padding:0 10px;border-radius:8px;border:1px solid var(--edge);background:var(--card)}
+.nctl{align-items:center}
+
+/* ---------- equations ---------- */
+.tex{font-variant-numeric:normal}
+.tex-d{display:block;text-align:center;margin:.7em 0;overflow-x:auto;overflow-y:hidden;max-width:100%}
+.tex .katex{font-size:1.06em}
+.tex-d .katex{font-size:1.15em}
+.katex-display{margin:0}
+.face .tex-d,.opt .tex-d{margin:.3em 0}
+.mark .katex{color:var(--mark-ink)}
+
 </style>
 </head>
 <body>
@@ -404,7 +454,7 @@ const DEMO = {
   glossary:[
     {term:"Self-attention",definition:"Each position in a sequence weighs every other position to build its own representation."},
     {term:"Multi-head attention",definition:"Several attention operations run in parallel on different learned projections, then are combined."},
-    {term:"Scaled dot-product",definition:"Attention scores are query-key dot products divided by the square root of the key dimension."},
+    {term:"Scaled dot-product",definition:"Attention scores are query-key dot products divided by $\\sqrt{d_k}$, giving $$\\mathrm{Attention}(Q,K,V)=\\mathrm{softmax}\\left(\\frac{QK^{T}}{\\sqrt{d_k}}\\right)V$$"},
     {term:"Positional encoding",definition:"Sine and cosine signals added to embeddings so the model knows token order."},
     {term:"BLEU",definition:"A score comparing machine translations to human references; higher is better."},
     {term:"Residual connection",definition:"A layer's input is added to its output to ease training of deep stacks."}],
@@ -416,7 +466,7 @@ const DEMO = {
     {label:"Table 3",check:"Single-run dev scores: are the differences larger than run-to-run noise?",pdf_page:9,kind:"table",title:"Architecture variations",what_it_shows:"Ablations that change heads, key size, model size, dropout and position encoding and report the effect on development BLEU.",why_it_matters:"It shows which design choices actually carry the performance.",takeaway:"Head count and key size matter; bigger models and dropout help."}],
   mindmap:{label:"Attention Is All You Need",children:[
     {label:"Problem",note:"Recurrent models are sequential and slow, and long-range dependencies are hard.",children:[{label:"Sequential computation"},{label:"Long-distance dependencies"}]},
-    {label:"Key idea",note:"Model sequences using attention only.",children:[{label:"Self-attention",note:"Every token attends to every other token.",children:[{label:"Queries, keys, values"},{label:"Scaled by sqrt(d_k)"}]},{label:"Multi-head attention",children:[{label:"8 heads in base model"}]},{label:"Positional encoding",children:[{label:"Sine and cosine"}]}]},
+    {label:"Key idea",note:"Model sequences using attention only.",children:[{label:"Self-attention",note:"Every token attends to every other token.",children:[{label:"Queries, keys, values"},{label:"Scaled by $\\sqrt{d_k}$"}]},{label:"Multi-head attention",children:[{label:"8 heads in base model"}]},{label:"Positional encoding",children:[{label:"Sine and cosine"}]}]},
     {label:"Architecture",children:[{label:"Encoder: 6 layers"},{label:"Decoder: 6 layers",children:[{label:"Masked self-attention"},{label:"Encoder-decoder attention"}]},{label:"Residuals and layer norm"}]},
     {label:"Training",children:[{label:"WMT 2014 EN-DE, EN-FR"},{label:"Adam with warmup schedule"},{label:"Dropout and label smoothing"}]},
     {label:"Results",children:[{label:"28.4 BLEU EN-DE"},{label:"41.8 BLEU EN-FR"},{label:"Lower training cost"},{label:"Generalises to parsing"}]},
@@ -424,7 +474,7 @@ const DEMO = {
   flashcards:[
     {front:"What problem with recurrent networks motivates the Transformer?",back:"They process tokens sequentially, preventing parallelism within a sequence and making long-range dependencies hard to learn.",type:"concept",difficulty:1},
     {front:"What does self-attention compute?",back:"For each position, a weighted sum of value vectors from all positions, with weights from query-key compatibility.",type:"concept",difficulty:1},
-    {front:"Why are dot products scaled by 1/sqrt(d_k)?",back:"For large d_k the dot products grow large and push the softmax into regions with tiny gradients; scaling counteracts that.",type:"method",difficulty:2},
+    {front:"Why are dot products scaled by $1/\\sqrt{d_k}$?",back:"For large $d_k$ the dot products grow large and push the softmax into regions with tiny gradients; scaling counteracts that.",type:"method",difficulty:2},
     {front:"Why use multi-head attention instead of one head?",back:"Different heads can attend to information from different representation subspaces at different positions, which a single averaged head cannot.",type:"method",difficulty:2},
     {front:"How does the Transformer know word order?",back:"Sinusoidal positional encodings are added to the input embeddings.",type:"method",difficulty:1},
     {front:"What BLEU did the big Transformer get on WMT 2014 EN-DE?",back:"28.4, over 2 BLEU above the best previous results including ensembles.",type:"result",difficulty:1},
@@ -437,7 +487,7 @@ const DEMO = {
   games:{
     quiz:[
       {question:"Which component does the Transformer remove entirely from earlier sequence models?",options:["Embeddings","Recurrence and convolution","Softmax","Dropout"],answer_index:1,explanation:"The title claim is literal: the model uses attention and feed-forward layers only."},
-      {question:"Why divide dot products by the square root of d_k?",options:["To make the model smaller","To keep softmax out of regions with tiny gradients","To speed up matrix multiplication","To normalise sentence length"],answer_index:1,explanation:"Large dot products would saturate the softmax, so they are scaled down."},
+      {question:"Why divide the dot products by $\\sqrt{d_k}$?",options:["To make the model smaller","To keep softmax out of regions with tiny gradients","To speed up matrix multiplication","To normalise sentence length"],answer_index:1,explanation:"Large dot products would saturate the softmax, so they are scaled down."},
       {question:"What supplies word-order information?",options:["Recurrent state","Convolution kernels","Positional encodings added to embeddings","A separate parser"],answer_index:2,explanation:"With no recurrence, order must be injected; the authors use sine and cosine functions."},
       {question:"What BLEU did the big model score on English-to-German?",options:["20.1","25.2","28.4","41.8"],answer_index:2,explanation:"41.8 is the English-to-French score."},
       {question:"What is a disadvantage of self-attention noted in the paper's analysis?",options:["Cannot be parallelised","Quadratic cost with sequence length","Needs recurrence for training","Cannot model long-range links"],answer_index:1,explanation:"Cost per layer is O(n squared times d), which is the usual criticism."},
@@ -822,6 +872,110 @@ async function paperTextFor(file) {
   if (!S.pdf) throw new Error('Couldn\'t read this PDF in your browser (the PDF reader failed to load). Check your connection, or switch to Anthropic or OpenAI in Settings, which read PDFs directly.');
   const t = await pdfToText(S.pdf); S.pdfTextCache = { f: file, t }; return t;
 }
+
+/* =====================================================================
+   Paperlens — equations.
+   Text written by the model may contain LaTeX between dollar signs. We find
+   it, show readable text immediately, and typeset it with KaTeX once loaded.
+   ===================================================================== */
+
+const SPACE = /[ \u00a0\u2009]/;       // only real spaces count: \n \t \f \r right after a $ are damaged LaTeX commands (\nu, \tau, \frac, \rho)
+/* ---- find math inside ordinary text (pandoc-style rules, so "$5 and $10" stays money) ---- */
+function mathSplit(text) {
+  const s = String(text ?? ''), out = []; let i = 0, buf = '', start = 0;
+  const flush = end => { if (buf || end > start) out.push({ t: 'text', s: buf, raw: s.slice(start, end) }); buf = ''; };
+  const push = (end, tex, d) => { flush(i); out.push({ t: 'math', s: tex, d, raw: s.slice(i, end) }); i = end; start = i; };
+  while (i < s.length) {
+    const c = s[i], n = s[i + 1];
+    if (c === '\\' && n === '$') { buf += '$'; i += 2; continue; }                                 // \$ is a literal dollar sign
+    if (c === '\\' && (n === '(' || n === '[')) {
+      const j = s.indexOf(n === '(' ? '\\)' : '\\]', i + 2);
+      if (j > 0 && s.slice(i + 2, j).trim()) { push(j + 2, s.slice(i + 2, j).trim(), n === '['); continue; }
+    }
+    if (c === '$') {
+      if (n === '$') {
+        const j = s.indexOf('$$', i + 2);
+        if (j > 0 && s.slice(i + 2, j).trim()) { push(j + 2, s.slice(i + 2, j).trim(), true); continue; }
+      } else if (n !== undefined && !SPACE.test(n)) {                                           // opening $ must touch the formula
+        let j = i + 1, hit = false;
+        while ((j = s.indexOf('$', j)) !== -1) {
+          if (s[j - 1] === '\\') { j++; continue; }                                               // an escaped dollar inside
+          if (!SPACE.test(s[j - 1]) && !/\d/.test(s[j + 1] || '') && j > i + 1 && !/\n\s*\n/.test(s.slice(i, j))) { push(j + 1, s.slice(i + 1, j), false); hit = true; break; }   // closing $ must touch it too, and not precede a digit
+          j++;
+        }
+        if (hit) continue;
+      }
+    }
+    buf += c; i++;
+  }
+  flush(s.length); return out;
+}
+
+/* ---- readable fallback (and mind-map labels): LaTeX → plain Unicode ---- */
+const GREEK = { alpha: 'α', beta: 'β', gamma: 'γ', delta: 'δ', epsilon: 'ε', varepsilon: 'ε', zeta: 'ζ', eta: 'η', theta: 'θ', vartheta: 'ϑ', iota: 'ι', kappa: 'κ', lambda: 'λ', mu: 'μ', nu: 'ν', xi: 'ξ', pi: 'π', rho: 'ρ', sigma: 'σ', tau: 'τ', upsilon: 'υ', phi: 'φ', varphi: 'φ', chi: 'χ', psi: 'ψ', omega: 'ω', Gamma: 'Γ', Delta: 'Δ', Theta: 'Θ', Lambda: 'Λ', Xi: 'Ξ', Pi: 'Π', Sigma: 'Σ', Phi: 'Φ', Psi: 'Ψ', Omega: 'Ω' };
+const SYMS = { times: '×', cdot: '·', pm: '±', mp: '∓', approx: '≈', sim: '∼', simeq: '≃', leq: '≤', le: '≤', geq: '≥', ge: '≥', neq: '≠', ne: '≠', equiv: '≡', infty: '∞', partial: '∂', nabla: '∇', sum: '∑', prod: '∏', int: '∫', in: '∈', notin: '∉', subset: '⊂', subseteq: '⊆', cup: '∪', cap: '∩', to: '→', rightarrow: '→', leftarrow: '←', Rightarrow: '⇒', Leftarrow: '⇐', leftrightarrow: '↔', mapsto: '↦', forall: '∀', exists: '∃', ldots: '…', cdots: '⋯', dots: '…', propto: '∝', angle: '∠', circ: '∘', ell: 'ℓ', hbar: 'ħ', emptyset: '∅', neg: '¬', land: '∧', lor: '∨', langle: '⟨', rangle: '⟩', mid: '|', quad: ' ', qquad: '  ', ' ': ' ', ',': ' ', ';': ' ', '!': '' };
+const SUPS = { 0: '⁰', 1: '¹', 2: '²', 3: '³', 4: '⁴', 5: '⁵', 6: '⁶', 7: '⁷', 8: '⁸', 9: '⁹', '+': '⁺', '-': '⁻', '−': '⁻', '=': '⁼', '(': '⁽', ')': '⁾', n: 'ⁿ', i: 'ⁱ', T: 'ᵀ', x: 'ˣ', y: 'ʸ', a: 'ᵃ', b: 'ᵇ', c: 'ᶜ', d: 'ᵈ', e: 'ᵉ', k: 'ᵏ', m: 'ᵐ', t: 'ᵗ' };
+const SUBS = { 0: '₀', 1: '₁', 2: '₂', 3: '₃', 4: '₄', 5: '₅', 6: '₆', 7: '₇', 8: '₈', 9: '₉', '+': '₊', '-': '₋', '=': '₌', '(': '₍', ')': '₎', a: 'ₐ', e: 'ₑ', h: 'ₕ', i: 'ᵢ', j: 'ⱼ', k: 'ₖ', l: 'ₗ', m: 'ₘ', n: 'ₙ', o: 'ₒ', p: 'ₚ', r: 'ᵣ', s: 'ₛ', t: 'ₜ', u: 'ᵤ', v: 'ᵥ', x: 'ₓ' };
+const BLACKBOARD = { R: 'ℝ', N: 'ℕ', Z: 'ℤ', Q: 'ℚ', C: 'ℂ', E: '𝔼', P: 'ℙ' };
+function latexToText(tex) {
+  let t = String(tex ?? '');
+  for (let k = 0; k < 3; k++) t = t.replace(/\\[dt]?frac\s*\{([^{}]*)\}\s*\{([^{}]*)\}/g, (m, a, b) => `(${a})/(${b})`);
+  t = t.replace(/\\sqrt\s*\{([^{}]*)\}/g, '√($1)').replace(/\\sqrt\s*([A-Za-z0-9])/g, '√$1')
+    .replace(/\\mathbb\s*\{([A-Za-z])\}/g, (m, c) => BLACKBOARD[c] || c)
+    .replace(/\\(?:mathrm|mathit|mathbf|boldsymbol|mathcal|mathsf|mathbb|text|textbf|textit|operatorname|hat|bar|vec|tilde|overline|underline)\s*\{([^{}]*)\}/g, '$1')
+    .replace(/\\(?:left|right|big|Big|bigg|Bigg)(?![A-Za-z])/g, '').replace(/\\\\/g, ' ')
+    .replace(/\\([A-Za-z]+|[ ,;!])/g, (m, n) => GREEK[n] ?? SYMS[n] ?? n);
+  const sup = x => [...x].every(c => SUPS[c]) ? [...x].map(c => SUPS[c]).join('') : '^(' + x + ')';
+  const sub = x => [...x].every(c => SUBS[c]) ? [...x].map(c => SUBS[c]).join('') : '_(' + x + ')';
+  t = t.replace(/\^\{([^{}]*)\}|\^([^\s{}])/g, (m, a, b) => sup(a ?? b)).replace(/_\{([^{}]*)\}|_([^\s{}])/g, (m, a, b) => sub(a ?? b));
+  return t.replace(/[{}]/g, '').replace(/\s+/g, ' ').trim();
+}
+const mathToText = text => mathSplit(text).map(p => p.t === 'text' ? p.s : latexToText(p.s)).join('');
+
+/* ---- HTML for text that may contain math (everything else is escaped) ---- */
+const texSpan = (tex, d) => `<span class="tex${d ? ' tex-d' : ''}" data-d="${d ? 1 : 0}" data-tex="${esc(tex)}">${esc(latexToText(tex))}</span>`;
+const rich = text => mathSplit(text).map(p => p.t === 'text' ? esc(p.s) : texSpan(p.s, p.d)).join('');
+function protectMath(text) {                                    // for markdown-ish rendering: hide math behind placeholders
+  const store = [];
+  const t = mathSplit(text).map(p => p.t === 'text' ? p.s.replace(/\u0000/g, '') : (store.push(texSpan(p.s, p.d)), '\u0000' + (store.length - 1) + '\u0000')).join('');
+  return { t, restore: html => html.replace(/\u0000(\d+)\u0000/g, (m, i) => store[+i] || '') };
+}
+
+/* ---- JSON hazard: "\beta" in a JSON string silently becomes a backspace character, "\frac" a form feed… ---- */
+const CTRL = { '\b': '\\b', '\f': '\\f', '\t': '\\t', '\r': '\\r', '\v': '\\v', '\x07': '\\a' };
+function fixMath(str) {
+  if (typeof str !== 'string' || str.indexOf('$') < 0) return str;
+  return mathSplit(str).map(p => p.t === 'text' ? p.raw : p.raw.replace(/[\b\f\t\r\v\x07]/g, c => CTRL[c]).replace(/([^\s\\])\n(?=[A-Za-z])/g, '$1\\n')).join('');
+}
+function deepFix(v) { return typeof v === 'string' ? fixMath(v) : Array.isArray(v) ? v.map(deepFix) : v && typeof v === 'object' ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, deepFix(x)])) : v; }
+const repairJsonEscapes = s => s.replace(/\\(?:["\\/bfnrt]|u[0-9a-fA-F]{4})|\\/g, m => m.length > 1 ? m : '\\\\');   // keep valid escapes, double stray backslashes
+
+/* ---- typeset with KaTeX (loaded on first use) ---- */
+const KATEX = 'https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.18/';
+let _katex = null, _katexFail = 0;
+function loadKatex() {
+  if (window.katex) return Promise.resolve();
+  if (_katex) return _katex;
+  _katex = new Promise((res, rej) => {
+    const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = KATEX + 'katex.min.css'; document.head.appendChild(l);
+    const s = document.createElement('script'); s.src = KATEX + 'katex.min.js'; s.onload = res; s.onerror = () => rej(new Error('KaTeX could not be loaded')); document.head.appendChild(s);
+  });
+  _katex.catch(() => { _katex = null; _katexFail = Date.now(); });
+  return _katex;
+}
+function typeset(root) {
+  const nodes = (root || document).querySelectorAll('.tex:not([data-done])'); if (!nodes.length) return;
+  if (!window.katex) { if (Date.now() - _katexFail > 30000) loadKatex().then(() => typeset(root), () => {}); return; }
+  nodes.forEach(el => {
+    try { window.katex.render(el.dataset.tex, el, { displayMode: el.dataset.d === '1', throwOnError: false, strict: 'ignore', trust: false, output: 'htmlAndMathml' }); el.setAttribute('data-done', '1'); }
+    catch (e) { el.setAttribute('data-done', 'err'); }
+  });
+}
+(function watch() {                                             // typeset whatever the app draws, wherever it draws it
+  if (typeof MutationObserver === 'undefined' || !document.body) return;
+  let queued = false;
+  new MutationObserver(() => { if (queued) return; queued = true; (window.requestAnimationFrame || setTimeout)(() => { queued = false; typeset(document.body); }); }).observe(document.body, { childList: true, subtree: true });
+})();
 
 /* =====================================================================
    Paperlens — find the real figures and tables in a PDF.
@@ -1225,13 +1379,13 @@ function buildSystem(aud, mode) {
   const textNote = mode === 'pdftext' ? '\nThe paper is given as plain text. Each page starts with a [Page N] marker: use N for every page number you report (pdf_page fields). You cannot see the figures themselves, so describe them only from their captions and the surrounding text, and say so rather than guessing.' : '';
   return `You are Paperlens, an expert analyst who helps researchers in any field grasp a paper fast. Read the paper carefully and respond with ONE JSON object and nothing else: no prose before or after, no code fences.
 
-Accuracy rules: only state what the paper supports. Quote numbers exactly as the paper reports them. If the paper does not say something, leave it out rather than guess. Write in plain text only: no markdown, no LaTeX; use unicode for symbols (α, ², ≈, √).
+Accuracy rules: only state what the paper supports. Quote numbers exactly as the paper reports them. If the paper does not say something, leave it out rather than guess. Write plain text with no markdown. Write every mathematical expression, equation, variable with a subscript or superscript, and special symbol in LaTeX between dollar signs: $e^{x}$ inline, and $$...$$ only for an important stand-alone equation. Ordinary words and plain numbers stay as normal text, and a literal dollar sign is written \\\\$ (doubled like every backslash). Because your whole reply is JSON, every backslash inside a JSON string must be doubled (write \\\\frac, \\\\alpha, \\\\times, never \\frac). Keep formulas short and standard: no custom macros and no \\\\begin environments.
 Audience: ${AUDIENCES[aud] || AUDIENCES.adjacent}.${textNote}
 Be concise and specific. Prefer concrete facts, numbers and names over general statements.
 
 JSON schema (keys in this exact order):
 {
- "meta": { "title": str, "authors": str (short, e.g. "Vaswani et al."), "venue_year": str or "", "field": str, "paper_type": str (e.g. "Randomised trial", "Method paper", "Review", "Theory"), "one_liner": str (max 25 words) },
+ "meta": { "title": str, "authors": str (short, e.g. "Vaswani et al."), "authors_full": [every author exactly as printed, in "Given Family" order; [] if unclear], "year": integer publication year, or null if not printed, "doi": str copied exactly as printed in the paper (such as "10.1234/abcd.5678"), or null if it is not printed, "journal": str (the journal or conference name as printed) or null, "venue_year": str or "", "field": str, "paper_type": str (e.g. "Randomised trial", "Method paper", "Review", "Theory"), "one_liner": str (max 25 words) },
  "overview": {
    "tldr": str (2 to 3 sentences, the whole paper in brief),
    "plain_english": str (3 to 4 sentences, no jargon),
@@ -1265,10 +1419,12 @@ function fileToB64(file) {
   return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(',')[1]); r.onerror = () => rej(new Error('Could not read that file.')); r.readAsDataURL(file); });
 }
 function parseModelJSON(text) {
-  let t = text.trim().replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '');
+  const t = text.trim().replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '');
   const a = t.indexOf('{'), b = t.lastIndexOf('}');
   if (a < 0 || b < a) throw new Error('The model did not return structured data.');
-  return JSON.parse(t.slice(a, b + 1));
+  const body = t.slice(a, b + 1);
+  try { return JSON.parse(body); }
+  catch (e) { try { return JSON.parse(repairJsonEscapes(body)); } catch (e2) { throw e; } }   // LaTeX backslashes the model forgot to double
 }
 
 async function analyze(src) {
@@ -1295,6 +1451,7 @@ async function analyze(src) {
     try { data = parseModelJSON(text); }
     catch (e) { throw new Error(stop === 'max_tokens' ? 'The analysis was cut off because the paper is very dense. Try again or choose a faster model.' : 'The response could not be read. Try again.'); }
     const paper = normalize(data);
+    paper.meta.doi = await verifyDoi(paper.meta.doi, src);
     paper.id = 'p' + Date.now().toString(36);
     try { await saveToLibrary(paper, src); } catch (e) { console.warn(e); toast('Could not save to your library (storage may be full)'); }
     S.abort = null; S.paper = paper; updateStages(text, true);
@@ -1307,10 +1464,12 @@ async function analyze(src) {
 }
 
 function normalize(d) {
+  d = deepFix(d);                                                    // heal LaTeX that JSON escaping turned into control characters
   const m = d.meta || {}, o = d.overview || {}, g = d.games || {};
   const title = m.title || 'Untitled paper';
   return {
-    meta: { title, authors: m.authors || '', venue: m.venue_year || '', field: m.field || '', type: m.paper_type || '', oneLiner: m.one_liner || '' },
+    meta: { title, authors: m.authors || '', venue: m.venue_year || '', field: m.field || '', type: m.paper_type || '', oneLiner: m.one_liner || '',
+      authorsFull: arr(m.authors_full).map(x => String(x || '').trim()).filter(Boolean).slice(0, 60), year: Number.isInteger(m.year) && m.year > 1000 && m.year < 2100 ? m.year : yearFrom(m.venue_year), doi: normalizeDoi(m.doi), journal: typeof m.journal === 'string' ? m.journal.trim() : '' },
     ov: {
       tldr: o.tldr || m.one_liner || '', plain: o.plain_english || '', problem: o.problem || '', approach: o.approach || '',
       findings: arr(o.key_findings).map(f => typeof f === 'string' ? { t: f, p: null } : { t: f?.text || '', p: Number.isInteger(f?.page) ? f.page : null }).filter(f => f.t), why: o.why_it_matters || '', limits: arr(o.limitations).filter(Boolean),
@@ -1413,7 +1572,7 @@ function updateStages(text, all) {
   const bar = $('#pbar'); if (bar) { bar.style.width = Math.max(2, pct) + '%'; bar.parentElement.setAttribute('aria-valuenow', Math.round(pct)); }
   const t = $('#ptxt'); if (t) t.textContent = all ? 'Done' : STAGES[cur][1] + '… ' + Math.round(pct) + '%';
   const title = /"title"\s*:\s*"((?:[^"\\]|\\.)*)"/.exec(text), tl = /"tldr"\s*:\s*"((?:[^"\\]|\\.)*)/.exec(text);
-  if (title && $('#live')) { $('#live').hidden = false; $('#live-t').textContent = jsonStr(title[1]); $('#live-s').textContent = tl ? jsonStr(tl[1]) : ''; }
+  if (title && $('#live')) { $('#live').hidden = false; $('#live-t').textContent = mathToText(jsonStr(title[1])); $('#live-s').textContent = tl ? mathToText(jsonStr(tl[1])) : ''; }
 }
 function showError(msg) {
   $('#tabs').hidden = true;
@@ -1423,7 +1582,7 @@ function showError(msg) {
 }
 
 /* ---------- screens: paper shell + tabs ---------- */
-const TABS = [['overview', 'Overview'], ['figures', 'Figures'], ['mindmap', 'Mind map'], ['cards', 'Flashcards'], ['play', 'Play'], ['chat', 'Chat']];
+const TABS = [['overview', 'Overview'], ['figures', 'Figures'], ['mindmap', 'Mind map'], ['cards', 'Flashcards'], ['play', 'Play'], ['chat', 'Chat'], ['notes', 'Notes']];
 function showPaper(tab) {
   const p = S.paper; if (!p) return showHome();
   document.title = p.meta.title + ' · Paperlens';
@@ -1432,7 +1591,7 @@ function showPaper(tab) {
   t.innerHTML = TABS.map(([id, name]) => `<button class="tab" role="tab" data-t="${id}" aria-selected="${id === tab}">${name}${counts[id] ? `<small>${counts[id]}</small>` : ''}</button>`).join('');
   $$('.tab', t).forEach(b => b.onclick = () => showPaper(b.dataset.t));
   teardown(); S.tab = tab; S.view = 'paper'; window.scrollTo(0, 0);
-  ({ overview: viewOverview, figures: viewFigures, mindmap: viewMindmap, cards: viewCards, play: viewPlay, chat: viewChat })[tab](p);
+  ({ overview: viewOverview, figures: viewFigures, mindmap: viewMindmap, cards: viewCards, play: viewPlay, chat: viewChat, notes: viewNotes })[tab](p);
 }
 
 /* ---------- page chips: verify a claim in place ---------- */
@@ -1450,27 +1609,29 @@ function viewOverview(p) {
   ${p.id === 'demo' ? `<div class="sample"><span class="grow"><b>Sample paper.</b> This is a finished example of what Paperlens produces.</span><button class="btn small" id="own">Analyze your own</button></div>` : ''}
   <div class="paper-head">
     <div class="meta">${m.field ? `<span class="chip">${esc(m.field)}</span>` : ''}${m.type ? `<span class="chip plain">${esc(m.type)}</span>` : ''}${m.venue ? `<span class="chip plain">${esc(m.venue)}</span>` : ''}</div>
-    <h1 style="margin-top:14px">${esc(m.title)}</h1>
+    <h1 style="margin-top:14px">${rich(m.title)}</h1>
     ${m.authors ? `<p class="authors">${esc(m.authors)}</p>` : ''}
-    ${o.tldr ? `<p class="tldr"><span class="mark">${esc(o.tldr)}</span></p>` : ''}
-    ${o.readIf ? `<p class="readif" style="margin-top:14px">${esc(o.readIf)}</p>` : ''}
+    ${o.tldr ? `<p class="tldr"><span class="mark">${rich(o.tldr)}</span></p>` : ''}
+    ${o.readIf ? `<p class="readif" style="margin-top:14px">${rich(o.readIf)}</p>` : ''}
   </div>
-  ${o.snapshot.length ? `<dl class="snap" style="margin-bottom:0">${o.snapshot.map(s => `<div><dt>${esc(s.label)}</dt><dd>${esc(s.value)}</dd></div>`).join('')}</dl>` : ''}
-  ${o.findings.length ? `<h2 class="section-h" style="margin-top:40px">What they found</h2><ul class="findings">${o.findings.map(f => `<li>${esc(f.t)}${f.p ? pageChip(f.p) : ''}</li>`).join('')}</ul>` : ''}
+  ${o.snapshot.length ? `<dl class="snap" style="margin-bottom:0">${o.snapshot.map(s => `<div><dt>${rich(s.label)}</dt><dd>${rich(s.value)}</dd></div>`).join('')}</dl>` : ''}
+  ${o.findings.length ? `<h2 class="section-h" style="margin-top:40px">What they found</h2><ul class="findings">${o.findings.map((f, i) => `<li>${rich(f.t)}${f.p ? pageChip(f.p) : ''}<button class="addnote" data-note="${i}" aria-label="Add this finding to my notes">＋ note</button></li>`).join('')}</ul>` : ''}
   <div class="two" style="margin-top:32px">
-    ${o.problem ? `<div class="card"><h3>The problem</h3><p>${esc(o.problem)}</p></div>` : ''}
-    ${o.approach ? `<div class="card"><h3>What they did</h3><p>${esc(o.approach)}</p></div>` : ''}
+    ${o.problem ? `<div class="card"><h3>The problem</h3><p>${rich(o.problem)}</p></div>` : ''}
+    ${o.approach ? `<div class="card"><h3>What they did</h3><p>${rich(o.approach)}</p></div>` : ''}
   </div>
-  ${o.plain ? `<div class="card plain" style="margin-top:16px"><h3>In plain English</h3><p>${esc(o.plain)}</p></div>` : ''}
+  ${o.plain ? `<div class="card plain" style="margin-top:16px"><h3>In plain English</h3><p>${rich(o.plain)}</p></div>` : ''}
   <div class="two" style="margin-top:16px">
-    ${o.why ? `<div class="card"><h3>Why it matters</h3><p>${esc(o.why)}</p></div>` : ''}
-    ${o.limits.length ? `<div class="card"><h3>Caveats</h3><ul class="limits">${o.limits.map(l => `<li>${esc(l)}</li>`).join('')}</ul></div>` : ''}
+    ${o.why ? `<div class="card"><h3>Why it matters</h3><p>${rich(o.why)}</p></div>` : ''}
+    ${o.limits.length ? `<div class="card"><h3>Caveats</h3><ul class="limits">${o.limits.map(l => `<li>${rich(l)}</li>`).join('')}</ul></div>` : ''}
   </div>
-  ${p.glossary.length ? `<h2 class="section-h">Terms worth knowing</h2><div class="gloss">${p.glossary.map(g => `<div><b>${esc(g.term)}</b><p>${esc(g.definition)}</p></div>`).join('')}</div>` : ''}
+  ${p.glossary.length ? `<h2 class="section-h">Terms worth knowing</h2><div class="gloss">${p.glossary.map(g => `<div><b>${rich(g.term)}</b><p>${rich(g.definition)}</p></div>`).join('')}</div>` : ''}
+  <div id="cite-slot" style="margin-top:30px"></div>
   <div class="next-step"><h3>Want more than the gist?</h3><p class="muted">Check the evidence next, then lock it in.</p>
     <div class="row" style="margin-top:14px"><button class="btn primary" id="go-figs">See the key figures</button><button class="btn" id="go-cards">Study the flashcards</button><button class="btn" id="go-chat">Ask a question</button></div></div>
   <div class="row" style="margin-top:18px"><button class="btn small" id="copy">Copy summary</button><button class="btn small" id="md">${ICON.dl}Download notes (.md)</button></div>
   <p class="disclaimer">Written by AI from the paper. Page links show where each claim comes from, so check anything important against the source.</p>`;
+  renderCite(p); $$('[data-note]').forEach(b => b.onclick = () => { const f = o.findings[+b.dataset.note]; addToNotes(p, f.t, f.p); });
   $('#go-figs').onclick = () => showPaper('figures'); $('#go-chat').onclick = () => showPaper('chat'); $('#own')?.addEventListener('click', showHome);
   $('#go-cards').onclick = () => showPaper('cards');
   $('#copy').onclick = () => navigator.clipboard.writeText(toMarkdown(p)).then(() => toast('Summary copied'), () => toast('Copy failed. Use the download instead.'));
@@ -1496,11 +1657,11 @@ function figCard(f, i) {
     <button class="fig-img" data-i="${i}" aria-label="Enlarge ${esc(f.label || f.title || 'figure')}"><span class="ph">Checking the PDF…</span></button>
     <div class="fig-body">
       <div class="row" style="gap:6px"><span class="chip">${esc(f.label || f.kind || 'Figure')}</span>${f.kind ? `<span class="chip plain">${esc(f.kind)}</span>` : ''}<span class="chip plain" data-pg hidden></span></div>
-      <h3>${esc(f.title || '')}</h3>
-      ${f.what_it_shows ? `<p>${esc(f.what_it_shows)}</p>` : ''}
-      ${f.why_it_matters ? `<p class="why">${esc(f.why_it_matters)}</p>` : ''}
-      ${f.takeaway ? `<p class="take"><span class="mark">${esc(f.takeaway)}</span></p>` : ''}
-      ${f.check ? `<p class="look"><b>Look closely:</b> ${esc(f.check)}</p>` : ''}
+      <h3>${rich(f.title || '')}</h3>
+      ${f.what_it_shows ? `<p>${rich(f.what_it_shows)}</p>` : ''}
+      ${f.why_it_matters ? `<p class="why">${rich(f.why_it_matters)}</p>` : ''}
+      ${f.takeaway ? `<p class="take"><span class="mark">${rich(f.takeaway)}</span></p>` : ''}
+      ${f.check ? `<p class="look"><b>Look closely:</b> ${rich(f.check)}</p>` : ''}
       <div class="row fig-actions" hidden><button class="btn small" data-full>Open the full page</button></div>
     </div></article>`;
 }
@@ -1576,7 +1737,7 @@ function chatSystem(mode) {
 
 Ground every answer in the paper. If the paper does not say, state that plainly; you may then add general knowledge, clearly labelled as coming from outside the paper. Quote numbers exactly as the paper reports them, and never invent citations or results.
 Lead with the answer, then give the support. Be concise unless asked for depth.${cite}
-Format: short paragraphs, "-" bullets when useful, **bold** sparingly. No headings, no tables, no LaTeX; use unicode for symbols.
+Format: short paragraphs, "-" bullets when useful, **bold** sparingly. No headings and no tables. Write any math in LaTeX between dollar signs ($e^{x}$ inline, $$...$$ for an important stand-alone equation) and keep ordinary words and plain numbers as normal text. A literal dollar sign is written \\$.
 Audience: ${AUDIENCES[S.settings.audience] || AUDIENCES.adjacent}.`;
 }
 async function chatSourceBlock() {
@@ -1596,15 +1757,16 @@ async function chatSourceBlock() {
 
 /* tiny, safe markdown: paragraphs, bullets, numbered lists, bold, code, page chips */
 function mdLite(text) {
+  const { t, restore } = protectMath(text);                       // keep equations safe from the bold/code rules
   const inline = s => s.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/`([^`]+)`/g, '<code>$1</code>')
     .replace(PAGE_RE, (m, n) => `<button class="pgc" data-pg="${n}">${m.slice(1, -1)}</button>`);
-  return esc(text).split(/\n{2,}/).map(b => {
+  return restore(esc(t).split(/\n{2,}/).map(b => {
     const lines = b.split('\n').filter(l => l.trim());
     if (!lines.length) return '';
     if (lines.every(l => /^\s*[-*•]\s+/.test(l))) return '<ul>' + lines.map(l => '<li>' + inline(l.replace(/^\s*[-*•]\s+/, '')) + '</li>').join('') + '</ul>';
     if (lines.every(l => /^\s*\d+[.)]\s+/.test(l))) return '<ol>' + lines.map(l => '<li>' + inline(l.replace(/^\s*\d+[.)]\s+/, '')) + '</li>').join('') + '</ol>';
     return '<p>' + lines.map(l => inline(l.replace(/^#+\s*(.*)$/, '<b>$1</b>'))).join('<br>') + '</p>';
-  }).join('');
+  }).join(''));
 }
 
 function viewChat(p) {
@@ -1633,7 +1795,8 @@ function viewChat(p) {
   const paint = () => {
     msgsEl.innerHTML = chat.msgs.map((m, i) => m.role === 'user'
       ? `<div class="msg user"><div class="bubble">${esc(m.content)}</div></div>`
-      : `<div class="msg ai"><div class="bubble ${m.error ? 'bad' : ''}" data-i="${i}">${m.content ? mdLite(m.content) : '<span class="typing"><i></i><i></i><i></i></span>'}</div></div>`).join('');
+      : `<div class="msg ai"><div class="aicol"><div class="bubble ${m.error ? 'bad' : ''}" data-i="${i}">${m.content ? mdLite(m.content) : '<span class="typing"><i></i><i></i><i></i></span>'}</div>${m.content && !(ctrl && i === chat.msgs.length - 1) ? `<button class="addnote" data-save="${i}">Save to notes</button>` : ''}</div></div>`).join('');
+    $$('[data-save]').forEach(b => b.onclick = () => addToNotes(p, chat.msgs[+b.dataset.save].content));
     $('#starters').innerHTML = chat.msgs.length ? '' : `<p class="muted" style="margin-bottom:8px">Try one of these</p>` + CHAT_STARTERS.map(s => `<button class="pill" data-s="${esc(s)}">${esc(s)}</button>`).join('');
     $('#clear').hidden = !chat.msgs.length;
     $$('[data-s]').forEach(b => b.onclick = () => send(b.dataset.s));
@@ -1708,14 +1871,20 @@ const idb = (store, mode, fn) => idbOpen().then(db => new Promise((res, rej) => 
   t.oncomplete = () => res(out); t.onerror = () => rej(t.error); t.onabort = () => rej(t.error || new Error('Storage was refused (it may be full)'));
 }));
 const progKey = id => 'pl.prog.' + id, chatKey = id => 'pl.chat.' + id, bestKey = (id, m) => 'pl.best.' + id + '.' + m;
-const legacyRec = x => Object.assign({ added: x.date || 0, opened: x.date || 0, hasSource: null, srcName: '', srcSize: 0, authors: x.data?.meta?.authors || '', type: x.data?.meta?.type || '', venue: x.data?.meta?.venue || '' }, x);
+const recDefaults = () => ({ folders: [], status: '', starred: false, notes: '', relevance: '', theme: '' });
+const withDefaults = r => Object.assign(recDefaults(), r);
+const legacyRec = x => Object.assign(recDefaults(), { added: x.date || 0, opened: x.date || 0, hasSource: null, srcName: '', srcSize: 0, authors: x.data?.meta?.authors || '', type: x.data?.meta?.type || '', venue: x.data?.meta?.venue || '' }, x);
 
 const lib = {
   async list() {
     const rows = (await libMode()) === 'idb' ? await idb('papers', 'readonly', s => s.getAll()) : ls.get('pl.lib', []).map(legacyRec);
-    return rows.sort((a, b) => (b.opened || 0) - (a.opened || 0));
+    return rows.map(withDefaults).sort((a, b) => (b.opened || 0) - (a.opened || 0));
   },
-  async get(id) { return (await libMode()) === 'idb' ? idb('papers', 'readonly', s => s.get(id)) : ls.get('pl.lib', []).map(legacyRec).find(x => x.id === id); },
+  async get(id) { const r = (await libMode()) === 'idb' ? await idb('papers', 'readonly', s => s.get(id)) : ls.get('pl.lib', []).map(legacyRec).find(x => x.id === id); return r ? withDefaults(r) : r; },
+  update(id, patch) {                                         // queued, so two quick edits to one paper never overwrite each other
+    const run = async () => { const r = await lib.get(id); if (!r) return null; Object.assign(r, typeof patch === 'function' ? patch(r) : patch); await lib.put(r); return r; };
+    return (lib._q = (lib._q || Promise.resolve()).then(run, run));
+  },
   async put(rec) {
     if ((await libMode()) === 'idb') return idb('papers', 'readwrite', s => s.put(rec));
     let a = ls.get('pl.lib', []).filter(x => x.id !== rec.id); a.unshift(rec); a = a.slice(0, 15);
@@ -1737,12 +1906,40 @@ const lib = {
   async usage() { try { const e = await navigator.storage.estimate(); return e.usage || 0; } catch (e) { return null; } }
 };
 
+/* ---------- folders: simple, flat, a paper can live in several ---------- */
+const FOLDER_COLORS = ['#2447d6', '#0b7a6e', '#b4570b', '#7c3aed', '#be185d', '#4d7c0f', '#0369a1', '#a16207'];
+const normName = s => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+const folders = {
+  all: () => arr(ls.get('pl.folders', [])).filter(f => f && f.id && f.name),
+  save(a) { ls.set('pl.folders', a); },
+  add(name) {
+    name = String(name || '').trim().replace(/\s+/g, ' ').slice(0, 60); if (!name) return null;
+    const a = this.all(), ex = a.find(f => normName(f.name) === normName(name)); if (ex) return ex;
+    const f = { id: 'f' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), name, color: FOLDER_COLORS[a.length % FOLDER_COLORS.length], created: Date.now() };
+    a.push(f); this.save(a); return f;
+  },
+  rename(id, name) { name = String(name || '').trim().replace(/\s+/g, ' ').slice(0, 60); if (!name) return false; const a = this.all(), f = a.find(x => x.id === id); if (!f) return false; f.name = name; this.save(a); return true; },
+  async remove(id) {                                          // papers are never deleted, only unfiled
+    this.save(this.all().filter(f => f.id !== id));
+    for (const r of await lib.list()) if (arr(r.folders).includes(id)) await lib.update(r.id, { folders: r.folders.filter(x => x !== id) });
+  }
+};
+function matchFolder(field) {                                 // a folder named like the paper's field
+  const f = normName(field); if (!f) return null;
+  return folders.all().find(x => { const n = normName(x.name); return n === f || (n.length > 3 && (f.includes(n) || n.includes(f))); }) || null;
+}
+function searchBlob(r) {
+  const d = r.data || {}, o = d.ov || {}, names = arr(r.folders).map(id => (folders.all().find(f => f.id === id) || {}).name).filter(Boolean);
+  return [r.title, r.authors, r.field, r.type, r.venue, o.tldr, arr(o.findings).map(f => f.t || f).join(' '), arr(d.glossary).map(g => g.term).join(' '), arr(d.figures).map(f => f.title).join(' '), r.notes, r.relevance, r.theme, names.join(' ')].join(' ').toLowerCase();
+}
+
 /* ---------- helpers ---------- */
 function upgradePaper(p) {                                   // papers saved by older versions
   p.ov = p.ov || {}; p.ov.findings = arr(p.ov.findings).map(f => typeof f === 'string' ? { t: f, p: null } : f).filter(f => f && f.t);
   ['limits', 'snapshot'].forEach(k => p.ov[k] = arr(p.ov[k]));
   ['glossary', 'figures', 'cards', 'quiz', 'fof', 'match'].forEach(k => p[k] = arr(p[k]));
   p.mindmap = p.mindmap && p.mindmap.label ? p.mindmap : { label: p.meta.title, children: [] };
+  p.meta = Object.assign({ authorsFull: [], year: null, doi: '', journal: '' }, p.meta); p.meta.authorsFull = arr(p.meta.authorsFull);
   return p;
 }
 const isPaper = x => !!(x && typeof x === 'object' && x.id && x.meta && typeof x.meta.title === 'string' && x.ov && Array.isArray(x.figures) && Array.isArray(x.cards));
@@ -1767,17 +1964,24 @@ async function migrateLegacy() {                              // move the old lo
 
 /* ---------- save / open ---------- */
 async function saveToLibrary(p, src) {
-  const rec = { id: p.id, title: p.meta.title, authors: p.meta.authors, field: p.meta.field, type: p.meta.type, venue: p.meta.venue,
-    added: Date.now(), opened: Date.now(), hasSource: null, srcName: '', srcSize: 0, data: p };
+  const rec = Object.assign(recDefaults(), { id: p.id, title: p.meta.title, authors: p.meta.authors, field: p.meta.field, type: p.meta.type, venue: p.meta.venue,
+    added: Date.now(), opened: Date.now(), hasSource: null, srcName: '', srcSize: 0, data: p });
   if (src && S.settings.keepPdf !== false) {
     try {
       if (src.pdf && await lib.putSource(p.id, { blob: src.pdf })) { rec.hasSource = 'pdf'; rec.srcName = src.pdf.name || 'paper.pdf'; rec.srcSize = src.pdf.size || 0; }
       else if (src.text && await lib.putSource(p.id, { text: src.text.slice(0, 450000) })) { rec.hasSource = 'text'; rec.srcSize = src.text.length; }
     } catch (e) { console.warn('Could not keep a copy of the source:', e); }
   }
+  const notes = [];
+  try {
+    const nt = normName(p.meta.title), doi = (p.meta.doi || '').toLowerCase();
+    const dup = (await lib.list()).find(x => x.id !== p.id && ((nt && normName(x.title) === nt) || (doi && String(x.data?.meta?.doi || '').toLowerCase() === doi)));
+    if (dup) notes.push('Looks like a paper you already saved ("' + dup.title.slice(0, 50) + '"). Both are kept.');
+    const mf = matchFolder(p.meta.field); if (mf) { rec.folders = [mf.id]; notes.push('Filed in ' + mf.name); }
+  } catch (e) {}
   await lib.put(rec);
   try { navigator.storage?.persist?.(); } catch (e) {}          // ask the browser not to evict it
-  refreshLibCount(); return rec;
+  refreshLibCount(); if (notes.length) toast(notes.join('. ')); return rec;
 }
 async function persistPaper(p) { try { const r = await lib.get(p.id); if (r) { r.data = p; await lib.put(r); } } catch (e) {} }
 async function openPaper(id, tab) {
@@ -1793,37 +1997,94 @@ async function openPaper(id, tab) {
 }
 
 /* ---------- the Library page ---------- */
-const libState = { q: '', sort: 'opened' };
+const libState = { q: '', sort: 'opened', folder: 'all', status: '', sel: new Set(), view: ls.get('pl.libview', 'cards') };
+const STATUS = { '': 'Mark status', toread: 'To read', reading: 'Reading', read: 'Read' };
+const STATUS_NEXT = { '': 'toread', toread: 'reading', reading: 'read', read: '' };
 function libStats(rec) {
   const prog = ls.get(progKey(rec.id), null), total = arr(rec.data?.cards).length, known = prog ? arr(prog.known).filter(i => i < total).length : 0;
   return { known, total, quiz: ls.get(bestKey(rec.id, 'quiz'), null), fof: ls.get(bestKey(rec.id, 'fof'), null), match: ls.get(bestKey(rec.id, 'match'), null) };
 }
 function libCard(r) {
-  const st = libStats(r), pct = st.total ? Math.round(st.known / st.total * 100) : 0;
+  const st = libStats(r), pct = st.total ? Math.round(st.known / st.total * 100) : 0, fl = folders.all();
   const scores = [st.quiz != null ? 'Best quiz ' + st.quiz + ' pts' : '', st.fof != null ? 'Fact or fiction ' + st.fof + ' pts' : '', st.match != null ? 'Pair up ' + st.match.toFixed(1) + ' s' : ''].filter(Boolean);
-  return `<article class="card libc" data-id="${esc(r.id)}">
+  const fchips = arr(r.folders).map(id => fl.find(f => f.id === id)).filter(Boolean).map(f => `<span class="chip plain fcp" style="--c:${f.color}"><i class="dot"></i>${esc(f.name)}</span>`).join('');
+  return `<article class="card libc" data-id="${esc(r.id)}" draggable="true">
+    <label class="libc-sel" title="Select to compare or move"><input type="checkbox" data-sel aria-label="Select ${esc(r.title)}" ${libState.sel.has(r.id) ? 'checked' : ''}></label>
     <div class="libc-main">
       <h3><button class="linklike" data-open>${esc(r.title)}</button></h3>
-      ${r.authors || r.venue ? `<p class="muted">${esc([r.authors, r.venue].filter(Boolean).join(' · '))}</p>` : ''}
-      <div class="row" style="gap:6px;margin-top:8px">${r.field ? `<span class="chip">${esc(r.field)}</span>` : ''}${r.type ? `<span class="chip plain">${esc(r.type)}</span>` : ''}${r.hasSource ? `<span class="chip plain" title="A copy is saved on this device">${r.hasSource === 'pdf' ? 'PDF saved' : 'Text saved'}${r.srcSize ? ' · ' + fmtBytes(r.srcSize) : ''}</span>` : ''}</div>
+      ${r.authors || r.venue ? `<p class="muted libc-authors">${esc([r.authors, r.venue].filter(Boolean).join(' · '))}</p>` : ''}
+      <div class="row" style="gap:6px;margin-top:8px">${r.field ? `<span class="chip">${esc(r.field)}</span>` : ''}${r.type ? `<span class="chip plain">${esc(r.type)}</span>` : ''}${fchips}${r.hasSource ? `<span class="chip plain" title="A copy is saved on this device">${r.hasSource === 'pdf' ? 'PDF saved' : 'Text saved'}${r.srcSize ? ' · ' + fmtBytes(r.srcSize) : ''}</span>` : ''}</div>
       <p class="muted libc-meta">Added ${esc(fmtAgo(r.added))}${r.opened && r.opened !== r.added ? ' · Opened ' + esc(fmtAgo(r.opened)) : ''}</p>
       ${st.total ? `<div class="libc-prog"><div class="bar" role="progressbar" aria-label="Flashcards learned" aria-valuemin="0" aria-valuemax="${st.total}" aria-valuenow="${st.known}"><i style="width:${pct}%"></i></div><span>${st.known} of ${st.total} flashcards learned${scores.length ? ' · ' + esc(scores.join(' · ')) : ''}</span></div>` : ''}
     </div>
     <div class="libc-act"><button class="btn primary small" data-open>Open</button>
+      <button class="btn small ghost star" data-star aria-pressed="${!!r.starred}" aria-label="${r.starred ? 'Remove star' : 'Star this paper'}" title="Star">${r.starred ? '★' : '☆'}</button>
+      <button class="btn small ${r.status ? '' : 'ghost'} st-${r.status || 'none'}" data-status title="Click to change: To read, Reading, Read">${esc(STATUS[r.status || ''])}</button>
+      <button class="btn small ghost" data-folders>Folders</button>
       ${r.hasSource ? '<button class="btn small ghost" data-rmsrc>Remove saved copy</button>' : ''}<button class="btn small ghost" data-del>Delete</button></div>
   </article>`;
 }
+
+/* ---- small dialogs ---- */
+function askText({ title, label, value = '', ok = 'Save' }) {
+  return new Promise(res => {
+    $('.scrim')?.remove();
+    const el = document.createElement('div'); el.className = 'scrim';
+    el.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="at-t"><h2 id="at-t">${esc(title)}</h2>
+      <div class="field"><label for="at">${esc(label)}</label><input id="at" maxlength="60" autocomplete="off" value="${esc(value)}"></div>
+      <div class="row" style="margin-top:18px"><button class="btn primary" id="at-ok">${esc(ok)}</button><button class="btn ghost" id="at-no">Cancel</button></div></div>`;
+    document.body.appendChild(el);
+    const done = v => { el.remove(); res(v); }, inp = $('#at', el);
+    $('#at-ok', el).onclick = () => done(inp.value.trim() || null); $('#at-no', el).onclick = () => done(null);
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter') done(inp.value.trim() || null); });
+    el.addEventListener('click', e => { if (e.target === el) done(null); });
+    setTimeout(() => { inp.focus(); inp.select(); }, 30);
+  });
+}
+async function openFolderPicker(ids, onChange) {
+  $('.scrim')?.remove();
+  const el = document.createElement('div'); el.className = 'scrim';
+  el.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="fp-t"><h2 id="fp-t">Folders</h2>
+    <p class="muted" id="fp-s"></p><div id="fp-list" style="margin-top:12px"></div>
+    <div class="field" style="margin-top:14px"><label for="fp-new">New folder</label><div class="row" style="flex-wrap:nowrap"><input id="fp-new" maxlength="60" placeholder="e.g. Neuroscience" autocomplete="off"><button class="btn" id="fp-add">Add</button></div></div>
+    <div class="row" style="margin-top:18px"><button class="btn primary" id="fp-done">Done</button></div></div>`;
+  document.body.appendChild(el);
+  const render = async () => {
+    const recs = (await lib.list()).filter(r => ids.includes(r.id)), fl = folders.all();
+    $('#fp-s', el).textContent = ids.length === 1 ? (recs[0] ? recs[0].title : '') : ids.length + ' papers selected. A tick means all of them are in that folder.';
+    $('#fp-list', el).innerHTML = fl.length ? fl.map(f => `<label class="check" style="margin:6px 0"><input type="checkbox" data-fid="${esc(f.id)}" ${recs.length && recs.every(r => arr(r.folders).includes(f.id)) ? 'checked' : ''}><span><i class="dot" style="--c:${f.color}"></i> <b>${esc(f.name)}</b></span></label>`).join('') : '<p class="muted">No folders yet. Create one below.</p>';
+    $$('[data-fid]', el).forEach(cb => cb.onchange = async () => {
+      for (const r of recs) await lib.update(r.id, x => ({ folders: cb.checked ? [...new Set([...arr(x.folders), cb.dataset.fid])] : arr(x.folders).filter(i => i !== cb.dataset.fid) }));
+      onChange && onChange();
+    });
+  };
+  const add = async () => {
+    const f = folders.add($('#fp-new', el).value); if (!f) return;
+    for (const id of ids) await lib.update(id, x => ({ folders: [...new Set([...arr(x.folders), f.id])] }));
+    $('#fp-new', el).value = ''; await render(); onChange && onChange();
+  };
+  $('#fp-add', el).onclick = add; $('#fp-new', el).addEventListener('keydown', e => { if (e.key === 'Enter') add(); });
+  $('#fp-done', el).onclick = () => el.remove(); el.addEventListener('click', e => { if (e.target === el) el.remove(); });
+  await render(); setTimeout(() => $('#fp-new', el)?.focus(), 30);
+}
+
 async function showLibrary() {
   teardown(); S.paper = null; S.view = 'library'; $('#tabs').hidden = true; document.title = 'Library · Paperlens';
   let items = [], mode = 'idb'; try { items = await lib.list(); mode = await libMode(); } catch (e) { console.warn(e); }
   if (S.view !== 'library') return;
+  libState.sel = new Set([...libState.sel].filter(id => items.some(r => r.id === id)));
   app().innerHTML = `
-  <div class="row" style="justify-content:space-between;align-items:flex-start;margin-bottom:22px">
+  <div class="row" style="justify-content:space-between;align-items:flex-start;margin-bottom:18px">
     <div><h1 style="font-size:clamp(28px,4vw,38px)">Your library</h1>
       <p class="muted" style="margin-top:6px;max-width:56ch">Every paper you analyze is saved here, on this device only, so you only ever see your own. No account needed.</p></div>
     <button class="btn primary" id="lib-new">Analyze a new paper</button></div>
-  ${items.length ? `<div class="lib-tools"><div class="field" style="flex:1;min-width:220px"><label for="lib-q" class="sr">Search your library</label><input id="lib-q" type="search" placeholder="Search by title, author or field…" value="${esc(libState.q)}"></div>
-    <div class="field"><label for="lib-sort" class="sr">Sort by</label><select id="lib-sort"><option value="opened">Recently opened</option><option value="added">Newest first</option><option value="title">Title A to Z</option><option value="field">Field</option></select></div></div>` : ''}
+  ${items.length ? `<div class="fbar" id="fbar" role="tablist" aria-label="Folders"></div>
+  <div id="fhead"></div><div id="suggest"></div>
+  <div class="lib-tools"><div class="field" style="flex:1;min-width:220px"><label for="lib-q" class="sr">Search your library</label><input id="lib-q" type="search" placeholder="Search titles, authors, findings, notes…" value="${esc(libState.q)}"></div>
+    <div class="field"><label for="lib-status" class="sr">Reading status</label><select id="lib-status"><option value="">Any status</option><option value="toread">To read</option><option value="reading">Reading</option><option value="read">Read</option></select></div>
+    <div class="field"><label for="lib-sort" class="sr">Sort by</label><select id="lib-sort"><option value="opened">Recently opened</option><option value="added">Newest first</option><option value="title">Title A to Z</option><option value="field">Field</option></select></div>
+    <button class="btn" id="lib-view" aria-pressed="${libState.view === 'compact'}" title="Switch between detailed cards and a compact list">${libState.view === 'compact' ? 'Detailed view' : 'Compact view'}</button></div>
+  <div id="selbar" class="selbar" hidden></div>` : ''}
   <div id="lib-list" class="lib-list"></div>
   <section class="card lib-data"><h3>Your data</h3>
     <p class="muted" id="lib-usage">Calculating…</p>
@@ -1831,21 +2092,62 @@ async function showLibrary() {
     <div class="row" style="margin-top:14px"><button class="btn small" id="lib-export">${ICON.dl}Export backup</button>
       <label class="check" style="margin:0;padding:6px 10px"><input type="checkbox" id="lib-incl"> <span>Include saved PDFs <small style="display:inline">(larger file)</small></span></label>
       <label class="btn small">Import backup<input type="file" id="lib-import" accept=".json,application/json" class="sr"></label></div></section>`;
-  $('#lib-new').onclick = showHome; $('#lib-sort').value = libState.sort;
+  $('#lib-new').onclick = showHome;
+  if ($('#lib-sort')) { $('#lib-sort').value = libState.sort; $('#lib-status').value = libState.status; }
+  const folderExists = id => folders.all().some(f => f.id === id);
+  const scoped = () => items.filter(r => { const f = libState.folder; return f === 'all' || (f === 'starred' && r.starred) || (f === 'unfiled' && !arr(r.folders).length) || arr(r.folders).includes(f); });
+  const reload = async () => { items = await lib.list(); paint(); refreshLibCount(); fillUsage(); };
+  const move = async (ids, fid) => { for (const id of ids) await lib.update(id, x => ({ folders: [...new Set([...arr(x.folders), fid])] })); await reload(); toast('Added to ' + (folders.all().find(f => f.id === fid) || {}).name); };
+
   const paint = () => {
+    if (!items.length) { $('#lib-list').innerHTML = `<div class="done"><h2>Nothing here yet</h2><p>Papers you analyze will appear here automatically.</p><button class="btn primary" id="lib-first">Analyze your first paper</button></div>`; $('#lib-first')?.addEventListener('click', showHome); return; }
+    if (libState.folder !== 'all' && !['starred', 'unfiled'].includes(libState.folder) && !folderExists(libState.folder)) libState.folder = 'all';
+    const fl = folders.all(), cnt = id => items.filter(r => arr(r.folders).includes(id)).length;
+    const chips = [['all', 'All papers', items.length], ['starred', '★ Starred', items.filter(r => r.starred).length], ['unfiled', 'Unfiled', items.filter(r => !arr(r.folders).length).length], ...fl.map(f => [f.id, f.name, cnt(f.id), f.color])];
+    $('#fbar').innerHTML = chips.map(([id, name, n, color]) => `<button class="fchip" role="tab" aria-selected="${libState.folder === id}" data-f="${esc(id)}" ${color ? `style="--c:${color}"` : ''} ${color ? 'data-drop' : ''}>${color ? '<i class="dot"></i>' : ''}${esc(name)} <span class="n">${n}</span></button>`).join('') + `<button class="fchip add" id="f-new">＋ New folder</button>`;
+    const cur = fl.find(f => f.id === libState.folder), inScope = scoped();
+    $('#fhead').innerHTML = `<div class="fhead">${cur ? `<h2><i class="dot" style="--c:${cur.color}"></i>${esc(cur.name)}</h2><span class="muted">${inScope.length} paper${inScope.length === 1 ? '' : 's'}</span><span class="spacer"></span><button class="btn small ghost" id="f-ren">Rename</button><button class="btn small ghost" id="f-del">Delete folder</button>` : `<span class="muted">${inScope.length} paper${inScope.length === 1 ? '' : 's'}</span><span class="spacer"></span>`}
+      <details class="exp"><summary class="btn small ghost">Export these ${inScope.length}</summary><div class="row" style="margin-top:8px"><button class="btn small" id="x-bib">Citations (.bib)</button><button class="btn small" id="x-md">Notes (.md)</button><button class="btn small" id="x-csv">Matrix (.csv)</button></div></details></div>`;
+    // smart suggestions: several unfiled papers share a field and no folder exists for it yet
+    const groups = {}; items.filter(r => !arr(r.folders).length && r.field).forEach(r => (groups[normName(r.field)] = groups[normName(r.field)] || { name: r.field, ids: [] }).ids.push(r.id));
+    const sug = Object.values(groups).filter(g => g.ids.length >= 2 && !matchFolder(g.name)).slice(0, 3);
+    $('#suggest').innerHTML = sug.length ? `<div class="suggest"><span class="muted">Tidy up:</span> ${sug.map((g, i) => `<button class="btn small" data-sug="${i}">＋ Folder “${esc(g.name)}” for ${g.ids.length} papers</button>`).join(' ')}</div>` : '';
+    $$('[data-sug]').forEach(b => b.onclick = async () => { const g = sug[+b.dataset.sug], f = folders.add(g.name); await move(g.ids, f.id); libState.folder = f.id; paint(); });
+    // list
     const q = libState.q.trim().toLowerCase();
-    let rows = items.filter(r => !q || [r.title, r.authors, r.field, r.type].join(' ').toLowerCase().includes(q));
+    let rows = inScope.filter(r => (!libState.status || r.status === libState.status) && (!q || searchBlob(r).includes(q)));
     const by = { opened: (a, b) => (b.opened || 0) - (a.opened || 0), added: (a, b) => (b.added || 0) - (a.added || 0), title: (a, b) => String(a.title).localeCompare(b.title), field: (a, b) => String(a.field || '~').localeCompare(b.field || '~') };
     rows = rows.sort(by[libState.sort] || by.opened);
-    $('#lib-list').innerHTML = rows.length ? rows.map(libCard).join('') : items.length ? `<div class="done"><h2>No matches</h2><p>Nothing in your library matches "${esc(libState.q)}".</p></div>`
-      : `<div class="done"><h2>Nothing here yet</h2><p>Papers you analyze will appear here automatically.</p><button class="btn primary" id="lib-first">Analyze your first paper</button></div>`;
-    $('#lib-first')?.addEventListener('click', showHome);
+    const list = $('#lib-list'); list.classList.toggle('compact', libState.view === 'compact');
+    list.innerHTML = rows.length ? rows.map(libCard).join('')
+      : (q || libState.status) ? `<div class="done"><h2>No matches</h2><p>Nothing here matches your search or filter.</p></div>`
+      : `<div class="done"><h2>${cur ? 'This folder is empty' : 'Nothing here'}</h2><p>${cur ? 'Drag a paper onto this folder in the bar above, or use Folders on any paper.' : 'No papers in this view yet.'}</p></div>`;
+    // selection bar
+    const n = libState.sel.size, sb = $('#selbar'); sb.hidden = !n;
+    if (n) { sb.innerHTML = `<b>${n} selected</b><button class="btn small primary" id="s-cmp" ${n < 2 || n > 8 ? 'disabled' : ''} title="${n > 8 ? 'Pick up to 8 papers' : 'Side-by-side matrix'}">Compare${n >= 2 ? ' ' + n : ''}</button><button class="btn small" id="s-fold">Add to folder…</button><button class="btn small ghost" id="s-clr">Clear</button>${n < 2 ? '<span class="muted">Pick 2 or more to compare.</span>' : ''}`;
+      $('#s-cmp').onclick = () => showCompare([...libState.sel]); $('#s-fold').onclick = () => openFolderPicker([...libState.sel], reload); $('#s-clr').onclick = () => { libState.sel.clear(); paint(); }; }
+    // folder bar
+    $$('[data-f]').forEach(b => { b.onclick = () => { libState.folder = b.dataset.f; paint(); };
+      b.addEventListener('dragover', e => { if (b.hasAttribute('data-drop')) { e.preventDefault(); b.classList.add('over'); } }); b.addEventListener('dragleave', () => b.classList.remove('over'));
+      b.addEventListener('drop', e => { e.preventDefault(); b.classList.remove('over'); if (!b.hasAttribute('data-drop')) return; const id = e.dataTransfer?.getData('text/plain'); if (id) move(libState.sel.has(id) ? [...libState.sel] : [id], b.dataset.f); }); });
+    $('#f-new').onclick = async () => { const nm = await askText({ title: 'New folder', label: 'Folder name (a discipline or project)', ok: 'Create' }); if (!nm) return; const f = folders.add(nm); libState.folder = f.id; paint(); };
+    $('#f-ren')?.addEventListener('click', async () => { const nm = await askText({ title: 'Rename folder', label: 'Folder name', value: cur.name }); if (nm) { folders.rename(cur.id, nm); paint(); } });
+    const fd = $('#f-del'); let armed = null;
+    fd?.addEventListener('click', async () => { if (!armed) { fd.textContent = 'Tap again to delete'; fd.classList.add('danger'); armed = setTimeout(() => { armed = null; fd.textContent = 'Delete folder'; fd.classList.remove('danger'); }, 3500); return; } clearTimeout(armed); await folders.remove(cur.id); libState.folder = 'all'; await reload(); toast('Folder deleted. Its papers are still in your library.'); });
+    const scopeName = cur ? cur.name : libState.folder === 'starred' ? 'starred' : libState.folder === 'unfiled' ? 'unfiled' : 'library';
+    $('#x-bib')?.addEventListener('click', () => exportScope('bib', rows.length ? rows : inScope, scopeName)); $('#x-md')?.addEventListener('click', () => exportScope('md', rows.length ? rows : inScope, scopeName)); $('#x-csv')?.addEventListener('click', () => exportScope('csv', rows.length ? rows : inScope, scopeName));
+    // cards
     $$('.libc').forEach(card => {
       const id = card.dataset.id; $$('[data-open]', card).forEach(b => b.onclick = () => openPaper(id));
-      const del = $('[data-del]', card); let armed = null;
+      $('[data-sel]', card).onchange = e => { e.target.checked ? libState.sel.add(id) : libState.sel.delete(id); paint(); };
+      $('[data-star]', card).onclick = async () => { const r = items.find(x => x.id === id); await lib.update(id, { starred: !r.starred }); reload(); };
+      $('[data-status]', card).onclick = async () => { const r = items.find(x => x.id === id); await lib.update(id, { status: STATUS_NEXT[r.status || ''] }); reload(); };
+      $('[data-folders]', card).onclick = () => openFolderPicker([id], reload);
+      card.addEventListener('dragstart', e => { e.dataTransfer.setData('text/plain', id); e.dataTransfer.effectAllowed = 'copy'; });
+      const del = $('[data-del]', card); let arm = null;
       del.onclick = async () => {
-        if (!armed) { del.textContent = 'Tap again to delete'; del.classList.add('danger'); armed = setTimeout(() => { armed = null; del.textContent = 'Delete'; del.classList.remove('danger'); }, 3500); return; }
-        clearTimeout(armed); await lib.remove(id); items = items.filter(x => x.id !== id); paint(); refreshLibCount(); toast('Deleted');
+        if (!arm) { del.textContent = 'Tap again to delete'; del.classList.add('danger'); arm = setTimeout(() => { arm = null; del.textContent = 'Delete'; del.classList.remove('danger'); }, 3500); return; }
+        clearTimeout(arm); await lib.remove(id); libState.sel.delete(id); items = items.filter(x => x.id !== id); paint(); refreshLibCount(); toast('Deleted');
       };
       $('[data-rmsrc]', card)?.addEventListener('click', async () => {
         const r = items.find(x => x.id === id); await lib.removeSource(id); r.hasSource = null; r.srcName = ''; r.srcSize = 0; await lib.put(r); paint(); toast('Saved copy removed. Notes kept.'); fillUsage();
@@ -1855,6 +2157,8 @@ async function showLibrary() {
   const fillUsage = async () => { const u = await lib.usage(); const el = $('#lib-usage'); if (el) el.textContent = `${items.length} paper${items.length === 1 ? '' : 's'} saved${u != null ? ' · about ' + fmtBytes(u) + ' used by Paperlens on this device' : ''}.`; };
   $('#lib-q')?.addEventListener('input', e => { libState.q = e.target.value; paint(); });
   $('#lib-sort')?.addEventListener('change', e => { libState.sort = e.target.value; paint(); });
+  $('#lib-status')?.addEventListener('change', e => { libState.status = e.target.value; paint(); });
+  $('#lib-view')?.addEventListener('click', e => { libState.view = libState.view === 'compact' ? 'cards' : 'compact'; ls.set('pl.libview', libState.view); e.target.textContent = libState.view === 'compact' ? 'Detailed view' : 'Compact view'; e.target.setAttribute('aria-pressed', libState.view === 'compact'); $('#lib-list').classList.toggle('compact', libState.view === 'compact'); });
   $('#lib-export').onclick = () => exportLibrary($('#lib-incl').checked);
   $('#lib-import').onchange = async e => { const f = e.target.files[0]; if (f) { await importLibrary(f); showLibrary(); } };
   paint(); fillUsage();
@@ -1862,7 +2166,7 @@ async function showLibrary() {
 
 /* ---------- backup: the no-account way to move or keep your library ---------- */
 async function exportLibrary(includePdfs) {
-  const items = await lib.list(), out = { app: 'paperlens', version: 1, exported: Date.now(), papers: [] };
+  const items = await lib.list(), out = { app: 'paperlens', version: 2, exported: Date.now(), folders: folders.all(), papers: [] };
   for (const r of items) {
     const entry = { rec: r, prog: ls.get(progKey(r.id), null), chat: ls.get(chatKey(r.id), null), best: { quiz: ls.get(bestKey(r.id, 'quiz'), null), fof: ls.get(bestKey(r.id, 'fof'), null), match: ls.get(bestKey(r.id, 'match'), null) } };
     if (includePdfs && r.hasSource) {
@@ -1877,6 +2181,8 @@ async function importLibrary(file) {
   let data; try { data = JSON.parse(await file.text()); } catch (e) { toast('That file isn\'t a Paperlens backup'); return 0; }
   if (!data || data.app !== 'paperlens' || !Array.isArray(data.papers)) { toast('That file isn\'t a Paperlens backup'); return 0; }
   const have = new Set((await lib.list()).map(r => r.id)); let added = 0, skipped = 0;
+  const fmap = {};                                                 // folders: match by name, create the rest
+  for (const f of arr(data.folders)) { if (f && f.id && f.name) { const mine = folders.all().find(x => normName(x.name) === normName(f.name)) || folders.add(f.name); if (mine) fmap[f.id] = mine.id; } }
   for (const e of data.papers) {
     const r = e && e.rec; if (!r || !r.id || !isPaper(r.data)) { skipped++; continue; }
     if (have.has(r.id)) { skipped++; continue; }
@@ -1884,7 +2190,7 @@ async function importLibrary(file) {
       if (e.pdf) { await lib.putSource(r.id, { blob: b64ToBlob(e.pdf) }); r.hasSource = 'pdf'; }
       else if (typeof e.text === 'string') { await lib.putSource(r.id, { text: e.text }); r.hasSource = 'text'; }
       else r.hasSource = null;
-      upgradePaper(r.data); await lib.put(r);
+      upgradePaper(r.data); r.folders = arr(r.folders).map(i => fmap[i]).filter(Boolean); await lib.put(withDefaults(r));
       if (e.prog) ls.set(progKey(r.id), e.prog); if (Array.isArray(e.chat)) ls.set(chatKey(r.id), e.chat);
       ['quiz', 'fof', 'match'].forEach(m => { if (e.best && e.best[m] != null) ls.set(bestKey(r.id, m), e.best[m]); });
       added++;
@@ -1892,6 +2198,196 @@ async function importLibrary(file) {
   }
   refreshLibCount(); toast(`Restored ${added} paper${added === 1 ? '' : 's'}${skipped ? ` (${skipped} skipped: already here or unreadable)` : ''}`);
   return added;
+}
+
+/* =====================================================================
+   Paperlens — what researchers reach for next: cite it, annotate it,
+   compare it with the others.
+   ===================================================================== */
+
+/* ---------- citation details ---------- */
+const yearFrom = s => { const m = /\b(19|20)\d{2}\b/.exec(String(s || '')); return m ? +m[0] : null; };
+function normalizeDoi(s) {
+  s = String(s || '').trim().replace(/^https?:\/\/(dx\.)?doi\.org\//i, '').replace(/^doi:\s*/i, '').replace(/[.,;)\]]+$/, '');
+  return /^10\.\d{4,9}\/\S+$/.test(s) ? s : '';
+}
+async function verifyDoi(doi, src) {                         // a DOI is kept only if it is printed in the paper itself
+  doi = normalizeDoi(doi); if (!doi) return '';
+  const needle = doi.toLowerCase().replace(/\s+/g, '');
+  try {
+    if (src && src.text) return src.text.toLowerCase().replace(/\s+/g, '').includes(needle) ? doi : '';
+    await S.pdfReady;
+    if (S.pdf) {
+      const n = S.pdf.numPages, pages = [...new Set([1, 2, 3, n])].filter(i => i >= 1 && i <= n); let t = '';
+      for (const i of pages) t += (await (await S.pdf.getPage(i)).getTextContent()).items.map(x => x.str).join('');
+      return t.toLowerCase().replace(/\s+/g, '').includes(needle) ? doi : '';
+    }
+  } catch (e) { console.warn(e); }
+  return '';
+}
+const PARTICLE = /^(van|von|der|den|de|del|della|di|da|la|le|bin|ibn|al|el|ter|ten)$/i;
+function splitName(full) {
+  const t = String(full || '').trim().replace(/\s+/g, ' '); if (!t) return { given: '', family: '' };
+  if (t.includes(',')) { const [f, g] = t.split(/,(.*)/s); return { family: f.trim(), given: (g || '').trim() }; }
+  const w = t.split(' '); if (w.length === 1) return { given: '', family: w[0] };
+  let i = w.length - 1; while (i > 1 && PARTICLE.test(w[i - 1])) i--;
+  return { given: w.slice(0, i).join(' '), family: w.slice(i).join(' ') };
+}
+const initials = g => g.split(/[\s-]+/).filter(Boolean).map(x => x[0].toUpperCase() + '.').join(' ');
+function authorList(meta) {
+  let list = arr(meta.authorsFull).map(x => String(x).trim()).filter(Boolean), etal = false;
+  if (!list.length) { const raw = String(meta.authors || '').trim(); etal = /\bet al\.?/i.test(raw); list = raw.replace(/\bet al\.?/ig, '').split(/\s*(?:,|;|&|\band\b)\s*/).map(x => x.trim()).filter(Boolean); }
+  return { list, etal };
+}
+const venueName = meta => String(meta.journal || meta.venue || '').replace(/\b(19|20)\d{2}\b/g, '').replace(/[\s,;:()-]+$/g, '').replace(/^[\s,;:()-]+/g, '').trim();
+const yearOf = r => { const m = r.data?.meta || r; return m.year || yearFrom(m.venue) || yearFrom(r.venue) || null; };
+function citeAPA(meta) {
+  const { list, etal } = authorList(meta), f = list.map(n => { const p = splitName(n); return p.given ? p.family + ', ' + initials(p.given) : p.family; });
+  let a = !f.length ? '' : f.length === 1 ? f[0] : f.length <= 20 ? f.slice(0, -1).join(', ') + ', & ' + f[f.length - 1] : f.slice(0, 19).join(', ') + ', ... ' + f[f.length - 1];
+  if (etal && f.length) a += ', et al.';
+  const title = String(meta.title || 'Untitled').trim().replace(/[.\s]+$/, ''), v = venueName(meta);
+  return [a, `(${meta.year || yearFrom(meta.venue) || 'n.d.'}).`, title + '.', v ? v + '.' : '', meta.doi ? 'https://doi.org/' + meta.doi : ''].filter(Boolean).join(' ');
+}
+const bibEsc = s => mathSplit(String(s || '')).map(p => p.t === 'math' ? p.raw : p.s.replace(/([&%#_])/g, '\\$1').replace(/\$/g, '\\$')).join('');   // leave $math$ alone, escape the rest
+const isConf = v => /proceedings|conference|workshop|symposium|advances in neural information|\b(neurips|nips|icml|iclr|acl|emnlp|naacl|cvpr|iccv|eccv|aaai|ijcai|kdd|sigir|chi|uist|www)\b/i.test(v || '');
+function citeKey(meta) {
+  const { list } = authorList(meta), fam = list[0] ? splitName(list[0]).family : 'paper';
+  const w = (String(meta.title || '').toLowerCase().match(/[a-z0-9]+/g) || []).find(x => x.length > 3 && !/^(with|from|that|this|using|towards?|into|over|under)$/.test(x)) || '';
+  return (fam.normalize('NFD').replace(/[^A-Za-z0-9]/g, '').toLowerCase() || 'paper') + (meta.year || yearFrom(meta.venue) || '') + w;
+}
+function citeBibTeX(meta) {
+  const { list, etal } = authorList(meta), v = venueName(meta), conf = isConf(v), year = meta.year || yearFrom(meta.venue);
+  const au = list.map(n => { const p = splitName(n); return p.given ? p.family + ', ' + p.given : p.family; }).join(' and ') + (etal && list.length ? ' and others' : '');
+  const L = [`@${conf ? 'inproceedings' : 'article'}{${citeKey(meta)},`, `  title = {{${bibEsc(meta.title)}}},`];
+  if (au) L.push(`  author = {${bibEsc(au)}},`);
+  if (year) L.push(`  year = {${year}},`);
+  if (v) L.push(`  ${conf ? 'booktitle' : 'journal'} = {${bibEsc(v)}},`);
+  if (meta.doi) L.push(`  doi = {${meta.doi}},`);
+  return L.join('\n').replace(/,$/, '') + '\n}';
+}
+function citeRIS(meta) {
+  const { list, etal } = authorList(meta), v = venueName(meta), year = meta.year || yearFrom(meta.venue), L = [`TY  - ${isConf(v) ? 'CONF' : 'JOUR'}`, `TI  - ${meta.title}`];
+  list.forEach(n => { const p = splitName(n); L.push('AU  - ' + (p.given ? p.family + ', ' + p.given : p.family)); }); if (etal && list.length) L.push('AU  - et al.');
+  if (year) L.push(`PY  - ${year}`); if (v) L.push(`${isConf(v) ? 'T2' : 'JO'}  - ${v}`); if (meta.doi) L.push(`DO  - ${meta.doi}`); L.push('ER  - ');
+  return L.join('\n');
+}
+function renderCite(p) {
+  const slot = $('#cite-slot'); if (!slot) return;
+  const m = p.meta, authors = authorList(m).list;
+  slot.innerHTML = `<div class="card cite"><h3>Cite this paper</h3>
+    <p class="cite-apa" id="cite-apa">${esc(citeAPA(m))}</p>
+    <div class="row" style="margin-top:12px"><button class="btn small" data-c="apa">Copy APA</button><button class="btn small" data-c="bib">Copy BibTeX</button><button class="btn small" data-c="ris">Copy RIS</button>
+      <button class="btn small ghost" id="c-bib">${ICON.dl}.bib</button><button class="btn small ghost" id="c-ris">${ICON.dl}.ris</button><button class="btn small ghost" id="c-edit">Edit details</button></div>
+    <p class="muted" style="font-size:13.5px;margin-top:10px">Read from the paper by AI, so check authors, year and venue before you cite.${m.doi ? ' The DOI was found printed in the paper.' : ' No DOI was found printed in the paper, so none is included.'} RIS and BibTeX import into Zotero, Mendeley and EndNote.</p>
+    <div id="c-form" hidden style="margin-top:14px">
+      <div class="field"><label for="ce-t">Title</label><input id="ce-t" value="${esc(m.title)}"></div>
+      <div class="field"><label for="ce-a">Authors (one per line, “Given Family”)</label><textarea id="ce-a" rows="4">${esc(authors.join('\n'))}</textarea></div>
+      <div class="two"><div class="field"><label for="ce-y">Year</label><input id="ce-y" inputmode="numeric" value="${esc(m.year || '')}"></div><div class="field"><label for="ce-d">DOI</label><input id="ce-d" value="${esc(m.doi || '')}" placeholder="10.xxxx/…"></div></div>
+      <div class="field"><label for="ce-j">Journal or conference</label><input id="ce-j" value="${esc(venueName(m))}"></div>
+      <div class="row" style="margin-top:12px"><button class="btn primary small" id="ce-save">Save details</button><button class="btn ghost small" id="ce-cancel">Cancel</button></div></div></div>`;
+  const get = { apa: () => citeAPA(m), bib: () => citeBibTeX(m), ris: () => citeRIS(m) };
+  $$('[data-c]', slot).forEach(b => b.onclick = () => navigator.clipboard.writeText(get[b.dataset.c]()).then(() => toast('Copied'), () => toast('Copy failed. Use the download instead.')));
+  $('#c-bib', slot).onclick = () => download(slug(m.title) + '.bib', citeBibTeX(m) + '\n', 'text/plain'); $('#c-ris', slot).onclick = () => download(slug(m.title) + '.ris', citeRIS(m) + '\n', 'text/plain');
+  $('#c-edit', slot).onclick = () => { $('#c-form', slot).hidden = !$('#c-form', slot).hidden; };
+  $('#ce-cancel', slot).onclick = () => { $('#c-form', slot).hidden = true; };
+  $('#ce-save', slot).onclick = async () => {
+    const list = $('#ce-a', slot).value.split('\n').map(x => x.trim()).filter(Boolean), y = parseInt($('#ce-y', slot).value, 10);
+    m.title = $('#ce-t', slot).value.trim() || m.title; m.authorsFull = list; m.year = y >= 1000 && y <= 2100 ? y : null; m.doi = normalizeDoi($('#ce-d', slot).value); m.journal = $('#ce-j', slot).value.trim();
+    if (list.length) { const fam = n => splitName(n).family; m.authors = list.length === 1 ? fam(list[0]) : list.length === 2 ? fam(list[0]) + ' & ' + fam(list[1]) : fam(list[0]) + ' et al.'; }
+    if (p.id && p.id !== 'demo') { try { await lib.update(p.id, { title: m.title, authors: m.authors, data: p }); } catch (e) { console.warn(e); } }
+    toast('Details saved'); renderCite(p);
+  };
+}
+
+/* ---------- notes ---------- */
+async function addToNotes(p, text, page) {
+  if (!p || !p.id || p.id === 'demo') { toast('Notes are kept for papers in your library. Analyze a paper to use them.'); return; }
+  const line = '- ' + String(text).trim().replace(/\s*\n\s*/g, ' ').slice(0, 2000) + (page ? ' (p. ' + page + ')' : '');
+  try { const r = await lib.update(p.id, x => ({ notes: (x.notes ? x.notes.replace(/\s+$/, '') + '\n' : '') + line + '\n' })); toast(r ? 'Added to your notes' : 'Could not save the note'); }
+  catch (e) { toast('Could not save the note'); }
+}
+async function viewNotes(p) {
+  const msg = t => { app().innerHTML = `<div class="done"><h2>My notes</h2><p>${esc(t)}</p></div>`; };
+  if (!p.id || p.id === 'demo') return msg('Notes are kept for papers in your library. Analyze a paper and they will be saved here, on your device.');
+  let rec = await lib.get(p.id); if (S.tab !== 'notes') return;
+  if (!rec) return msg('This paper isn\'t in your library, so there is nowhere to keep notes.');
+  const fl = () => arr(rec.folders).map(id => (folders.all().find(f => f.id === id) || {}).name).filter(Boolean);
+  app().innerHTML = `
+  <div class="row" style="justify-content:space-between;align-items:flex-start"><div><h2 style="font-size:26px">My notes</h2>
+    <p class="muted" style="margin-top:4px">Private to this device and saved as you type.</p></div><span id="nsave" role="status" class="muted"></span></div>
+  <div class="row nctl" style="margin:16px 0">
+    <button class="btn small ghost star" id="n-star" aria-pressed="${!!rec.starred}"></button>
+    <label class="sr" for="n-status">Reading status</label>
+    <select id="n-status" class="small-select"><option value="">No status</option><option value="toread">To read</option><option value="reading">Reading</option><option value="read">Read</option></select>
+    <button class="btn small" id="n-fold">Folders</button><span class="muted" id="n-fl"></span></div>
+  <div class="two"><div class="field"><label for="n-rel">Relevance to my research</label><textarea id="n-rel" rows="3" placeholder="Why does this paper matter for your project?"></textarea></div>
+    <div class="field"><label for="n-theme">Theme(s)</label><input id="n-theme" placeholder="e.g. attention, scaling"><small>Short labels. They become a column in the comparison matrix.</small></div></div>
+  <div class="field" style="margin-top:14px"><label for="n-notes">Notes</label><textarea id="n-notes" rows="14" placeholder="Your thoughts, quotes, questions…"></textarea>
+    <small>Use <b>＋ note</b> on the Overview and <b>Save to notes</b> in Chat to drop findings and answers in here.</small></div>
+  <div class="row"><button class="btn small" id="n-dl">${ICON.dl}Download notes (.md)</button></div>`;
+  const star = () => { const b = $('#n-star'); b.textContent = rec.starred ? '★ Starred' : '☆ Star'; b.setAttribute('aria-pressed', !!rec.starred); }, showFl = () => { $('#n-fl').textContent = fl().length ? 'In: ' + fl().join(', ') : 'Not in a folder'; };
+  $('#n-rel').value = rec.relevance; $('#n-theme').value = rec.theme; $('#n-notes').value = rec.notes; $('#n-status').value = rec.status; star(); showFl();
+  let timer = null; const save = async () => { clearTimeout(timer); timer = null; const r = await lib.update(p.id, { relevance: $('#n-rel').value, theme: $('#n-theme').value.trim(), notes: $('#n-notes').value }); if (r) { rec = r; const el = $('#nsave'); if (el) el.textContent = 'Saved'; } };
+  const queue = () => { const el = $('#nsave'); if (el) el.textContent = 'Saving…'; clearTimeout(timer); timer = setTimeout(save, 500); };
+  ['n-rel', 'n-theme', 'n-notes'].forEach(id => $('#' + id).addEventListener('input', queue)); S.cleanups.push(() => { if (timer) save(); });
+  $('#n-star').onclick = async () => { rec = await lib.update(p.id, { starred: !rec.starred }); star(); };
+  $('#n-status').onchange = async e => { rec = await lib.update(p.id, { status: e.target.value }); };
+  $('#n-fold').onclick = () => openFolderPicker([p.id], async () => { rec = await lib.get(p.id); showFl(); });
+  $('#n-dl').onclick = async () => { await save(); download(slug(p.meta.title) + '-my-notes.md', notesMarkdown(rec), 'text/markdown'); };
+}
+function notesMarkdown(r) {
+  const m = r.data.meta, L = ['# ' + m.title, '*' + citeAPA(m) + '*'];
+  if (r.theme) L.push('', '**Theme(s):** ' + r.theme); if (r.relevance) L.push('', '**Relevance to my research:** ' + r.relevance);
+  L.push('', '## My notes', r.notes || '*(none yet)*'); return L.join('\n') + '\n';
+}
+
+/* ---------- the literature-review matrix ---------- */
+const MATRIX = [
+  ['Paper', r => r.title], ['Authors', r => r.authors], ['Year', r => yearOf(r) || ''], ['Field / type', r => [r.field, r.type].filter(Boolean).join(' · ')],
+  ['Aim / problem', r => r.data.ov.problem || r.data.ov.tldr], ['Method', r => r.data.ov.approach],
+  ['Key findings', r => arr(r.data.ov.findings).map(f => '• ' + (f.t || f)).join('\n')], ['Limitations', r => arr(r.data.ov.limits).map(f => '• ' + f).join('\n')],
+  ['Relevance to my research', r => r.relevance], ['Theme(s)', r => r.theme], ['Citation (APA)', r => citeAPA(r.data.meta)]
+];
+const sortRecs = (recs, how) => recs.slice().sort(how === 'new' ? (a, b) => (yearOf(b) || 0) - (yearOf(a) || 0) : how === 'title' ? (a, b) => a.title.localeCompare(b.title) : (a, b) => (yearOf(a) || 9999) - (yearOf(b) || 9999));
+const csvCell = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+const matrixCSV = recs => '\ufeff' + [MATRIX.map(c => csvCell(c[0])).join(','), ...recs.map(r => MATRIX.map(c => csvCell(c[1](r))).join(','))].join('\r\n');
+const matrixMD = recs => { const cell = v => String(v ?? '').replace(/\|/g, '\\|').replace(/\n/g, '<br>'); return ['| ' + MATRIX.map(c => c[0]).join(' | ') + ' |', '|' + MATRIX.map(() => ' --- ').join('|') + '|', ...recs.map(r => '| ' + MATRIX.map(c => cell(c[1](r))).join(' | ') + ' |')].join('\n') + '\n'; };
+async function exportScope(kind, recs, name) {
+  if (!recs.length) return toast('Nothing to export here');
+  recs = sortRecs(recs, 'old'); const base = slug(name || 'library');
+  if (kind === 'bib') download(base + '-citations.bib', recs.map(r => citeBibTeX(r.data.meta)).join('\n\n') + '\n', 'text/plain');
+  else if (kind === 'csv') download(base + '-matrix.csv', matrixCSV(recs), 'text/csv');
+  else download(base + '-notes.md', '# ' + (name || 'Library') + '\n\n' + recs.map(r => toMarkdown(r.data) + '\n### My notes\n' + (r.theme ? '**Theme(s):** ' + r.theme + '\n\n' : '') + (r.relevance ? '**Relevance to my research:** ' + r.relevance + '\n\n' : '') + (r.notes || '*(none yet)*') + '\n\n**Cite:** ' + citeAPA(r.data.meta) + '\n').join('\n---\n\n'), 'text/markdown');
+  toast('Exported ' + recs.length + ' paper' + (recs.length === 1 ? '' : 's'));
+}
+async function showCompare(ids) {
+  teardown(); S.paper = null; S.view = 'compare'; $('#tabs').hidden = true; document.title = 'Compare · Paperlens';
+  const all = await lib.list(); let recs = ids.map(id => all.find(r => r.id === id)).filter(Boolean);
+  if (recs.length < 2) { toast('Pick at least two papers to compare'); return showLibrary(); }
+  let how = 'old'; const timers = {};
+  const cols = MATRIX.filter(c => c[0] !== 'Paper' && c[0] !== 'Citation (APA)');
+  const draw = () => {
+    recs = sortRecs(recs, how);
+    $('#cmp-body').innerHTML = recs.map(r => `<tr data-id="${esc(r.id)}"><th scope="row"><button class="linklike" data-open>${esc(r.title)}</button><div class="muted">${esc([r.authors, yearOf(r)].filter(Boolean).join(' · '))}</div></th>${cols.map(([name, fn]) => name === 'Relevance to my research'
+      ? `<td><label class="sr" for="rel-${esc(r.id)}">Relevance for ${esc(r.title)}</label><textarea id="rel-${esc(r.id)}" data-k="relevance" rows="4">${esc(r.relevance)}</textarea></td>`
+      : name === 'Theme(s)' ? `<td><label class="sr" for="th-${esc(r.id)}">Themes for ${esc(r.title)}</label><input id="th-${esc(r.id)}" data-k="theme" value="${esc(r.theme)}"></td>`
+      : `<td>${rich(fn(r)).replace(/\n/g, '<br>')}</td>`).join('')}</tr>`).join('');
+    $$('#cmp-body tr').forEach(tr => { const id = tr.dataset.id; $('[data-open]', tr).onclick = () => openPaper(id);
+      $$('[data-k]', tr).forEach(inp => inp.addEventListener('input', () => { const r = recs.find(x => x.id === id); r[inp.dataset.k] = inp.value; clearTimeout(timers[id + inp.dataset.k]); $('#cmp-save').textContent = 'Saving…';
+        timers[id + inp.dataset.k] = setTimeout(async () => { await lib.update(id, { [inp.dataset.k]: inp.value }); $('#cmp-save') && ($('#cmp-save').textContent = 'Saved'); }, 500); })); });
+  };
+  app().innerHTML = `
+  <div class="row" style="justify-content:space-between;align-items:flex-start;margin-bottom:6px"><div><h1 style="font-size:clamp(26px,4vw,34px)">Compare ${recs.length} papers</h1>
+    <p class="muted" style="margin-top:6px;max-width:62ch">A literature-review matrix: one paper per row, the same questions across the columns. Read down a column to see how the field treats one idea. The last two columns are yours to fill in.</p></div>
+    <button class="btn" id="cmp-back">Back to library</button></div>
+  <div class="row" style="margin:16px 0"><label class="sr" for="cmp-sort">Order</label><select id="cmp-sort"><option value="old">Oldest first</option><option value="new">Newest first</option><option value="title">Title A to Z</option></select>
+    <button class="btn small" id="cmp-csv">${ICON.dl}Excel / CSV</button><button class="btn small" id="cmp-md">${ICON.dl}Markdown table</button><button class="btn small" id="cmp-bib">${ICON.dl}Citations (.bib)</button><span id="cmp-save" role="status" class="muted"></span></div>
+  <div class="cmp-wrap"><table class="cmp"><thead><tr><th scope="col">Paper</th>${cols.map(c => `<th scope="col">${esc(c[0])}</th>`).join('')}</tr></thead><tbody id="cmp-body"></tbody></table></div>
+  <p class="muted" style="margin-top:12px;font-size:13.5px">Summaries are written by AI from each paper. Check anything you plan to cite against the source.</p>`;
+  $('#cmp-back').onclick = showLibrary; $('#cmp-sort').onchange = e => { how = e.target.value; draw(); };
+  $('#cmp-csv').onclick = () => download('literature-matrix.csv', matrixCSV(sortRecs(recs, how)), 'text/csv'); $('#cmp-md').onclick = () => download('literature-matrix.md', matrixMD(sortRecs(recs, how)), 'text/markdown');
+  $('#cmp-bib').onclick = () => download('citations.bib', sortRecs(recs, how).map(r => citeBibTeX(r.data.meta)).join('\n\n') + '\n', 'text/plain');
+  S.cleanups.push(() => Object.values(timers).forEach(clearTimeout)); draw();
 }
 
 /* =====================================================================
@@ -1911,7 +2407,7 @@ function wrapText(s, max) {
 function mmBuild(root) {
   let id = 0;
   const walk = (n, depth, branch) => {
-    const node = { id: id++, label: String(n.label || '…'), note: n.note || '', depth, branch, children: [] };
+    const node = { id: id++, label: mathToText(String(n.label || '…')), note: n.note || '', depth, branch, children: [] };
     arr(n.children).forEach((c, i) => node.children.push(walk(c, depth + 1, depth === 0 ? i : branch)));
     return node;
   };
@@ -1988,7 +2484,7 @@ function viewMindmap(p) {
     const W = svg.clientWidth, H = svg.clientHeight; cx = cx ?? W / 2; cy = cy ?? H / 2;
     const k = Math.max(0.25, Math.min(3, V.k * f)); V.x = cx - (cx - V.x) * (k / V.k); V.y = cy - (cy - V.y) * (k / V.k); V.k = k; apply();
   };
-  const showNote = n => { $('#mm-note').innerHTML = `<b>${esc(n.label)}</b>${n.note ? ' — ' + esc(n.note) : '<span class="muted"> — no extra note for this node.</span>'}`; };
+  const showNote = n => { $('#mm-note').innerHTML = `<b>${esc(n.label)}</b>${n.note ? ' — ' + rich(n.note) : '<span class="muted"> — no extra note for this node.</span>'}`; };
   draw(); requestAnimationFrame(fit);
   const onResize = () => fit(); addEventListener('resize', onResize); S.cleanups.push(() => removeEventListener('resize', onResize));
 
@@ -2048,8 +2544,8 @@ function viewCards(p) {
     <p class="muted" style="margin-top:8px;font-size:14px">${done} of ${total} learned · ${F.queue.length} left${F.again + F.hard ? ` · ${F.again + F.hard} to revisit` : ''}</p>
     ${c ? `
     <div class="fc-stage"><div class="fc ${F.flipped ? 'flip' : ''}" id="fc" role="button" tabindex="0" aria-label="Flashcard. Press to flip.">
-      <div class="face front"><span class="tag">${esc(CARD_TYPES[c.type] || 'Card')}</span>${esc(c.front)}<span class="hint">Click to flip</span></div>
-      <div class="face back"><span class="tag">Answer</span>${esc(c.back)}</div></div></div>
+      <div class="face front"><span class="tag">${esc(CARD_TYPES[c.type] || 'Card')}</span>${rich(c.front)}<span class="hint">Click to flip</span></div>
+      <div class="face back"><span class="tag">Answer</span>${rich(c.back)}</div></div></div>
     <div class="fc-act"><button class="btn again" id="again">Show again soon</button><button class="btn hard" id="hard">Hard, later</button><button class="btn got" id="got">I know this</button></div>
     <p class="keys">Space flips · 1 again · 2 hard · 3 know it</p>` : `
     <div class="done"><h2>${total ? 'That\'s the whole deck' : 'No cards in this set'}</h2><p>${total ? `You've been through all ${total} cards${F.again + F.hard ? ', and ' + (F.again + F.hard) + ' needed another look' : ' without a miss'}. Come back tomorrow to see what stuck.` : 'Choose another filter.'}</p>
@@ -2110,8 +2606,8 @@ function playQuiz(mode) {
       <span>${G.streak > 1 ? 'Streak ×' + G.streak : ''}</span><span>${G.score} pts</span><span id="secs" aria-hidden="true">${secs}s</span>
       <span class="hearts" aria-label="${G.lives} lives left">${'♥'.repeat(G.lives)}<span class="off">${'♥'.repeat(3 - G.lives)}</span></span></div>
     <div class="timer"><i id="tbar"></i></div>
-    <p class="q">${isQ ? '' : 'True or false: '}${esc(it.q)}</p>
-    <div class="opts ${isQ ? '' : 'tf'}" id="opts">${it.opts.map((o, i) => `<button class="opt" data-i="${i}">${isQ ? `<kbd>${i + 1}</kbd>` : ''}<span>${esc(o.t)}</span></button>`).join('')}</div>
+    <p class="q">${isQ ? '' : 'True or false: '}${rich(it.q)}</p>
+    <div class="opts ${isQ ? '' : 'tf'}" id="opts">${it.opts.map((o, i) => `<button class="opt" data-i="${i}">${isQ ? `<kbd>${i + 1}</kbd>` : ''}<span>${rich(o.t)}</span></button>`).join('')}</div>
     <div id="after"></div>`;
     $$('.opt').forEach(b => b.onclick = () => answer(+b.dataset.i));
     stop(); const t0 = Date.now();
@@ -2138,7 +2634,7 @@ function playQuiz(mode) {
       else b.classList.add('dim');
     });
     const over = G.lives <= 0 || G.i === items.length - 1;
-    $('#after').innerHTML = `<div class="explain"><p><b>${ok ? 'Correct' + (gain ? ' · +' + gain : '') : idx < 0 ? "Time's up" : 'Not quite'}</b></p>${it.why ? `<p>${esc(it.why)}</p>` : ''}</div>
+    $('#after').innerHTML = `<div class="explain"><p><b>${ok ? 'Correct' + (gain ? ' · +' + gain : '') : idx < 0 ? "Time's up" : 'Not quite'}</b></p>${it.why ? `<p>${rich(it.why)}</p>` : ''}</div>
       <div class="row" style="margin-top:16px"><button class="btn primary" id="nx">${over ? 'See results' : 'Next'}</button></div>`;
     $('#nx').focus(); $('#nx').onclick = () => { if (over) finish(); else { G.i++; question(); } };
   };
@@ -2168,7 +2664,7 @@ function playMatch() {
   const stop = () => clearInterval(tick); S.cleanups.push(stop);
   app().innerHTML = `
   <div class="hud"><span>Match each term to its meaning</span><span class="grow"></span><span id="clock">0.0 s</span></div>
-  <div class="match-grid">${cards.map((c, i) => `<button class="mcard ${c.kind}" data-i="${i}">${esc(c.t)}</button>`).join('')}</div>`;
+  <div class="match-grid">${cards.map((c, i) => `<button class="mcard ${c.kind}" data-i="${i}">${rich(c.t)}</button>`).join('')}</div>`;
   $$('.mcard').forEach(b => b.onclick = () => {
     const i = +b.dataset.i, c = cards[i]; if (b.classList.contains('gone')) return;
     if (!t0) { t0 = Date.now(); tick = setInterval(() => { $('#clock') ? $('#clock').textContent = ((Date.now() - t0) / 1000 + penalty).toFixed(1) + ' s' : stop(); }, 100); }
