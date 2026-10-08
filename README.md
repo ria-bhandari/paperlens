@@ -26,7 +26,7 @@ Also: six themes (Paper, Spring, Golden hour, Fall, Winter, Dusk) with light and
 
 ## Getting started
 
-1. **Get an API key** at [console.anthropic.com](https://console.anthropic.com).
+1. **Get an API key** from an AI service ([Anthropic](https://console.anthropic.com) is the recommended default, and [OpenRouter](https://openrouter.ai/keys) is the easiest way to use other models). See [Choose your AI service](#choose-your-ai-service).
 2. **[Open Paperlens](https://ria-bhandari.github.io/paperlens/).**
 3. **Add your key.** Click the gear icon, paste the key, and save. Do this once per device.
 4. **Drop in a paper.** Drag a PDF onto the page (up to about 24 MB and 100 pages), or paste the text instead. Analysis takes roughly 30 to 90 seconds, and the overview appears as it's written.
@@ -34,6 +34,20 @@ Also: six themes (Paper, Spring, Golden hour, Fall, Winter, Dusk) with light and
 No key yet? Click **See a finished example first** to try a sample paper with every feature.
 
 ---
+
+## Choose your AI service
+
+Open **Settings** (the gear icon), pick a service, paste its key, and press **Test connection**. Each service keeps its own key, so you can switch freely.
+
+| Service | Get a key | How it reads the paper | Works from a web page? |
+|---|---|---|---|
+| **Anthropic (Claude)** | [console.anthropic.com](https://console.anthropic.com) | Reads the PDF directly, figures included | Yes |
+| **OpenRouter** | [openrouter.ai/keys](https://openrouter.ai/keys) | Text extracted in your browser | Yes. One key reaches Claude, GPT, Gemini, Llama and many more |
+| **OpenAI** | [platform.openai.com/api-keys](https://platform.openai.com/api-keys) | Reads the PDF directly | Often blocked by OpenAI (CORS). Use OpenRouter for OpenAI models, or enter a proxy address |
+| **Google Gemini** | [aistudio.google.com/apikey](https://aistudio.google.com/apikey) | Text extracted in your browser | Use **Test connection** to check |
+| **Other (OpenAI-compatible)** | Your service | Text extracted in your browser | Depends on the service. Local servers (Ollama, LM Studio) work if they allow browser access |
+
+Anthropic is the most thoroughly tested option. The others use the standard OpenAI-style chat format, but every service names its models differently and changes them often, so always check the exact model name on the service's own site.
 
 ## Install it as an app
 
@@ -49,12 +63,12 @@ Once installed, the app opens instantly and works offline for reading saved pape
 
 ## Your privacy and your key
 
-There is **no Paperlens server**. When you analyse a paper or ask a question, your browser sends it directly to the Anthropic API using **your own API key**.
+There is **no Paperlens server**. When you analyse a paper or ask a question, your browser sends it directly to the AI service you choose (Anthropic by default) using **your own API key**.
 
-- **Your key** is saved only in your browser on that device. It is never sent anywhere except to Anthropic.
-- **Your papers** go to Anthropic and nowhere else.
+- **Your key** is saved only in your browser on that device. It is never sent anywhere except to the service you chose.
+- **Your papers** go to the AI service you choose and nowhere else.
 - **Your library** (the generated notes, your progress and, unless you switch it off in Settings, a copy of each PDF) is stored in your browser on your own device. It is never uploaded anywhere, which is also why no account is needed. Use **Library, then Export backup** to keep a copy or move to another device.
-- **Cost:** you pay Anthropic for your own usage. Long papers cost more, and chat re-sends the paper with each question (with caching turned on to keep follow-ups cheaper). Check your usage in the Anthropic console.
+- **Cost:** you pay your chosen AI service for your own usage. Long papers cost more, and chat re-sends the paper with each question (with caching turned on to keep follow-ups cheaper). Check your usage on that service's website.
 
 ---
 
@@ -76,16 +90,17 @@ There is **no Paperlens server**. When you analyse a paper or ask a question, yo
 - **Figure previews** are the real PDF pages rendered in your browser. They need an internet connection the first time.
 - **Your library is per browser and per device.** A different browser, a private window, or cleared browsing data means a fresh, empty library, and some browsers clear data for sites you rarely visit. Installing Paperlens as an app and exporting a backup now and then keeps your papers safe.
 - **Scanned PDFs** and very long documents may give weaker results than text-based PDFs.
-- **Model:** the default is `claude-sonnet-5-5`. You can change it in Settings (for example to an Opus model for more depth, or Haiku for speed).
+- **Model:** the default for Anthropic is `claude-sonnet-5-5`. You can change the model in Settings (for example Opus for more depth, or Haiku for speed). Model names change often, so use **Test connection** to check one works.
+- **Which service reads the paper best?** Anthropic and OpenAI read the PDF directly, including its figures. Other services (OpenRouter, Gemini, and others) are sent the paper's text, extracted in your browser, so they describe figures from their captions and surrounding text, and a scanned PDF with no selectable text won't work with them.
 
 ## Troubleshooting
 
 | Problem | Try this |
 |---|---|
-| "The API key was rejected" | Open Settings and re-paste the key. Check it hasn't been revoked in the console. |
-| "Could not reach api.anthropic.com" | Check your connection, and look for an ad blocker or privacy extension blocking the request. |
+| "…rejected the API key" | Open Settings, make sure the right AI service is selected, and re-paste that service's key. Check it hasn't been revoked. |
+| "Could not reach …" | Check your connection, and look for an ad blocker or privacy extension. If it names a service other than Anthropic or OpenRouter, that service may not allow requests from web pages (a browser rule called CORS). OpenAI often blocks them: use OpenRouter instead, or enter a proxy address in Settings. |
 | "Your key isn't tied to a workspace" | In the Anthropic console, create a key inside a named workspace, or paste that workspace's ID (starts with `wrkspc_`) into the Workspace ID box in Settings. |
-| "That model name was not found" | Open Settings and pick a valid model name. |
+| "…could not find that model" | Open Settings, copy the exact model name from the service's own model list, and press **Test connection**. |
 | My papers disappeared | The library lives in one browser on one device. Check you're in the same browser and not a private window, or use Library, then Import backup. |
 | "Rate limit reached" or "busy" | Wait a minute and try again. |
 | PDF too large | Compress the PDF or split it. The limit is about 24 MB. |
@@ -96,7 +111,7 @@ There is **no Paperlens server**. When you analyse a paper or ask a question, yo
 
 ## FAQ
 
-**Does my paper get stored anywhere?** Only on your own device (the notes, and a copy of the PDF if "Keep a copy" is on in Settings), and with Anthropic when you analyze or chat. There is no other server. You can delete any paper, or just its saved PDF, from the Library.
+**Does my paper get stored anywhere?** Only on your own device (the notes, and a copy of the PDF if "Keep a copy" is on in Settings), and with the AI service you chose when you analyze or chat. There is no other server. You can delete any paper, or just its saved PDF, from the Library.
 
 **Can anyone use it?** Yes, just open the link above. Each person uses their own API key and has their own private library on their own device, with no login.
 

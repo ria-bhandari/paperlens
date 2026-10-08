@@ -642,6 +642,188 @@ const PALETTES = {
 };
 
 /* =====================================================================
+   Paperlens — AI services.
+   The app speaks one internal format (Anthropic-style messages). For
+   OpenAI-style services we translate on the way out and parse their stream.
+   ===================================================================== */
+const PROVIDERS = {
+  anthropic: {
+    name: 'Anthropic (Claude)', kind: 'anthropic', url: 'https://api.anthropic.com/v1/messages', pdf: 'native',
+    model: 'claude-sonnet-5-5', models: ['claude-sonnet-5-5', 'claude-opus-5-5', 'claude-haiku-5-5'],
+    ph: 'sk-ant-…', keyHelp: 'Get one at console.anthropic.com.',
+    note: 'Reads your PDF directly, including the figures. The recommended choice.', modelHelp: 'Sonnet is a good balance. Opus is deeper but slower. Haiku is fastest.'
+  },
+  openrouter: {
+    name: 'OpenRouter', kind: 'openai', base: 'https://openrouter.ai/api/v1', pdf: 'text',
+    model: 'anthropic/claude-haiku-5.5', models: ['anthropic/claude-haiku-5.5', 'anthropic/claude-sonnet-5.5', 'openai/gpt-5.2', 'google/gemini-2.5-flash', 'google/gemini-2.5-pro', 'deepseek/deepseek-r1'],
+    ph: 'sk-or-…', keyHelp: 'Get one at openrouter.ai/keys.',
+    note: 'One key for Claude, GPT, Gemini, Llama and hundreds more, and it works straight from the browser. The paper\'s text is read in your browser and sent as text.',
+    modelHelp: 'Names look like provider/model. Copy the exact name from openrouter.ai/models, since they change.'
+  },
+  openai: {
+    name: 'OpenAI', kind: 'openai', base: 'https://api.openai.com/v1', pdf: 'native', tokenParam: 'max_completion_tokens',
+    model: 'gpt-5.2', models: ['gpt-5.2', 'gpt-5.5', 'gpt-5-mini'],
+    ph: 'sk-…', keyHelp: 'Get one at platform.openai.com/api-keys.', showBase: true, baseLabel: 'Proxy address (optional)', baseHelp: 'Leave empty to call OpenAI directly.',
+    note: 'Heads up: OpenAI often refuses requests that come straight from a web page (a browser rule called CORS). If Test connection says it could not reach OpenAI, use OpenRouter instead (it can run OpenAI models), or enter your own proxy address below.',
+    modelHelp: 'Check platform.openai.com/docs/models for the names your account can use.'
+  },
+  gemini: {
+    name: 'Google Gemini', kind: 'openai', base: 'https://generativelanguage.googleapis.com/v1beta/openai', pdf: 'text',
+    model: 'gemini-2.5-flash', models: ['gemini-2.5-flash', 'gemini-2.5-pro'],
+    ph: 'AIza…', keyHelp: 'Get one at aistudio.google.com/apikey.',
+    note: 'Uses Google\'s OpenAI-compatible endpoint. The paper\'s text is read in your browser and sent as text. Use Test connection to check it works from your browser.',
+    modelHelp: 'See ai.google.dev/gemini-api/docs/models for current names.'
+  },
+  custom: {
+    name: 'Other (OpenAI-compatible)', kind: 'openai', base: '', pdf: 'text', noKey: true,
+    model: '', models: [], ph: 'API key (can be empty for a local server)', keyHelp: 'Use the key from whichever service you pick below.',
+    showBase: true, baseLabel: 'Base URL', baseRequired: true, baseHelp: 'The address that ends in /v1 (Paperlens adds /chat/completions). Suggestions: Groq, Together, Mistral, DeepSeek, xAI, Ollama and LM Studio.',
+    bases: ['https://api.groq.com/openai/v1', 'https://api.together.xyz/v1', 'https://api.mistral.ai/v1', 'https://api.deepseek.com/v1', 'https://api.x.ai/v1', 'http://localhost:11434/v1', 'http://localhost:1234/v1'],
+    note: 'Works with any service that has an OpenAI-style /chat/completions address. Many block calls from web pages (CORS). Local servers such as Ollama need browser access switched on.',
+    modelHelp: 'Type the model name exactly as that service lists it.'
+  }
+};
+
+const defaultSettings = () => ({ provider: 'anthropic', profiles: {}, key: '', model: PROVIDERS.anthropic.model, base: '', workspace: '', audience: 'adjacent', keepPdf: true });
+const providerOf = cfg => PROVIDERS[(cfg || activeCfg()).provider] || PROVIDERS.anthropic;
+function activeCfg() { const s = S.settings; return { provider: PROVIDERS[s.provider] ? s.provider : 'anthropic', key: s.key || '', model: s.model || '', base: s.base || '', workspace: s.workspace || '' }; }
+function cfgReady(cfg) { cfg = cfg || activeCfg(); const P = providerOf(cfg); return !!((cfg.key || (P.noKey && cfg.base)) && (cfg.model || P.model)); }
+function endpoint(cfg) {
+  const P = providerOf(cfg); if (P.kind === 'anthropic') return P.url;
+  const b = String(cfg.base || P.base || '').trim().replace(/\/+$/, '');
+  return /\/chat\/completions$/.test(b) ? b : b + '/chat/completions';
+}
+function apiHost(cfg) { try { return new URL(endpoint(cfg)).host; } catch (e) { return 'the service'; } }
+
+/* ---- settings: one profile (key, model, base) per service, so switching never loses anything ---- */
+function syncActive() {                                       // copy the active mirrored fields into their profile
+  const s = S.settings; s.profiles = s.profiles && typeof s.profiles === 'object' ? s.profiles : {};
+  s.profiles[s.provider] = { key: s.key || '', model: s.model || '', base: s.base || '', workspace: s.workspace || '' };
+}
+function persistSettings() { syncActive(); ls.set('pl.settings', S.settings); }
+function applyProfile(s, id) {                                // make a profile the active one
+  const P = PROVIDERS[id], d = (s.profiles && s.profiles[id]) || {};
+  s.provider = id; s.key = d.key || ''; s.model = d.model || P.model; s.base = d.base || ''; s.workspace = d.workspace || '';
+}
+function migrateSettings(s) {
+  s = Object.assign(defaultSettings(), s || {});
+  if (!PROVIDERS[s.provider]) s.provider = 'anthropic';
+  if (!s.profiles || typeof s.profiles !== 'object') s.profiles = {};
+  if (!s.profiles[s.provider]) s.profiles[s.provider] = { key: s.key, model: s.model, base: s.base, workspace: s.workspace };   // settings saved by older versions: keep their key
+  applyProfile(s, s.provider); return s;
+}
+
+/* ---- errors ---- */
+function friendlyError(status, msg, cfg) {
+  const P = providerOf(cfg), name = P.name.replace(/ \(.*\)/, '');
+  if (status === 400 && /workspace/i.test(msg)) return 'Your key isn\'t tied to a workspace. Either create a new key inside a named workspace in the Anthropic console, or add that workspace\'s ID (starts with wrkspc_) in Settings.';
+  if (status === 401) return `${name} rejected the API key. Open Settings and check that it is correct and for ${name}.`;
+  if (status === 402) return `${name} says this account is out of credit. Add credit on their site and try again.`;
+  if (status === 403) return `This key is not allowed to use that model or feature. ${msg}`.trim();
+  if (status === 404) return `${name} could not find that model name. Open Settings, check the exact name, and use Test connection. ${msg}`.trim();
+  if (status === 413) return 'The file is too large for the API. Try a smaller PDF (under about 24 MB and 100 pages).';
+  if (status === 429) return 'Rate limit reached. Wait a minute and try again.';
+  if (status === 529 || status >= 500) return `${name} is busy right now. Try again in a moment.`;
+  return msg || ('Request failed (' + status + ').');
+}
+function unreachable(cfg) {
+  const P = providerOf(cfg), host = apiHost(cfg);
+  let m = `Could not reach ${host}. Check your connection and any ad or privacy blockers.`;
+  if (P.kind !== 'anthropic') m += cfg.provider === 'openai' ? ' OpenAI often blocks requests from web pages (CORS). Try OpenRouter, which can run OpenAI models, or enter a proxy address in Settings.'
+    : /localhost|127\.0\.0\.1/.test(host) ? ' For a local server, make sure it is running and allows requests from this page (for Ollama, set OLLAMA_ORIGINS).'
+    : ' If your connection is fine, this service may not allow requests from web pages (CORS). OpenRouter does.';
+  return m;
+}
+const errText = async res => { try { const j = await res.json(); return (j.error && (j.error.message || (typeof j.error === 'string' ? j.error : ''))) || j.message || ''; } catch (e) { return ''; } };
+
+/* ---- build the request for each kind of service ---- */
+function requestFor(cfg, system, messages, max_tokens) {
+  const P = providerOf(cfg);
+  if (P.kind === 'anthropic') {
+    return { url: P.url, headers: Object.assign({ 'content-type': 'application/json', 'x-api-key': cfg.key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' }, cfg.workspace ? { 'anthropic-workspace-id': cfg.workspace } : {}),
+      body: { model: cfg.model || P.model, max_tokens, stream: true, system, messages } };
+  }
+  const msgs = [{ role: 'system', content: system }];
+  for (const m of messages) {
+    if (typeof m.content === 'string') { msgs.push({ role: m.role, content: m.content }); continue; }
+    const hasFile = m.content.some(b => b.type === 'document');
+    if (!hasFile) { msgs.push({ role: m.role, content: m.content.map(b => b.text).filter(Boolean).join('\n\n') }); continue; }   // plain string works on every service
+    msgs.push({ role: m.role, content: m.content.map(b => b.type === 'document'
+      ? { type: 'file', file: { filename: 'paper.pdf', file_data: 'data:application/pdf;base64,' + b.source.data } } : { type: 'text', text: b.text }) });
+  }
+  const body = { model: cfg.model || P.model, messages: msgs, stream: true }; body[P.tokenParam || 'max_tokens'] = max_tokens;
+  return { url: endpoint(cfg), headers: Object.assign({ 'content-type': 'application/json' }, cfg.key ? { authorization: 'Bearer ' + cfg.key } : {}), body };
+}
+
+/* ---- stream a reply, whichever service it comes from ---- */
+async function streamMessages({ system, messages, max_tokens, onText, signal, cfg }) {
+  cfg = cfg || activeCfg(); const P = providerOf(cfg);
+  const send = async mt => {
+    const r = requestFor(cfg, system, messages, mt);
+    try { return await fetch(r.url, { method: 'POST', signal, headers: r.headers, body: JSON.stringify(r.body) }); }
+    catch (e) { if (e.name === 'AbortError') throw e; throw new Error(unreachable(cfg)); }
+  };
+  let res = await send(max_tokens), msg = '';
+  if (!res.ok) {
+    msg = await errText(res);
+    if (P.kind === 'openai' && res.status === 400 && max_tokens > 8192 && /max(_completion)?_tokens|output tokens|completion tokens/i.test(msg)) { res = await send(8192); msg = res.ok ? '' : await errText(res); }   // some models cap output lower
+    if (!res.ok) throw new Error(friendlyError(res.status, msg, cfg));
+  }
+  const reader = res.body.getReader(), dec = new TextDecoder();
+  let buf = '', text = '', stop = '';
+  for (;;) {
+    const { done, value } = await reader.read(); if (done) break;
+    buf += dec.decode(value, { stream: true });
+    let i;
+    while ((i = buf.indexOf('\n')) >= 0) {
+      const line = buf.slice(0, i).trim(); buf = buf.slice(i + 1);
+      if (!line.startsWith('data:')) continue;
+      const d = line.slice(5).trim(); if (!d || d === '[DONE]') continue;
+      let ev; try { ev = JSON.parse(d); } catch (e) { continue; }
+      if (P.kind === 'anthropic') {
+        if (ev.type === 'content_block_delta' && ev.delta?.type === 'text_delta') { text += ev.delta.text; onText && onText(text); }
+        else if (ev.type === 'message_delta' && ev.delta?.stop_reason) stop = ev.delta.stop_reason;
+        else if (ev.type === 'error') throw new Error(ev.error?.message || 'The stream was interrupted.');
+      } else {
+        if (ev.error) throw new Error((ev.error.message || (typeof ev.error === 'string' ? ev.error : '')) || 'The stream was interrupted.');
+        const ch = ev.choices && ev.choices[0], dc = ch && ch.delta && ch.delta.content;
+        const piece = typeof dc === 'string' ? dc : Array.isArray(dc) ? dc.map(x => (x && x.text) || '').join('') : '';
+        if (piece) { text += piece; onText && onText(text); }
+        if (ch && ch.finish_reason) stop = ch.finish_reason === 'length' ? 'max_tokens' : ch.finish_reason;
+      }
+    }
+  }
+  return { text, stop };
+}
+async function testConnection(cfg) {
+  const ctrl = new AbortController(), timer = setTimeout(() => ctrl.abort(), 25000);
+  try { await streamMessages({ cfg, system: 'You are a connection test. Reply with the single word: ok', messages: [{ role: 'user', content: 'ping' }], max_tokens: 64, signal: ctrl.signal }); return { ok: true }; }
+  catch (e) { return { ok: false, error: e.name === 'AbortError' ? 'Timed out after 25 seconds.' : (e.message || String(e)) }; }
+  finally { clearTimeout(timer); }
+}
+
+/* ---- services that can't read a PDF directly get its text, with page markers so citations still work ---- */
+async function pdfToText(pdf, limit = 450000) {
+  const parts = []; let total = 0, cut = false;
+  for (let n = 1; n <= pdf.numPages; n++) {
+    const page = await pdf.getPage(n), tc = await page.getTextContent();
+    let t = ''; for (const it of tc.items) { t += it.str; if (it.hasEOL) t += '\n'; }
+    const block = '[Page ' + n + ']\n' + t.replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+    if (total + block.length > limit) { cut = true; if (!parts.length) parts.push(block.slice(0, limit)); break; }
+    parts.push(block); total += block.length + 2;
+  }
+  const body = parts.join('\n\n');
+  if (body.replace(/\[Page \d+\]|\s/g, '').length < 200) throw new Error('This PDF has no selectable text (it may be a scan), so this service can\'t read it. Switch to Anthropic or OpenAI in Settings, which read PDFs directly, or use a text-based PDF.');
+  return body + (cut ? '\n\n[The rest of the paper was cut off to fit.]' : '');
+}
+async function paperTextFor(file) {
+  if (S.pdfTextCache && S.pdfTextCache.f === file) return S.pdfTextCache.t;
+  await S.pdfReady;
+  if (!S.pdf) throw new Error('Couldn\'t read this PDF in your browser (the PDF reader failed to load). Check your connection, or switch to Anthropic or OpenAI in Settings, which read PDFs directly.');
+  const t = await pdfToText(S.pdf); S.pdfTextCache = { f: file, t }; return t;
+}
+
+/* =====================================================================
    Paperlens — find the real figures and tables in a PDF.
    The model only *names* a figure ("Figure 2"). We then look for its printed
    caption in the PDF text, work out where the figure sits relative to that
@@ -877,7 +1059,7 @@ const ICON = {
 };
 
 const S = {
-  settings: Object.assign({ key: '', model: 'claude-sonnet-5-5', audience: 'adjacent', workspace: '', keepPdf: true }, ls.get('pl.settings', {})),
+  settings: migrateSettings(ls.get('pl.settings', {})),
   paper: null, tab: 'overview',
   pdf: null, pdfReady: Promise.resolve(), pageImgs: {},
   cleanups: [], keys: null, abort: null, lastSrc: null,
@@ -945,38 +1127,61 @@ document.addEventListener('keydown', e => {
 
 /* ---------- settings modal ---------- */
 function openSettings(msg) {
-  $('.scrim')?.remove();
+  $('.scrim')?.remove(); syncActive();
+  const draft = JSON.parse(JSON.stringify(S.settings.profiles)); let prov = S.settings.provider;
   const el = document.createElement('div'); el.className = 'scrim';
   el.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="st">
     <h2 id="st">Settings</h2>
-    <p class="muted">${esc(msg || 'Paperlens sends your paper straight from this page to the Anthropic API. Nothing goes through any other server.')}</p>
+    <p class="muted">${esc(msg || 'Paperlens sends your paper straight from this page to the AI service you choose. Nothing goes through any other server.')}</p>
     ${/iphone|ipad/i.test(navigator.userAgent) && !navigator.standalone ? `<p class="muted" style="margin-top:10px"><b>Install on iPhone or iPad:</b> tap the Share button in Safari, then Add to Home Screen.</p>` : ''}
-    <div class="field"><label for="k">Anthropic API key</label>
-      <input id="k" type="password" autocomplete="off" placeholder="sk-ant-…" value="${esc(S.settings.key)}">
-      <small>Stored only in this browser. Get one at console.anthropic.com.</small></div>
-    <div class="field"><label for="w">Workspace ID <span class="muted" style="font-weight:400">(only if asked for)</span></label>
-      <input id="w" autocomplete="off" placeholder="wrkspc_…" value="${esc(S.settings.workspace)}">
+    <div class="field"><label for="prov">AI service</label>
+      <select id="prov">${Object.entries(PROVIDERS).map(([id, p]) => `<option value="${id}">${esc(p.name)}</option>`).join('')}</select>
+      <small id="pnote"></small></div>
+    <div class="field"><label for="k" id="k-l">API key</label>
+      <input id="k" type="password" autocomplete="off"><small id="k-s"></small></div>
+    <div class="field" id="base-f"><label for="base" id="base-l">Base URL</label>
+      <input id="base" list="bases" autocomplete="off" placeholder="https://…/v1"><datalist id="bases"></datalist><small id="base-s"></small></div>
+    <div class="field" id="w-f"><label for="w">Workspace ID <span class="muted" style="font-weight:400">(only if asked for)</span></label>
+      <input id="w" autocomplete="off" placeholder="wrkspc_…">
       <small>Needed if you see "key is not scoped to a workspace". Find it on your workspace's page in the console, or create the key inside a workspace instead.</small></div>
     <div class="field"><label for="m">Model</label>
-      <input id="m" list="models" value="${esc(S.settings.model)}">
-      <datalist id="models"><option value="claude-sonnet-5-5"><option value="claude-opus-5-5"><option value="claude-haiku-5-5"></datalist>
-      <small>Sonnet is a good balance. Opus is deeper but slower. Haiku is fastest.</small></div>
+      <input id="m" list="models" autocomplete="off"><datalist id="models"></datalist><small id="m-s"></small></div>
+    <div class="row" style="margin-top:14px"><button class="btn small" id="test" type="button">Test connection</button><span id="test-r" role="status" class="muted" style="flex:1;min-width:160px;font-size:14px"></span></div>
     <label class="check"><input type="checkbox" id="kp" ${S.settings.keepPdf !== false ? 'checked' : ''}><span><b>Keep a copy of my PDFs on this device</b><small>Lets figures, page previews and full-paper chat keep working when you reopen a paper from your library. Stays on this device only.</small></span></label>
     <div class="row" style="margin-top:22px"><button class="btn primary" id="sv">Save</button><button class="btn ghost" id="cn">Cancel</button><span class="spacer"></span>
       <button class="btn ghost small" id="wipe">Clear saved data</button></div></div>`;
   document.body.appendChild(el);
+  const field = id => $('#' + id, el);
+  const read = () => ({ key: field('k').value.trim(), model: field('m').value.trim(), base: field('base').value.trim(), workspace: field('w').value.trim() });
+  const load = id => {
+    const P = PROVIDERS[id], d = draft[id] || {};
+    field('k').value = d.key || ''; field('k').placeholder = P.ph; field('k-s').textContent = 'Stored only in this browser and sent only to ' + P.name.replace(/ \(.*\)/, '') + '. ' + P.keyHelp;
+    field('m').value = d.model || P.model; field('m-s').textContent = P.modelHelp; field('models').innerHTML = P.models.map(m => `<option value="${esc(m)}">`).join('');
+    field('base-f').hidden = !P.showBase; field('base').value = d.base || ''; field('base-l').textContent = P.baseLabel || 'Base URL'; field('base-s').textContent = P.baseHelp || '';
+    field('bases').innerHTML = (P.bases || []).map(m => `<option value="${esc(m)}">`).join('');
+    field('w-f').hidden = id !== 'anthropic'; field('pnote').textContent = P.note; field('test-r').textContent = '';
+  };
+  field('prov').value = prov; load(prov);
+  field('prov').onchange = e => { draft[prov] = read(); prov = e.target.value; load(prov); };
+  field('test').onclick = async () => {
+    const d = read(), P = PROVIDERS[prov], cfg = { provider: prov, key: d.key, model: d.model || P.model, base: d.base, workspace: d.workspace }, r = field('test-r'), b = field('test');
+    if (!cfgReady(cfg)) { r.textContent = P.baseRequired && !d.base ? '✗ Enter the base URL and model first.' : '✗ Enter your API key first.'; return; }
+    b.disabled = true; r.textContent = 'Testing…';
+    const res = await testConnection(cfg); b.disabled = false;
+    if (field('test-r')) field('test-r').textContent = res.ok ? '✓ Connected. This key and model work.' : '✗ ' + res.error;
+  };
   el.addEventListener('click', e => { if (e.target === el) el.remove(); });
-  $('#cn', el).onclick = () => el.remove();
-  $('#sv', el).onclick = () => {
-    S.settings.keepPdf = $('#kp', el).checked; S.settings.key = $('#k', el).value.trim(); S.settings.workspace = $('#w', el).value.trim(); S.settings.model = $('#m', el).value.trim() || 'claude-sonnet-5-5';
-    ls.set('pl.settings', S.settings); el.remove(); toast('Settings saved'); if (!S.paper && !S.abort) (S.view === 'library' ? showLibrary() : showHome());
+  field('cn').onclick = () => el.remove();
+  field('sv').onclick = () => {
+    draft[prov] = read(); const s = S.settings; s.profiles = draft; s.keepPdf = field('kp').checked; applyProfile(s, prov);
+    persistSettings(); el.remove(); toast('Settings saved'); if (!S.paper && !S.abort) (S.view === 'library' ? showLibrary() : showHome());
   };
-  $('#wipe', el).onclick = async () => {
-    if (!confirm('Remove your API key and ALL saved papers, saved PDFs and progress from this browser? This can\'t be undone.')) return;
+  field('wipe').onclick = async () => {
+    if (!confirm('Remove your API keys and ALL saved papers, saved PDFs and progress from this browser? This can\'t be undone.')) return;
     ls.del('pl.settings'); await lib.clearAll(); refreshLibCount();
-    S.settings = { key: '', model: 'claude-sonnet-5-5', audience: 'adjacent', workspace: '', keepPdf: true }; el.remove(); toast('Cleared'); showHome();
+    S.settings = migrateSettings({}); el.remove(); toast('Cleared'); showHome();
   };
-  setTimeout(() => $('#k', el).focus(), 30);
+  setTimeout(() => field('k').focus(), 30);
 }
 
 /* ---------- PDF page rendering (pdf.js loaded on demand) ---------- */
@@ -1016,11 +1221,12 @@ const AUDIENCES = {
   expert: 'a specialist in this exact field: be technical and precise, no hand-holding',
   newcomer: 'a curious newcomer: use plain language and short everyday analogies, define every technical term'
 };
-function buildSystem(aud) {
+function buildSystem(aud, mode) {
+  const textNote = mode === 'pdftext' ? '\nThe paper is given as plain text. Each page starts with a [Page N] marker: use N for every page number you report (pdf_page fields). You cannot see the figures themselves, so describe them only from their captions and the surrounding text, and say so rather than guessing.' : '';
   return `You are Paperlens, an expert analyst who helps researchers in any field grasp a paper fast. Read the paper carefully and respond with ONE JSON object and nothing else: no prose before or after, no code fences.
 
 Accuracy rules: only state what the paper supports. Quote numbers exactly as the paper reports them. If the paper does not say something, leave it out rather than guess. Write in plain text only: no markdown, no LaTeX; use unicode for symbols (α, ², ≈, √).
-Audience: ${AUDIENCES[aud] || AUDIENCES.adjacent}.
+Audience: ${AUDIENCES[aud] || AUDIENCES.adjacent}.${textNote}
 Be concise and specific. Prefer concrete facts, numbers and names over general statements.
 
 JSON schema (keys in this exact order):
@@ -1058,16 +1264,6 @@ const STAGES = [
 function fileToB64(file) {
   return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(',')[1]); r.onerror = () => rej(new Error('Could not read that file.')); r.readAsDataURL(file); });
 }
-function friendlyError(status, msg) {
-  if (status === 400 && /workspace/i.test(msg)) return 'Your key isn\'t tied to a workspace. Either create a new key inside a named workspace in the Anthropic console, or add that workspace\'s ID (starts with wrkspc_) in Settings.';
-  if (status === 401) return 'The API key was rejected. Open Settings and check that it is correct.';
-  if (status === 403) return 'This key is not allowed to use that model or feature. ' + msg;
-  if (status === 404) return 'That model name was not found. Open Settings and pick a valid model. ' + msg;
-  if (status === 413) return 'The file is too large for the API. Try a smaller PDF (under about 24 MB and 100 pages).';
-  if (status === 429) return 'Rate limit reached. Wait a minute and try again.';
-  if (status === 529 || status >= 500) return 'The API is busy right now. Try again in a moment.';
-  return msg || ('Request failed (' + status + ').');
-}
 function parseModelJSON(text) {
   let t = text.trim().replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '');
   const a = t.indexOf('{'), b = t.lastIndexOf('}');
@@ -1075,58 +1271,26 @@ function parseModelJSON(text) {
   return JSON.parse(t.slice(a, b + 1));
 }
 
-/* ---------- shared: stream a Messages API call ---------- */
-async function streamMessages({ system, messages, max_tokens, onText, signal }) {
-  let res;
-  try {
-    res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST', signal,
-      headers: Object.assign({ 'content-type': 'application/json', 'x-api-key': S.settings.key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' }, S.settings.workspace ? { 'anthropic-workspace-id': S.settings.workspace } : {}),
-      body: JSON.stringify({ model: S.settings.model, max_tokens, stream: true, system, messages })
-    });
-  } catch (e) {
-    if (e.name === 'AbortError') throw e;
-    throw new Error('Could not reach api.anthropic.com. Check your connection and any ad or privacy blockers.');
-  }
-  if (!res.ok) { let m = ''; try { m = (await res.json()).error?.message || ''; } catch (e) {} throw new Error(friendlyError(res.status, m)); }
-  const reader = res.body.getReader(), dec = new TextDecoder();
-  let buf = '', text = '', stop = '';
-  for (;;) {
-    const { done, value } = await reader.read(); if (done) break;
-    buf += dec.decode(value, { stream: true });
-    let i;
-    while ((i = buf.indexOf('\n')) >= 0) {
-      const line = buf.slice(0, i).trim(); buf = buf.slice(i + 1);
-      if (!line.startsWith('data:')) continue;
-      const d = line.slice(5).trim(); if (!d) continue;
-      let ev; try { ev = JSON.parse(d); } catch (e) { continue; }
-      if (ev.type === 'content_block_delta' && ev.delta?.type === 'text_delta') { text += ev.delta.text; onText && onText(text); }
-      else if (ev.type === 'message_delta' && ev.delta?.stop_reason) stop = ev.delta.stop_reason;
-      else if (ev.type === 'error') throw new Error(ev.error?.message || 'The stream was interrupted.');
-    }
-  }
-  return { text, stop };
-}
-
 async function analyze(src) {
-  if (!S.settings.key) { openSettings('Add your Anthropic API key to analyze a paper.'); return; }
+  if (!cfgReady()) { openSettings('Add an API key to analyze a paper.'); return; }
   S.lastSrc = src; S.view = 'loading'; teardown();
   const label = src.pdf ? src.pdf.name : 'pasted text';
   showLoading(label);
   const ctrl = S.abort = new AbortController();
   try {
-    const content = [];
+    const content = [], P = providerOf(); let mode = 'text';
     if (src.pdf) {
       if (src.pdf.size > 24 * 1024 * 1024) throw new Error('That PDF is larger than 24 MB. Try a smaller or compressed copy.');
-      content.push({ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: await blobToB64(src.pdf) } });
-      attachPdf(src.pdf);
+      const ready = attachPdf(src.pdf);
+      if (P.pdf === 'native') { content.push({ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: await blobToB64(src.pdf) } }); mode = 'pdf'; }
+      else { await ready; content.push({ type: 'text', text: 'PAPER TEXT (each page starts with a [Page N] marker, where N is the PDF page number):\n\n' + await paperTextFor(src.pdf) }); mode = 'pdftext'; }
     } else {
       S.srcFile = null; S.srcText = src.text; S.pdf = null; S.pageImgs = {}; S.pdfReady = Promise.resolve();
       content.push({ type: 'text', text: 'PAPER TEXT:\n\n' + src.text.slice(0, 450000) });
     }
     content.push({ type: 'text', text: 'Analyze this paper and return the JSON object described in your instructions.' });
 
-    const { text, stop } = await streamMessages({ system: buildSystem(S.settings.audience), messages: [{ role: 'user', content }], max_tokens: 16000, onText: updateStages, signal: ctrl.signal });
+    const { text, stop } = await streamMessages({ system: buildSystem(S.settings.audience, mode), messages: [{ role: 'user', content }], max_tokens: 16000, onText: updateStages, signal: ctrl.signal });
     let data;
     try { data = parseModelJSON(text); }
     catch (e) { throw new Error(stop === 'max_tokens' ? 'The analysis was cut off because the paper is very dense. Try again or choose a faster model.' : 'The response could not be read. Try again.'); }
@@ -1182,15 +1346,15 @@ function showHome() {
         <option value="expert">A specialist in this field</option>
         <option value="newcomer">A curious newcomer</option>
       </select></div>
-    <div class="field"><label>&nbsp;</label><button class="btn ${S.settings.key ? '' : 'primary'}" id="demo" style="width:100%">See a finished example first</button></div>
+    <div class="field"><label>&nbsp;</label><button class="btn ${cfgReady() ? '' : 'primary'}" id="demo" style="width:100%">See a finished example first</button></div>
   </div>
   <details class="paste"><summary>No PDF? Paste the text instead</summary>
     <div class="field" style="margin-top:8px"><textarea id="txt" placeholder="Paste the paper's text here…"></textarea></div>
     <button class="btn primary" id="gotxt" style="margin-top:10px">Analyze pasted text</button></details>
-  ${S.settings.key ? '' : `<div class="notice">The example works without a key. To analyze your own papers, add your Anthropic API key. <button id="needkey">Open settings</button></div>`}
+  ${cfgReady() ? '' : `<div class="notice">The example works without a key. To analyze your own papers, add an API key (Anthropic, OpenRouter, OpenAI or any OpenAI-compatible service). <button id="needkey">Open settings</button></div>`}
 <div id="recent"></div>`;
   $('#aud').value = S.settings.audience;
-  $('#aud').onchange = e => { S.settings.audience = e.target.value; ls.set('pl.settings', S.settings); };
+  $('#aud').onchange = e => { S.settings.audience = e.target.value; persistSettings(); };
   const drop = $('#drop'), inp = $('#file');
   const take = f => {
     if (!f) return;
@@ -1404,9 +1568,10 @@ const PAGE_RE = /\(pp?\.\s*(\d+)[^)]*\)/g;
 
 function chatSystem(mode) {
   const src = mode === 'pdf' ? 'The full paper is attached to the first message as a PDF.'
+    : mode === 'pdftext' ? 'The full text of the paper is in the first message. Each page starts with a [Page N] marker, where N is the PDF page number.'
     : mode === 'text' ? 'The full text of the paper is in the first message.'
     : 'You only have saved notes about the paper (summary, figures, glossary), not the full text. Say so when a question needs detail the notes do not contain.';
-  const cite = mode === 'pdf' ? '\nWhen you rely on a specific part, cite the PDF page like (p. 4). Count pages from the first page of the PDF file, not the printed page number.' : '';
+  const cite = mode === 'pdf' || mode === 'pdftext' ? '\nWhen you rely on a specific part, cite the PDF page like (p. 4). Count pages from the first page of the PDF file, not the printed page number.' : '';
   return `You are Paperlens, a research assistant answering questions about ONE paper. ${src}
 
 Ground every answer in the paper. If the paper does not say, state that plainly; you may then add general knowledge, clearly labelled as coming from outside the paper. Quote numbers exactly as the paper reports them, and never invent citations or results.
@@ -1416,6 +1581,10 @@ Audience: ${AUDIENCES[S.settings.audience] || AUDIENCES.adjacent}.`;
 }
 async function chatSourceBlock() {
   const cc = { type: 'ephemeral' };
+  if (S.srcFile && providerOf().pdf !== 'native') {
+    const text = await paperTextFor(S.srcFile);
+    return { mode: 'pdftext', block: { type: 'text', text: 'PAPER TEXT (each page starts with a [Page N] marker, where N is the PDF page number):\n\n' + text, cache_control: cc } };
+  }
   if (S.srcFile) {
     if (!S.srcCache || S.srcCache.f !== S.srcFile) S.srcCache = { f: S.srcFile, b: await blobToB64(S.srcFile) };
     return { mode: 'pdf', block: { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: S.srcCache.b }, cache_control: cc } };
@@ -1474,7 +1643,7 @@ function viewChat(p) {
 
   async function send(text) {
     text = (text ?? q.value).trim(); if (!text || ctrl) return;
-    if (!S.settings.key) { openSettings('Add your Anthropic API key to chat with the paper.'); return; }
+    if (!cfgReady()) { openSettings('Add an API key to chat with the paper.'); return; }
     q.value = ''; q.style.height = 'auto';
     chat.msgs.push({ role: 'user', content: text }, { role: 'assistant', content: '' });
     paint(); busy(true); scrollTo({ top: document.documentElement.scrollHeight });
