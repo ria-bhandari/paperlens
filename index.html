@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- Paperlens © 2026 Ria Bhandari. All rights reserved. -->
 <html lang="en" data-theme="light">
 <head>
 <meta charset="utf-8">
@@ -14,6 +15,8 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Paperlens">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="author" content="Ria Bhandari">
+<meta name="copyright" content="© 2026 Ria Bhandari. All rights reserved.">
 <meta name="description" content="Understand any research paper fast: overview, key figures, mind map, flashcards and games.">
 <style>
 :root{
@@ -333,6 +336,8 @@ details.paste summary{cursor:pointer;color:var(--blue);font-weight:600;padding:6
 .unv{margin-top:34px;padding:14px 18px;border:1px dashed var(--edge);border-radius:12px}
 .unv summary{cursor:pointer;font-weight:600;min-height:32px;display:flex;align-items:center}
 
+.site-foot{max-width:1000px;margin:0 auto;padding:8px clamp(14px,3vw,28px) 36px;text-align:center;font-size:13px;color:var(--muted)}
+
 </style>
 </head>
 <body>
@@ -355,6 +360,7 @@ details.paste summary{cursor:pointer;color:var(--blue);font-weight:600;padding:6
 </header>
 <nav class="tabs" id="tabs" role="tablist" aria-label="Paper sections" hidden></nav>
 <main id="app"></main>
+<footer class="site-foot">© 2026 Ria Bhandari. All rights reserved.</footer>
 <script>
 const DEMO = {
   meta:{title:"Attention Is All You Need",authors:"Vaswani, Shazeer, Parmar, Uszkoreit, Jones, Gomez, Kaiser, Polosukhin",venue_year:"NeurIPS 2017",field:"Machine learning",paper_type:"Method paper",

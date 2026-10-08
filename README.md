@@ -13,7 +13,7 @@
 | Tab | What it does |
 |---|---|
 | **Overview** | A TL;DR, a "worth a full read if…" line, a snapshot (study type, data, method, headline result), key findings with numbers, the problem and approach, a plain-English version, caveats, and a glossary. Each finding links to the PDF page it came from. |
-| **Figures** | The 3 to 6 figures and tables that carry the paper, shown as the real PDF page, each with what it shows, why it matters, a one-line takeaway, and a "Look closely" prompt for reading critically. |
+| **Figures** | The figures, tables and diagrams that carry the paper. Each one is matched to its numbered caption in your PDF and cropped straight from the page, with what it shows, why it matters, a one-line takeaway, and a "Look closely" prompt for reading critically. Anything that can't be found in the PDF is set aside and clearly marked, never shown as a figure. |
 | **Mind map** | An interactive map you can pan, zoom, expand and collapse. Click a node to read its note. Export as SVG or PNG for slides. |
 | **Flashcards** | Flip cards with *Show again soon*, *Hard, later* and *I know this*. Filter by type (concepts, methods, results, terms, critique). Export to Anki. |
 | **Play** | **Quiz blitz** (lives, a timer and streak bonuses), **Fact or fiction**, and **Pair up** (match terms to meanings against the clock). Questions you miss can be turned into flashcards in one click. |
@@ -86,7 +86,7 @@ There is **no Paperlens server**. When you analyse a paper or ask a question, yo
 | "That model name was not found" | Open Settings and pick a valid model name. |
 | "Rate limit reached" or "busy" | Wait a minute and try again. |
 | PDF too large | Compress the PDF or split it. The limit is about 24 MB. |
-| Figures show no page images | The PDF isn't attached (reopened from the library) or the preview library couldn't load. Attach the PDF on the Figures tab. |
+| Figures show no images | The PDF isn't attached (reopened from the library), or the figure is a scan with no text caption. Attach the PDF on the Figures tab. Items listed under "Couldn't match" weren't found as numbered figures or tables in the PDF. |
 | No "Install app" button | Not every browser offers it. On iPhone or iPad use Share, then Add to Home Screen. |
 
 ---
@@ -101,4 +101,4 @@ There is **no Paperlens server**. When you analyse a paper or ask a question, yo
 
 ---
 
-© 2026 ria-bhandari. All rights reserved. The source in this repository is published only so the app can be hosted at the link above. Copying, redistributing or deploying your own copy is not permitted without permission.
+© 2026 Ria Bhandari. All rights reserved. The source in this repository is published only so the app can be hosted at the link above. Copying, redistributing or deploying your own copy is not permitted without permission.
