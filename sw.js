@@ -2,7 +2,7 @@
 /* Paperlens service worker: makes the app load instantly and work offline.
    The Anthropic API is never touched, so your paper and key only go where you send them.
    To ship an update, change VERSION. */
-const VERSION = 'paperlens-v8';
+const VERSION = 'paperlens-v9';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-maskable-512.png', './apple-touch-icon.png', './favicon-32.png', './icon.svg'];
 
 self.addEventListener('install', e => {
@@ -23,7 +23,7 @@ self.addEventListener('fetch', e => {
   if (url.origin === self.location.origin) {
     if (req.mode === 'navigate') {
       // Online: always get the latest page. Offline: fall back to the saved copy.
-      e.respondWith(fetch(req).then(res => {
+      e.respondWith(fetch(req, { cache: 'no-cache' }).then(res => {          // always ask the server, so a fresh upload shows on the next reload
         if (res.ok) { const copy = res.clone(); caches.open(VERSION).then(c => c.put('./index.html', copy)); }
         return res;
       }).catch(() => caches.match('./index.html')));
@@ -31,7 +31,7 @@ self.addEventListener('fetch', e => {
     }
     // Other files from this site: serve the saved copy fast, refresh it in the background.
     e.respondWith(caches.match(req).then(hit => {
-      const fresh = fetch(req).then(res => { if (res.ok) { const copy = res.clone(); caches.open(VERSION).then(c => c.put(req, copy)); } return res; }).catch(() => hit);
+      const fresh = fetch(req, { cache: 'no-cache' }).then(res => { if (res.ok) { const copy = res.clone(); caches.open(VERSION).then(c => c.put(req, copy)); } return res; }).catch(() => hit);
       return hit || fresh;
     }));
     return;

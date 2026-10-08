@@ -52,6 +52,10 @@ Open **Settings** (the gear icon), pick a service, paste its key, and press **Te
 
 Anthropic is the most thoroughly tested option. The others use the standard OpenAI-style chat format, but every service names its models differently and changes them often, so always check the exact model name on the service's own site.
 
+## Updates and checking your version
+
+Open **Settings** (the gear icon): the version appears under **App version** (currently 2026.10.8). If something you expect is missing, press **Update app**. It clears the saved copy of the app and loads the newest one, and your papers, notes and settings are kept.
+
 ## Install it as an app
 
 Paperlens can live on your desktop or home screen with its own icon and window.
@@ -102,6 +106,7 @@ There is **no Paperlens server**. When you analyse a paper or ask a question, yo
 
 | Problem | Try this |
 |---|---|
+| I don't see a new feature | The site is still showing an older copy. Open Settings and press **Update app**. If there's no App version line, the new files haven't reached the site yet: check that `index.html` and `sw.js` were replaced (not saved as `index (1).html`) and wait a few minutes. |
 | "…rejected the API key" | Open Settings, make sure the right AI service is selected, and re-paste that service's key. Check it hasn't been revoked. |
 | "Could not reach …" | Check your connection, and look for an ad blocker or privacy extension. If it names a service other than Anthropic or OpenRouter, that service may not allow requests from web pages (a browser rule called CORS). OpenAI often blocks them: use OpenRouter instead, or enter a proxy address in Settings. |
 | "Your key isn't tied to a workspace" | In the Anthropic console, create a key inside a named workspace, or paste that workspace's ID (starts with `wrkspc_`) into the Workspace ID box in Settings. |

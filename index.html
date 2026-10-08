@@ -15,6 +15,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Paperlens">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="app-version" content="2026.10.8">
 <meta name="author" content="Ria Bhandari">
 <meta name="copyright" content="© 2026 Ria Bhandari. All rights reserved.">
 <meta name="description" content="Understand any research paper fast: overview, key figures, mind map, flashcards and games.">
@@ -1279,6 +1280,15 @@ document.addEventListener('keydown', e => {
   if (S.keys) S.keys(e);
 });
 
+/* ---------- version + clean refresh ---------- */
+const APP_VERSION = '2026.10.8';
+function reloadApp() { location.replace(location.pathname + '?u=' + Date.now()); }
+async function refreshApp() {                                  // clears the saved copy of the APP only; papers, notes and settings are untouched
+  try { const regs = (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) ? await navigator.serviceWorker.getRegistrations() : []; await Promise.all(regs.map(r => r.unregister())); } catch (e) {}
+  try { if (window.caches) { const keys = await caches.keys(); await Promise.all(keys.map(k => caches.delete(k))); } } catch (e) {}
+  reloadApp();
+}
+
 /* ---------- settings modal ---------- */
 function openSettings(msg) {
   $('.scrim')?.remove(); syncActive();
@@ -1302,6 +1312,9 @@ function openSettings(msg) {
       <input id="m" list="models" autocomplete="off"><datalist id="models"></datalist><small id="m-s"></small></div>
     <div class="row" style="margin-top:14px"><button class="btn small" id="test" type="button">Test connection</button><span id="test-r" role="status" class="muted" style="flex:1;min-width:160px;font-size:14px"></span></div>
     <label class="check"><input type="checkbox" id="kp" ${S.settings.keepPdf !== false ? 'checked' : ''}><span><b>Keep a copy of my PDFs on this device</b><small>Lets figures, page previews and full-paper chat keep working when you reopen a paper from your library. Stays on this device only.</small></span></label>
+    <div class="field" style="margin-top:18px"><label>App version</label>
+      <div class="row" style="gap:10px"><span id="ver" class="muted">Paperlens ${APP_VERSION}</span><button class="btn small" id="upd" type="button">Update app</button></div>
+      <small>If something you expect is missing, this clears the saved copy of the app and loads the newest one. Your papers, notes and settings are kept.</small></div>
     <div class="row" style="margin-top:22px"><button class="btn primary" id="sv">Save</button><button class="btn ghost" id="cn">Cancel</button><span class="spacer"></span>
       <button class="btn ghost small" id="wipe">Clear saved data</button></div></div>`;
   document.body.appendChild(el);
@@ -1326,6 +1339,7 @@ function openSettings(msg) {
   };
   el.addEventListener('click', e => { if (e.target === el) el.remove(); });
   field('cn').onclick = () => el.remove();
+  field('upd').onclick = () => { field('upd').disabled = true; field('upd').textContent = 'Updating…'; refreshApp(); };
   field('sv').onclick = () => {
     draft[prov] = read(); const s = S.settings; s.profiles = draft; s.keepPdf = field('kp').checked; applyProfile(s, prov);
     persistSettings(); el.remove(); toast('Settings saved'); if (!S.paper && !S.abort) (S.view === 'library' ? showLibrary() : showHome());
