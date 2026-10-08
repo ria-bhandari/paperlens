@@ -18,8 +18,9 @@
 | **Flashcards** | Flip cards with *Show again soon*, *Hard, later* and *I know this*. Filter by type (concepts, methods, results, terms, critique). Export to Anki. |
 | **Play** | **Quiz blitz** (lives, a timer and streak bonuses), **Fact or fiction**, and **Pair up** (match terms to meanings against the clock). Questions you miss can be turned into flashcards in one click. |
 | **Chat** | Ask anything about the paper. Answers are grounded in the full PDF, and page references open the page so you can check them. |
+| **Library** | Every paper you analyze is saved on your own device, with your flashcard progress, best game scores and chat history. Search, sort, reopen where you left off, and export a backup. No account or login needed. |
 
-Also: six themes (Paper, Spring, Golden hour, Fall, Winter, Dusk) with light and dark modes and an optional "follow the seasons" setting, a saved library of past papers, Markdown notes export, and an "explain it for" setting (nearby-field researcher, specialist, or newcomer).
+Also: six themes (Paper, Spring, Golden hour, Fall, Winter, Dusk) with light and dark modes and an optional "follow the seasons" setting, Markdown notes export, and an "explain it for" setting (nearby-field researcher, specialist, or newcomer).
 
 ---
 
@@ -51,7 +52,8 @@ Once installed, the app opens instantly and works offline for reading saved pape
 There is **no Paperlens server**. When you analyse a paper or ask a question, your browser sends it directly to the Anthropic API using **your own API key**.
 
 - **Your key** is saved only in your browser on that device. It is never sent anywhere except to Anthropic.
-- **Your papers** go to Anthropic and nowhere else. The app keeps the generated notes in your browser's saved library, not the PDF itself.
+- **Your papers** go to Anthropic and nowhere else.
+- **Your library** (the generated notes, your progress and, unless you switch it off in Settings, a copy of each PDF) is stored in your browser on your own device. It is never uploaded anywhere, which is also why no account is needed. Use **Library, then Export backup** to keep a copy or move to another device.
 - **Cost:** you pay Anthropic for your own usage. Long papers cost more, and chat re-sends the paper with each question (with caching turned on to keep follow-ups cheaper). Check your usage in the Anthropic console.
 
 ---
@@ -72,7 +74,7 @@ There is **no Paperlens server**. When you analyse a paper or ask a question, yo
 
 - **Check the important bits.** Summaries, figures and answers are written by AI. Page links are there so you can verify claims against the source, and you should for anything that matters.
 - **Figure previews** are the real PDF pages rendered in your browser. They need an internet connection the first time.
-- **Papers reopened from your library** don't keep the PDF, so page previews are unavailable until you attach the PDF again from the Figures or Chat tab.
+- **Your library is per browser and per device.** A different browser, a private window, or cleared browsing data means a fresh, empty library, and some browsers clear data for sites you rarely visit. Installing Paperlens as an app and exporting a backup now and then keeps your papers safe.
 - **Scanned PDFs** and very long documents may give weaker results than text-based PDFs.
 - **Model:** the default is `claude-sonnet-5-5`. You can change it in Settings (for example to an Opus model for more depth, or Haiku for speed).
 
@@ -84,16 +86,19 @@ There is **no Paperlens server**. When you analyse a paper or ask a question, yo
 | "Could not reach api.anthropic.com" | Check your connection, and look for an ad blocker or privacy extension blocking the request. |
 | "Your key isn't tied to a workspace" | In the Anthropic console, create a key inside a named workspace, or paste that workspace's ID (starts with `wrkspc_`) into the Workspace ID box in Settings. |
 | "That model name was not found" | Open Settings and pick a valid model name. |
+| My papers disappeared | The library lives in one browser on one device. Check you're in the same browser and not a private window, or use Library, then Import backup. |
 | "Rate limit reached" or "busy" | Wait a minute and try again. |
 | PDF too large | Compress the PDF or split it. The limit is about 24 MB. |
-| Figures show no images | The PDF isn't attached (reopened from the library), or the figure is a scan with no text caption. Attach the PDF on the Figures tab. Items listed under "Couldn't match" weren't found as numbered figures or tables in the PDF. |
+| Figures show no images | The saved PDF was removed (or "Keep a copy" is off in Settings), or the figure is a scan with no text caption. Attach the PDF on the Figures tab. Items listed under "Couldn't match" weren't found as numbered figures or tables in the PDF. |
 | No "Install app" button | Not every browser offers it. On iPhone or iPad use Share, then Add to Home Screen. |
 
 ---
 
 ## FAQ
 
-**Can anyone use it?** Yes, just open the link above. Each person uses their own API key and has their own private library on their own device.
+**Does my paper get stored anywhere?** Only on your own device (the notes, and a copy of the PDF if "Keep a copy" is on in Settings), and with Anthropic when you analyze or chat. There is no other server. You can delete any paper, or just its saved PDF, from the Library.
+
+**Can anyone use it?** Yes, just open the link above. Each person uses their own API key and has their own private library on their own device, with no login.
 
 **Why do I need my own key?** There's no server to hold a shared one, and a key placed inside a public web page would be exposed to every visitor, so Paperlens deliberately doesn't do that.
 

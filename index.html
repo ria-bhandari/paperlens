@@ -338,14 +338,36 @@ details.paste summary{cursor:pointer;color:var(--blue);font-weight:600;padding:6
 
 .site-foot{max-width:1000px;margin:0 auto;padding:8px clamp(14px,3vw,28px) 36px;text-align:center;font-size:13px;color:var(--muted)}
 
+/* ---------- library ---------- */
+.count{display:inline-grid;place-items:center;min-width:20px;height:20px;margin-left:8px;padding:0 6px;border-radius:10px;background:var(--ink);color:var(--bg);font-size:12px;font-weight:700}
+.count:empty{display:none}
+.lib-tools{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.lib-list{display:grid;gap:14px}
+.libc{display:flex;gap:18px;justify-content:space-between;align-items:flex-start;flex-wrap:wrap}
+.libc-main{flex:1;min-width:240px}
+.libc-main h3{font-size:20px;margin:0}
+.linklike{background:none;border:0;padding:0;text-align:left;font:inherit;color:inherit;cursor:pointer}
+.linklike:hover{text-decoration:underline;text-decoration-color:var(--mark);text-decoration-thickness:3px}
+.libc-meta{font-size:13.5px;margin-top:8px}
+.libc-prog{margin-top:12px;max-width:440px}
+.libc-prog span{display:block;margin-top:6px;font-size:13.5px;color:var(--muted)}
+.libc-act{display:flex;gap:6px;flex-wrap:wrap}
+.btn.danger{color:var(--bad);border-color:var(--bad)}
+.lib-data{margin-top:30px}
+.lib-data h3{font-size:19px;margin-bottom:6px}
+@media (max-width:520px){#btn-lib{padding:0 10px}}
+
+@media (max-width:420px){.brand-t{display:none}.top{gap:4px}.icon-btn{width:40px}}
+
 </style>
 </head>
 <body>
 <header class="top">
   <button class="brand" id="brand" aria-label="Paperlens home">
     <svg viewBox="0 0 32 32" aria-hidden="true"><rect x="2" y="2" width="28" height="28" rx="8" fill="#121a2f"/><rect class="logo-mark" x="7" y="19" width="18" height="6" rx="1.5"/><circle cx="14.5" cy="13.5" r="5" fill="none" stroke="#fff" stroke-width="2.4"/><path d="M18.3 17.3 23 22" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg>
-    Paperlens
+    <span class="brand-t">Paperlens</span>
   </button>
+  <button class="btn small ghost" id="btn-lib" aria-label="Your library of saved papers">Library<span class="count" id="lib-n"></span></button>
   <span class="spacer"></span>
   <button class="btn small" id="btn-install" hidden title="Install Paperlens as an app">Install app</button>
   <button class="icon-btn" id="btn-look" aria-label="Appearance and themes" title="Themes">
@@ -698,7 +720,7 @@ function figIsCaptionStart(L, s) {
   const m = FIG_CAP_RE.exec(s.text.trim()); if (!m) return false;
   const rest = m[3] || '';
   if (FIG_VERB_RE.test(rest) && !/^\s*[.:|—–\-)]/.test(rest)) return false;
-  return /^\s*[.:|—–\-)]/.test(rest) || s.firstFont !== L.bodyFont;
+  return /^\s*[.:|—–\-)]/.test(rest) || rest.trim() === '' || s.firstFont !== L.bodyFont;
 }
 function figCaptionBlock(L, cap, band) {
   const lines = [cap]; let last = cap, text = cap.text;
@@ -718,12 +740,13 @@ function figRegion(L, bands, cap, blk, band, type) {
   const bandW = band[1] - band[0], body = L.body;
   const inBand = s => Math.min(s.x1, band[1]) - Math.max(s.x0, band[0]) >= 0.5 * (s.x1 - s.x0);
   const colW = Math.min(bandW, ...bands.cols.map(b => b[1] - b[0]));            // a "full line" is judged against the narrowest column
-  const isProse = s => s.words >= 5 && Math.abs(s.size - body) <= 0.1 * body && s.x1 - s.x0 >= 0.5 * colW;
+  const isProse = s => s.words >= 5 && s.font === L.bodyFont && Math.abs(s.size - body) <= 0.1 * body && s.x1 - s.x0 >= 0.5 * colW;
   const mine = new Set(blk.lines), otherCaps = new Set();
   for (const s of L.segs) if (!mine.has(s) && figIsCaptionStart(L, s)) { figCaptionBlock(L, s, figBandFor(L, bands, s)).lines.forEach(x => otherCaps.add(x)); }
   const pool = L.segs.filter(s => !mine.has(s) && inBand(s));
   const stop = s => isProse(s) || otherCaps.has(s);
-  const x0 = Math.max(0, band[0] - 4), x1 = Math.min(L.w, band[1] + 4);
+  const pad = bands.cols.length > 1 && band !== bands.full ? 6 : 18;                 // tables and rules often run slightly past the text edge
+  const x0 = Math.max(0, band[0] - pad), x1 = Math.min(L.w, band[1] + pad);
   const up = () => {
     let edge = 0; for (const s of pool) if (s.bot <= blk.top + 1 && stop(s) && s.bot > edge) edge = s.bot;
     for (let k = 0; k < 3 && edge > 0; k++) {                                                   // short last line of that paragraph
@@ -733,8 +756,16 @@ function figRegion(L, bands, cap, blk, band, type) {
     return { dir: 'up', x0, x1, y0: edge ? edge + 2 : 0, y1: Math.min(L.h, blk.bot + 2), gfx: (blk.top - 2) - (edge ? edge + 2 : 0) };
   };
   const down = () => {
-    let edge = L.h; for (const s of pool) if (s.top >= blk.bot - 1 && stop(s) && s.top < edge) edge = s.top;
-    return { dir: 'down', x0, x1, y0: Math.max(0, blk.top - 2), y1: edge >= L.h ? L.h : edge - 2, gfx: (edge - 2) - (blk.bot + 2) };
+    const seq = pool.filter(t => t.top >= blk.bot - 1).sort((p, q) => p.top - q.top);
+    let prevBot = blk.bot, edge = L.h;
+    for (let k = 0; k < seq.length; k++) {
+      const t = seq[k], nx = seq[k + 1];
+      // a paragraph starts here: a body-text line after a gap, or two body-text lines in a row
+      const para = isProse(t) && (t.top - prevBot >= 1.0 * body || (nx && isProse(nx) && nx.top - t.bot < 0.6 * body));
+      if (otherCaps.has(t) || para) { edge = t.top; break; }
+      prevBot = Math.max(prevBot, t.bot);
+    }
+    return { dir: 'down', x0, x1, y0: Math.max(0, blk.top - 2), y1: edge >= L.h ? L.h : edge - 2, gfx: (edge >= L.h ? L.h : edge - 2) - (blk.bot + 2) };
   };
   const need = type === 'table' ? 24 : 40, order = type === 'table' ? [down, up] : [up, down];
   const all = order.map(f => f()).filter(r => r.gfx >= 16 && r.y1 - r.y0 <= 0.9 * L.h);
@@ -762,7 +793,7 @@ async function figLocate(pdf, f, cache) {
       const m = FIG_CAP_RE.exec(s.text.trim()); if (!m) continue;
       if (FIG_TYPES[m[1].toLowerCase()] !== parsed.type || m[2].toUpperCase() !== parsed.id) continue;
       const rest = m[3] || '', punct = /^\s*[.:|—–\-)]/.test(rest), bold = s.firstFont !== L.bodyFont;
-      let score = (punct ? 3 : 0) + (bold ? 2 : 0) + (s.size < L.body * 0.98 ? 1 : 0) - (FIG_VERB_RE.test(rest) && !punct ? 3 : 0) + (n === claimed ? 0.5 : 0);
+      let score = (punct ? 3 : 0) + (rest.trim() === '' ? 2 : 0) + (bold ? 2 : 0) + (s.size < L.body * 0.98 ? 1 : 0) - (FIG_VERB_RE.test(rest) && !punct ? 3 : 0) + (n === claimed ? 0.5 : 0);
       const band = figBandFor(L, bands, s), blk = figCaptionBlock(L, s, band);
       if (start.length) { const words = new Set(blk.text.toLowerCase().match(/[a-z0-9]+/g) || []); score += 3 * start.filter(w => words.has(w)).length / start.length; }
       if (score >= 2 && (!best || score > best.score)) best = { score, page: n, L, bands, cap: s, blk, band, parsed };
@@ -846,7 +877,7 @@ const ICON = {
 };
 
 const S = {
-  settings: Object.assign({ key: '', model: 'claude-sonnet-5-5', audience: 'adjacent', workspace: '' }, ls.get('pl.settings', {})),
+  settings: Object.assign({ key: '', model: 'claude-sonnet-5-5', audience: 'adjacent', workspace: '', keepPdf: true }, ls.get('pl.settings', {})),
   paper: null, tab: 'overview',
   pdf: null, pdfReady: Promise.resolve(), pageImgs: {},
   cleanups: [], keys: null, abort: null, lastSrc: null,
@@ -930,19 +961,20 @@ function openSettings(msg) {
       <input id="m" list="models" value="${esc(S.settings.model)}">
       <datalist id="models"><option value="claude-sonnet-5-5"><option value="claude-opus-5-5"><option value="claude-haiku-5-5"></datalist>
       <small>Sonnet is a good balance. Opus is deeper but slower. Haiku is fastest.</small></div>
+    <label class="check"><input type="checkbox" id="kp" ${S.settings.keepPdf !== false ? 'checked' : ''}><span><b>Keep a copy of my PDFs on this device</b><small>Lets figures, page previews and full-paper chat keep working when you reopen a paper from your library. Stays on this device only.</small></span></label>
     <div class="row" style="margin-top:22px"><button class="btn primary" id="sv">Save</button><button class="btn ghost" id="cn">Cancel</button><span class="spacer"></span>
       <button class="btn ghost small" id="wipe">Clear saved data</button></div></div>`;
   document.body.appendChild(el);
   el.addEventListener('click', e => { if (e.target === el) el.remove(); });
   $('#cn', el).onclick = () => el.remove();
   $('#sv', el).onclick = () => {
-    S.settings.key = $('#k', el).value.trim(); S.settings.workspace = $('#w', el).value.trim(); S.settings.model = $('#m', el).value.trim() || 'claude-sonnet-5-5';
-    ls.set('pl.settings', S.settings); el.remove(); toast('Settings saved'); if (!S.paper && !S.abort) showHome();
+    S.settings.keepPdf = $('#kp', el).checked; S.settings.key = $('#k', el).value.trim(); S.settings.workspace = $('#w', el).value.trim(); S.settings.model = $('#m', el).value.trim() || 'claude-sonnet-5-5';
+    ls.set('pl.settings', S.settings); el.remove(); toast('Settings saved'); if (!S.paper && !S.abort) (S.view === 'library' ? showLibrary() : showHome());
   };
-  $('#wipe', el).onclick = () => {
-    if (!confirm('Remove your API key and all saved papers from this browser?')) return;
-    ['pl.settings', 'pl.lib'].forEach(ls.del); Object.keys(localStorage).filter(k => k.startsWith('pl.best.')).forEach(ls.del);
-    S.settings = { key: '', model: 'claude-sonnet-5-5', audience: 'adjacent', workspace: '' }; el.remove(); toast('Cleared'); showHome();
+  $('#wipe', el).onclick = async () => {
+    if (!confirm('Remove your API key and ALL saved papers, saved PDFs and progress from this browser? This can\'t be undone.')) return;
+    ls.del('pl.settings'); await lib.clearAll(); refreshLibCount();
+    S.settings = { key: '', model: 'claude-sonnet-5-5', audience: 'adjacent', workspace: '', keepPdf: true }; el.remove(); toast('Cleared'); showHome();
   };
   setTimeout(() => $('#k', el).focus(), 30);
 }
@@ -1078,7 +1110,7 @@ async function streamMessages({ system, messages, max_tokens, onText, signal }) 
 
 async function analyze(src) {
   if (!S.settings.key) { openSettings('Add your Anthropic API key to analyze a paper.'); return; }
-  S.lastSrc = src; teardown();
+  S.lastSrc = src; S.view = 'loading'; teardown();
   const label = src.pdf ? src.pdf.name : 'pasted text';
   showLoading(label);
   const ctrl = S.abort = new AbortController();
@@ -1086,7 +1118,7 @@ async function analyze(src) {
     const content = [];
     if (src.pdf) {
       if (src.pdf.size > 24 * 1024 * 1024) throw new Error('That PDF is larger than 24 MB. Try a smaller or compressed copy.');
-      content.push({ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: await fileToB64(src.pdf) } });
+      content.push({ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: await blobToB64(src.pdf) } });
       attachPdf(src.pdf);
     } else {
       S.srcFile = null; S.srcText = src.text; S.pdf = null; S.pageImgs = {}; S.pdfReady = Promise.resolve();
@@ -1100,7 +1132,7 @@ async function analyze(src) {
     catch (e) { throw new Error(stop === 'max_tokens' ? 'The analysis was cut off because the paper is very dense. Try again or choose a faster model.' : 'The response could not be read. Try again.'); }
     const paper = normalize(data);
     paper.id = 'p' + Date.now().toString(36);
-    saveToLibrary(paper);
+    try { await saveToLibrary(paper, src); } catch (e) { console.warn(e); toast('Could not save to your library (storage may be full)'); }
     S.abort = null; S.paper = paper; updateStages(text, true);
     setTimeout(() => showPaper('overview'), 350);
   } catch (e) {
@@ -1130,19 +1162,10 @@ function normalize(d) {
   };
 }
 
-/* ---------- library ---------- */
-function saveToLibrary(p) {
-  let lib = ls.get('pl.lib', []).filter(x => x.id !== p.id);
-  lib.unshift({ id: p.id, title: p.meta.title, field: p.meta.field, date: Date.now(), data: p });
-  lib = lib.slice(0, 15);
-  while (lib.length && !ls.set('pl.lib', lib)) lib.pop();
-}
-
 /* ---------- screens: home ---------- */
 const app = () => $('#app');
 function showHome() {
-  teardown(); S.paper = null; $('#tabs').hidden = true; document.title = 'Paperlens';
-  const lib = ls.get('pl.lib', []);
+  teardown(); S.paper = null; S.view = 'home'; $('#tabs').hidden = true; document.title = 'Paperlens';
   app().innerHTML = `
   <section class="hero">
     <h1>Read any paper in the time it takes to make coffee.</h1>
@@ -1165,9 +1188,7 @@ function showHome() {
     <div class="field" style="margin-top:8px"><textarea id="txt" placeholder="Paste the paper's text here…"></textarea></div>
     <button class="btn primary" id="gotxt" style="margin-top:10px">Analyze pasted text</button></details>
   ${S.settings.key ? '' : `<div class="notice">The example works without a key. To analyze your own papers, add your Anthropic API key. <button id="needkey">Open settings</button></div>`}
-  ${lib.length ? `<h2 class="section-h" style="margin-top:44px">Your papers</h2><div class="lib">${lib.map(x => `
-     <div class="row" style="flex-wrap:nowrap;gap:8px"><button class="lib-item" data-open="${esc(x.id)}"><span class="grow"><b>${esc(x.title)}</b><span>${esc(x.field || 'Paper')} · ${new Date(x.date).toLocaleDateString()}</span></span></button>
-     <button class="icon-btn" data-del="${esc(x.id)}" aria-label="Remove ${esc(x.title)}" title="Remove">✕</button></div>`).join('')}</div>` : ''}`;
+<div id="recent"></div>`;
   $('#aud').value = S.settings.audience;
   $('#aud').onchange = e => { S.settings.audience = e.target.value; ls.set('pl.settings', S.settings); };
   const drop = $('#drop'), inp = $('#file');
@@ -1185,11 +1206,15 @@ function showHome() {
   $('#gotxt').onclick = () => { const t = $('#txt').value.trim(); if (t.length < 400) toast('Paste a bit more text (at least a few paragraphs)'); else analyze({ text: t }); };
   $('#demo').onclick = () => { const p = normalize(DEMO); p.id = 'demo'; S.paper = p; S.pdf = null; S.srcFile = S.srcText = null; S.pageImgs = {}; S.pdfReady = Promise.resolve(); showPaper('overview'); };
   $('#needkey')?.addEventListener('click', () => openSettings());
-  $$('[data-open]').forEach(b => b.onclick = () => {
-    const it = ls.get('pl.lib', []).find(x => x.id === b.dataset.open); if (!it) return;
-    S.paper = it.data; S.pdf = null; S.srcFile = S.srcText = null; S.pageImgs = {}; S.pdfReady = Promise.resolve(); showPaper('overview');
-  });
-  $$('[data-del]').forEach(b => b.onclick = () => { ls.set('pl.lib', ls.get('pl.lib', []).filter(x => x.id !== b.dataset.del)); showHome(); });
+  fillRecent();
+}
+async function fillRecent() {
+  let items = []; try { items = await lib.list(); } catch (e) {}
+  const el = $('#recent'); if (!el || S.view !== 'home' || !items.length) return;
+  el.innerHTML = `<div class="row" style="justify-content:space-between;margin:44px 0 12px"><h2 class="section-h" style="margin:0">Pick up where you left off</h2><button class="btn small ghost" id="see-all">All ${items.length} paper${items.length === 1 ? '' : 's'}</button></div>
+    <div class="lib">${items.slice(0, 3).map(x => `<button class="lib-item" data-open="${esc(x.id)}"><span class="grow"><b>${esc(x.title)}</b><span>${esc(x.field || 'Paper')} · opened ${esc(fmtAgo(x.opened))}</span></span></button>`).join('')}</div>`;
+  $$('[data-open]', el).forEach(b => b.onclick = () => openPaper(b.dataset.open));
+  $('#see-all', el).onclick = showLibrary;
 }
 
 /* ---------- screens: loading & error ---------- */
@@ -1242,7 +1267,7 @@ function showPaper(tab) {
   const t = $('#tabs'); t.hidden = false;
   t.innerHTML = TABS.map(([id, name]) => `<button class="tab" role="tab" data-t="${id}" aria-selected="${id === tab}">${name}${counts[id] ? `<small>${counts[id]}</small>` : ''}</button>`).join('');
   $$('.tab', t).forEach(b => b.onclick = () => showPaper(b.dataset.t));
-  teardown(); S.tab = tab; window.scrollTo(0, 0);
+  teardown(); S.tab = tab; S.view = 'paper'; window.scrollTo(0, 0);
   ({ overview: viewOverview, figures: viewFigures, mindmap: viewMindmap, cards: viewCards, play: viewPlay, chat: viewChat })[tab](p);
 }
 
@@ -1392,7 +1417,7 @@ Audience: ${AUDIENCES[S.settings.audience] || AUDIENCES.adjacent}.`;
 async function chatSourceBlock() {
   const cc = { type: 'ephemeral' };
   if (S.srcFile) {
-    if (!S.srcCache || S.srcCache.f !== S.srcFile) S.srcCache = { f: S.srcFile, b: await fileToB64(S.srcFile) };
+    if (!S.srcCache || S.srcCache.f !== S.srcFile) S.srcCache = { f: S.srcFile, b: await blobToB64(S.srcFile) };
     return { mode: 'pdf', block: { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: S.srcCache.b }, cache_control: cc } };
   }
   if (S.srcText) return { mode: 'text', block: { type: 'text', text: 'PAPER TEXT:\n\n' + S.srcText.slice(0, 450000), cache_control: cc } };
@@ -1414,7 +1439,9 @@ function mdLite(text) {
 }
 
 function viewChat(p) {
-  const chat = S.chats[p.id] || (S.chats[p.id] = { msgs: [] });
+  const keep = p.id && p.id !== 'demo';
+  const chat = S.chats[p.id] || (S.chats[p.id] = { msgs: keep ? arr(ls.get(chatKey(p.id), [])).filter(m => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string' && m.content) : [] });
+  const saveChat = () => { if (keep) { const m = chat.msgs.filter(x => x.content).slice(-40); m.length ? ls.set(chatKey(p.id), m) : ls.del(chatKey(p.id)); } };
   const hasSrc = !!(S.srcFile || S.srcText);
   let ctrl = null, draft = '';
   S.cleanups.push(() => ctrl?.abort());
@@ -1472,18 +1499,230 @@ function viewChat(p) {
         if (!aborted && $('#q')) toast(e.message || 'Something went wrong');
       }
     } finally {
-      ctrl = null;
+      ctrl = null; saveChat();
       if ($('#msgs')) { paint(); busy(false); const qq = $('#q'); if (draft) { qq.value = draft; draft = ''; } qq.focus(); }
     }
   }
 
   $('#send').onclick = () => send();
   $('#stop').onclick = () => ctrl?.abort();
-  $('#clear').onclick = () => { chat.msgs.length = 0; paint(); };
+  $('#clear').onclick = () => { chat.msgs.length = 0; saveChat(); paint(); };
   q.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); send(); } });
   q.addEventListener('input', () => { q.style.height = 'auto'; q.style.height = Math.min(q.scrollHeight, 160) + 'px'; });
   $('#chat-att')?.addEventListener('change', e => { const f = e.target.files[0]; if (f) { attachPdf(f); toast('PDF attached'); viewChat(p); } });
   paint();
+}
+
+/* =====================================================================
+   Paperlens — your library.
+   Lives in this browser on this device only: no account, no server.
+   Papers + saved PDFs go in IndexedDB; if that's unavailable (some private
+   modes) we fall back to localStorage, notes only.
+   ===================================================================== */
+let _idb = null, _mode = null;
+function idbOpen() {
+  if (_idb) return _idb;
+  _idb = new Promise((res, rej) => {
+    try {
+      if (!window.indexedDB) throw new Error('IndexedDB unavailable');
+      const r = indexedDB.open('paperlens', 1);
+      r.onupgradeneeded = () => { const d = r.result; ['papers', 'sources'].forEach(n => d.objectStoreNames.contains(n) || d.createObjectStore(n, { keyPath: 'id' })); };
+      r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error || new Error('IndexedDB error')); r.onblocked = () => rej(new Error('IndexedDB blocked'));
+    } catch (e) { rej(e); }
+  });
+  return _idb;
+}
+const libMode = () => _mode ? Promise.resolve(_mode) : idbOpen().then(() => (_mode = 'idb'), () => (_mode = 'ls'));
+const idb = (store, mode, fn) => idbOpen().then(db => new Promise((res, rej) => {
+  const t = db.transaction(store, mode); let out;
+  const rq = fn(t.objectStore(store)); if (rq) rq.onsuccess = () => { out = rq.result; };
+  t.oncomplete = () => res(out); t.onerror = () => rej(t.error); t.onabort = () => rej(t.error || new Error('Storage was refused (it may be full)'));
+}));
+const progKey = id => 'pl.prog.' + id, chatKey = id => 'pl.chat.' + id, bestKey = (id, m) => 'pl.best.' + id + '.' + m;
+const legacyRec = x => Object.assign({ added: x.date || 0, opened: x.date || 0, hasSource: null, srcName: '', srcSize: 0, authors: x.data?.meta?.authors || '', type: x.data?.meta?.type || '', venue: x.data?.meta?.venue || '' }, x);
+
+const lib = {
+  async list() {
+    const rows = (await libMode()) === 'idb' ? await idb('papers', 'readonly', s => s.getAll()) : ls.get('pl.lib', []).map(legacyRec);
+    return rows.sort((a, b) => (b.opened || 0) - (a.opened || 0));
+  },
+  async get(id) { return (await libMode()) === 'idb' ? idb('papers', 'readonly', s => s.get(id)) : ls.get('pl.lib', []).map(legacyRec).find(x => x.id === id); },
+  async put(rec) {
+    if ((await libMode()) === 'idb') return idb('papers', 'readwrite', s => s.put(rec));
+    let a = ls.get('pl.lib', []).filter(x => x.id !== rec.id); a.unshift(rec); a = a.slice(0, 15);
+    while (a.length && !ls.set('pl.lib', a)) a.pop();
+  },
+  async putSource(id, src) { if ((await libMode()) !== 'idb') return false; await idb('sources', 'readwrite', s => s.put(Object.assign({ id }, src))); return true; },
+  async getSource(id) { return (await libMode()) === 'idb' ? idb('sources', 'readonly', s => s.get(id)) : null; },
+  async removeSource(id) { if ((await libMode()) === 'idb') await idb('sources', 'readwrite', s => s.delete(id)); },
+  async remove(id) {
+    if ((await libMode()) === 'idb') { await idb('papers', 'readwrite', s => s.delete(id)); await idb('sources', 'readwrite', s => s.delete(id)); }
+    else ls.set('pl.lib', ls.get('pl.lib', []).filter(x => x.id !== id));
+    [progKey(id), chatKey(id), bestKey(id, 'quiz'), bestKey(id, 'fof'), bestKey(id, 'match')].forEach(ls.del); delete S.chats[id];
+  },
+  async clearAll() {
+    if ((await libMode()) === 'idb') { await idb('papers', 'readwrite', s => s.clear()); await idb('sources', 'readwrite', s => s.clear()); }
+    try { Object.keys(localStorage).filter(k => /^pl\.(lib|prog|chat|best)/.test(k)).forEach(ls.del); } catch (e) {}
+    S.chats = {};
+  },
+  async usage() { try { const e = await navigator.storage.estimate(); return e.usage || 0; } catch (e) { return null; } }
+};
+
+/* ---------- helpers ---------- */
+function upgradePaper(p) {                                   // papers saved by older versions
+  p.ov = p.ov || {}; p.ov.findings = arr(p.ov.findings).map(f => typeof f === 'string' ? { t: f, p: null } : f).filter(f => f && f.t);
+  ['limits', 'snapshot'].forEach(k => p.ov[k] = arr(p.ov[k]));
+  ['glossary', 'figures', 'cards', 'quiz', 'fof', 'match'].forEach(k => p[k] = arr(p[k]));
+  p.mindmap = p.mindmap && p.mindmap.label ? p.mindmap : { label: p.meta.title, children: [] };
+  return p;
+}
+const isPaper = x => !!(x && typeof x === 'object' && x.id && x.meta && typeof x.meta.title === 'string' && x.ov && Array.isArray(x.figures) && Array.isArray(x.cards));
+const fmtBytes = n => n == null ? '' : n < 1048576 ? Math.max(1, Math.round(n / 1024)) + ' KB' : (n / 1048576).toFixed(n < 10485760 ? 1 : 0) + ' MB';
+function fmtAgo(ts) {
+  if (!ts) return ''; const d = (Date.now() - ts) / 864e5;
+  if (d < 1) return 'today'; if (d < 2) return 'yesterday'; if (d < 14) return Math.floor(d) + ' days ago';
+  return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: d > 300 ? 'numeric' : undefined });
+}
+async function blobToB64(blob) {
+  const u = new Uint8Array(await blob.arrayBuffer()); let s = '';
+  for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000));
+  return btoa(s);
+}
+const b64ToBlob = (b64, type) => { const s = atob(b64), u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return new Blob([u], { type: type || 'application/pdf' }); };
+function refreshLibCount() { lib.list().then(a => { const n = $('#lib-n'); if (n) n.textContent = a.length ? String(a.length) : ''; }, () => {}); }
+async function migrateLegacy() {                              // move the old localStorage library into IndexedDB
+  const old = ls.get('pl.lib', []); if (!old.length || (await libMode()) !== 'idb') return;
+  for (const x of old) { try { await lib.put(legacyRec(x)); } catch (e) { return; } }
+  ls.del('pl.lib');
+}
+
+/* ---------- save / open ---------- */
+async function saveToLibrary(p, src) {
+  const rec = { id: p.id, title: p.meta.title, authors: p.meta.authors, field: p.meta.field, type: p.meta.type, venue: p.meta.venue,
+    added: Date.now(), opened: Date.now(), hasSource: null, srcName: '', srcSize: 0, data: p };
+  if (src && S.settings.keepPdf !== false) {
+    try {
+      if (src.pdf && await lib.putSource(p.id, { blob: src.pdf })) { rec.hasSource = 'pdf'; rec.srcName = src.pdf.name || 'paper.pdf'; rec.srcSize = src.pdf.size || 0; }
+      else if (src.text && await lib.putSource(p.id, { text: src.text.slice(0, 450000) })) { rec.hasSource = 'text'; rec.srcSize = src.text.length; }
+    } catch (e) { console.warn('Could not keep a copy of the source:', e); }
+  }
+  await lib.put(rec);
+  try { navigator.storage?.persist?.(); } catch (e) {}          // ask the browser not to evict it
+  refreshLibCount(); return rec;
+}
+async function persistPaper(p) { try { const r = await lib.get(p.id); if (r) { r.data = p; await lib.put(r); } } catch (e) {} }
+async function openPaper(id, tab) {
+  const rec = await lib.get(id);
+  if (!rec || !isPaper(rec.data)) { toast('That paper is no longer saved'); return showLibrary(); }
+  S.paper = upgradePaper(rec.data); S.paper.id = rec.id;
+  S.pdf = null; S.pageImgs = {}; S.srcFile = S.srcText = null; S.figCache = new Map(); S.pdfReady = Promise.resolve();
+  try {
+    if (rec.hasSource) { const src = await lib.getSource(id); if (src?.blob) attachPdf(src.blob); else if (src?.text) S.srcText = src.text; }
+  } catch (e) { console.warn(e); }
+  rec.opened = Date.now(); lib.put(rec).catch(() => {});
+  showPaper(tab || 'overview');
+}
+
+/* ---------- the Library page ---------- */
+const libState = { q: '', sort: 'opened' };
+function libStats(rec) {
+  const prog = ls.get(progKey(rec.id), null), total = arr(rec.data?.cards).length, known = prog ? arr(prog.known).filter(i => i < total).length : 0;
+  return { known, total, quiz: ls.get(bestKey(rec.id, 'quiz'), null), fof: ls.get(bestKey(rec.id, 'fof'), null), match: ls.get(bestKey(rec.id, 'match'), null) };
+}
+function libCard(r) {
+  const st = libStats(r), pct = st.total ? Math.round(st.known / st.total * 100) : 0;
+  const scores = [st.quiz != null ? 'Best quiz ' + st.quiz + ' pts' : '', st.fof != null ? 'Fact or fiction ' + st.fof + ' pts' : '', st.match != null ? 'Pair up ' + st.match.toFixed(1) + ' s' : ''].filter(Boolean);
+  return `<article class="card libc" data-id="${esc(r.id)}">
+    <div class="libc-main">
+      <h3><button class="linklike" data-open>${esc(r.title)}</button></h3>
+      ${r.authors || r.venue ? `<p class="muted">${esc([r.authors, r.venue].filter(Boolean).join(' · '))}</p>` : ''}
+      <div class="row" style="gap:6px;margin-top:8px">${r.field ? `<span class="chip">${esc(r.field)}</span>` : ''}${r.type ? `<span class="chip plain">${esc(r.type)}</span>` : ''}${r.hasSource ? `<span class="chip plain" title="A copy is saved on this device">${r.hasSource === 'pdf' ? 'PDF saved' : 'Text saved'}${r.srcSize ? ' · ' + fmtBytes(r.srcSize) : ''}</span>` : ''}</div>
+      <p class="muted libc-meta">Added ${esc(fmtAgo(r.added))}${r.opened && r.opened !== r.added ? ' · Opened ' + esc(fmtAgo(r.opened)) : ''}</p>
+      ${st.total ? `<div class="libc-prog"><div class="bar" role="progressbar" aria-label="Flashcards learned" aria-valuemin="0" aria-valuemax="${st.total}" aria-valuenow="${st.known}"><i style="width:${pct}%"></i></div><span>${st.known} of ${st.total} flashcards learned${scores.length ? ' · ' + esc(scores.join(' · ')) : ''}</span></div>` : ''}
+    </div>
+    <div class="libc-act"><button class="btn primary small" data-open>Open</button>
+      ${r.hasSource ? '<button class="btn small ghost" data-rmsrc>Remove saved copy</button>' : ''}<button class="btn small ghost" data-del>Delete</button></div>
+  </article>`;
+}
+async function showLibrary() {
+  teardown(); S.paper = null; S.view = 'library'; $('#tabs').hidden = true; document.title = 'Library · Paperlens';
+  let items = [], mode = 'idb'; try { items = await lib.list(); mode = await libMode(); } catch (e) { console.warn(e); }
+  if (S.view !== 'library') return;
+  app().innerHTML = `
+  <div class="row" style="justify-content:space-between;align-items:flex-start;margin-bottom:22px">
+    <div><h1 style="font-size:clamp(28px,4vw,38px)">Your library</h1>
+      <p class="muted" style="margin-top:6px;max-width:56ch">Every paper you analyze is saved here, on this device only, so you only ever see your own. No account needed.</p></div>
+    <button class="btn primary" id="lib-new">Analyze a new paper</button></div>
+  ${items.length ? `<div class="lib-tools"><div class="field" style="flex:1;min-width:220px"><label for="lib-q" class="sr">Search your library</label><input id="lib-q" type="search" placeholder="Search by title, author or field…" value="${esc(libState.q)}"></div>
+    <div class="field"><label for="lib-sort" class="sr">Sort by</label><select id="lib-sort"><option value="opened">Recently opened</option><option value="added">Newest first</option><option value="title">Title A to Z</option><option value="field">Field</option></select></div></div>` : ''}
+  <div id="lib-list" class="lib-list"></div>
+  <section class="card lib-data"><h3>Your data</h3>
+    <p class="muted" id="lib-usage">Calculating…</p>
+    <p class="muted" style="margin-top:8px">${mode === 'idb' ? 'Your library lives only in this browser on this device. Clearing your browsing data, using a private window, or switching browser or device starts a fresh library, and some browsers clear data for sites you rarely visit. Export a backup to keep a copy or move to another device.' : 'This browser doesn\'t allow saving PDFs here (private mode, perhaps), so only your notes are kept, up to 15 papers.'}</p>
+    <div class="row" style="margin-top:14px"><button class="btn small" id="lib-export">${ICON.dl}Export backup</button>
+      <label class="check" style="margin:0;padding:6px 10px"><input type="checkbox" id="lib-incl"> <span>Include saved PDFs <small style="display:inline">(larger file)</small></span></label>
+      <label class="btn small">Import backup<input type="file" id="lib-import" accept=".json,application/json" class="sr"></label></div></section>`;
+  $('#lib-new').onclick = showHome; $('#lib-sort').value = libState.sort;
+  const paint = () => {
+    const q = libState.q.trim().toLowerCase();
+    let rows = items.filter(r => !q || [r.title, r.authors, r.field, r.type].join(' ').toLowerCase().includes(q));
+    const by = { opened: (a, b) => (b.opened || 0) - (a.opened || 0), added: (a, b) => (b.added || 0) - (a.added || 0), title: (a, b) => String(a.title).localeCompare(b.title), field: (a, b) => String(a.field || '~').localeCompare(b.field || '~') };
+    rows = rows.sort(by[libState.sort] || by.opened);
+    $('#lib-list').innerHTML = rows.length ? rows.map(libCard).join('') : items.length ? `<div class="done"><h2>No matches</h2><p>Nothing in your library matches "${esc(libState.q)}".</p></div>`
+      : `<div class="done"><h2>Nothing here yet</h2><p>Papers you analyze will appear here automatically.</p><button class="btn primary" id="lib-first">Analyze your first paper</button></div>`;
+    $('#lib-first')?.addEventListener('click', showHome);
+    $$('.libc').forEach(card => {
+      const id = card.dataset.id; $$('[data-open]', card).forEach(b => b.onclick = () => openPaper(id));
+      const del = $('[data-del]', card); let armed = null;
+      del.onclick = async () => {
+        if (!armed) { del.textContent = 'Tap again to delete'; del.classList.add('danger'); armed = setTimeout(() => { armed = null; del.textContent = 'Delete'; del.classList.remove('danger'); }, 3500); return; }
+        clearTimeout(armed); await lib.remove(id); items = items.filter(x => x.id !== id); paint(); refreshLibCount(); toast('Deleted');
+      };
+      $('[data-rmsrc]', card)?.addEventListener('click', async () => {
+        const r = items.find(x => x.id === id); await lib.removeSource(id); r.hasSource = null; r.srcName = ''; r.srcSize = 0; await lib.put(r); paint(); toast('Saved copy removed. Notes kept.'); fillUsage();
+      });
+    });
+  };
+  const fillUsage = async () => { const u = await lib.usage(); const el = $('#lib-usage'); if (el) el.textContent = `${items.length} paper${items.length === 1 ? '' : 's'} saved${u != null ? ' · about ' + fmtBytes(u) + ' used by Paperlens on this device' : ''}.`; };
+  $('#lib-q')?.addEventListener('input', e => { libState.q = e.target.value; paint(); });
+  $('#lib-sort')?.addEventListener('change', e => { libState.sort = e.target.value; paint(); });
+  $('#lib-export').onclick = () => exportLibrary($('#lib-incl').checked);
+  $('#lib-import').onchange = async e => { const f = e.target.files[0]; if (f) { await importLibrary(f); showLibrary(); } };
+  paint(); fillUsage();
+}
+
+/* ---------- backup: the no-account way to move or keep your library ---------- */
+async function exportLibrary(includePdfs) {
+  const items = await lib.list(), out = { app: 'paperlens', version: 1, exported: Date.now(), papers: [] };
+  for (const r of items) {
+    const entry = { rec: r, prog: ls.get(progKey(r.id), null), chat: ls.get(chatKey(r.id), null), best: { quiz: ls.get(bestKey(r.id, 'quiz'), null), fof: ls.get(bestKey(r.id, 'fof'), null), match: ls.get(bestKey(r.id, 'match'), null) } };
+    if (includePdfs && r.hasSource) {
+      try { const s = await lib.getSource(r.id); if (s?.blob) entry.pdf = await blobToB64(s.blob); else if (s?.text) entry.text = s.text; } catch (e) { console.warn(e); }
+    }
+    out.papers.push(entry);
+  }
+  download('paperlens-backup-' + new Date().toISOString().slice(0, 10) + '.json', JSON.stringify(out), 'application/json');
+  toast(items.length ? 'Backup downloaded' : 'Backup downloaded (your library is empty)');
+}
+async function importLibrary(file) {
+  let data; try { data = JSON.parse(await file.text()); } catch (e) { toast('That file isn\'t a Paperlens backup'); return 0; }
+  if (!data || data.app !== 'paperlens' || !Array.isArray(data.papers)) { toast('That file isn\'t a Paperlens backup'); return 0; }
+  const have = new Set((await lib.list()).map(r => r.id)); let added = 0, skipped = 0;
+  for (const e of data.papers) {
+    const r = e && e.rec; if (!r || !r.id || !isPaper(r.data)) { skipped++; continue; }
+    if (have.has(r.id)) { skipped++; continue; }
+    try {
+      if (e.pdf) { await lib.putSource(r.id, { blob: b64ToBlob(e.pdf) }); r.hasSource = 'pdf'; }
+      else if (typeof e.text === 'string') { await lib.putSource(r.id, { text: e.text }); r.hasSource = 'text'; }
+      else r.hasSource = null;
+      upgradePaper(r.data); await lib.put(r);
+      if (e.prog) ls.set(progKey(r.id), e.prog); if (Array.isArray(e.chat)) ls.set(chatKey(r.id), e.chat);
+      ['quiz', 'fof', 'match'].forEach(m => { if (e.best && e.best[m] != null) ls.set(bestKey(r.id, m), e.best[m]); });
+      added++;
+    } catch (err) { console.warn(err); skipped++; }
+  }
+  refreshLibCount(); toast(`Restored ${added} paper${added === 1 ? '' : 's'}${skipped ? ` (${skipped} skipped: already here or unreadable)` : ''}`);
+  return added;
 }
 
 /* =====================================================================
@@ -1619,7 +1858,9 @@ const CARD_TYPES = { concept: 'Concepts', method: 'Methods', result: 'Results', 
 function viewCards(p) {
   if (!p.cards.length) { app().innerHTML = `<div class="done"><h2>No flashcards</h2><p>The analysis didn't include any.</p></div>`; return; }
   const all = p.cards.map((c, i) => Object.assign({ i }, c));
-  const F = { type: 'all', shuffled: false, known: new Set(), queue: [], flipped: false, again: 0, hard: 0 };
+  const pk = p.id && p.id !== 'demo' ? progKey(p.id) : null, saved = pk ? ls.get(pk, null) : null;
+  const F = { type: 'all', shuffled: false, known: new Set(saved ? arr(saved.known).filter(i => Number.isInteger(i) && i < all.length) : []), queue: [], flipped: false, again: 0, hard: 0 };
+  const saveProg = () => { if (pk) ls.set(pk, { known: [...F.known], total: all.length, at: Date.now() }); };
   const pool = () => all.filter(c => F.type === 'all' || c.type === F.type);
   const rebuild = () => { const q = pool().filter(c => !F.known.has(c.i)); F.queue = F.shuffled ? shuffle(q) : q; F.flipped = false; };
   rebuild();
@@ -1649,11 +1890,11 @@ function viewCards(p) {
     $('#anki').onclick = () => download(slug(p.meta.title) + '-flashcards.txt', all.map(c => [c.front, c.back, c.type || ''].map(s => String(s).replace(/[\t\r\n]+/g, ' ')).join('\t')).join('\n'), 'text/plain');
     $('#fc')?.addEventListener('click', flip);
     $('#again')?.addEventListener('click', again); $('#hard')?.addEventListener('click', hard); $('#got')?.addEventListener('click', got);
-    $('#restart')?.addEventListener('click', () => { pool().forEach(c => F.known.delete(c.i)); F.again = 0; F.hard = 0; rebuild(); render(); });
+    $('#restart')?.addEventListener('click', () => { pool().forEach(c => F.known.delete(c.i)); saveProg(); F.again = 0; F.hard = 0; rebuild(); render(); });
   };
   const flip = () => { F.flipped = !F.flipped; $('#fc')?.classList.toggle('flip', F.flipped); };
   const next = () => { F.flipped = false; render(); };
-  const got = () => { const c = F.queue.shift(); if (c) F.known.add(c.i); next(); };
+  const got = () => { const c = F.queue.shift(); if (c) { F.known.add(c.i); saveProg(); } next(); };
   const hard = () => { const c = F.queue.shift(); if (c) { F.hard++; F.queue.splice(Math.min(F.queue.length, 9), 0, c); } next(); };
   const again = () => { const c = F.queue.shift(); if (c) { F.again++; F.queue.splice(Math.min(F.queue.length, 4), 0, c); } next(); };
   S.keys = e => {
@@ -1740,7 +1981,7 @@ function playQuiz(mode) {
       <p>${G.right} of ${G.answered} correct (${pct}%) · ${esc(rankFor(pct))}${isBest ? ' · New best!' : ''}</p>
       <div class="row" style="justify-content:center">${G.missed.length ? `<button class="btn primary" id="keep">Turn ${G.missed.length} missed into flashcards</button>` : ''}<button class="btn ${G.missed.length ? '' : 'primary'}" id="again">Play again</button><button class="btn" id="hub">All games</button></div></div>`;
     $('#again').onclick = () => playQuiz(mode); $('#hub').onclick = () => showPaper('play');
-    $('#keep')?.addEventListener('click', () => { const have = new Set(p.cards.map(c => c.front)); G.missed.forEach(m => have.has(m.front) || p.cards.push({ front: m.front, back: m.back, type: 'missed', difficulty: 2 })); S.cardFilter = 'missed'; showPaper('cards'); });
+    $('#keep')?.addEventListener('click', () => { const have = new Set(p.cards.map(c => c.front)); G.missed.forEach(m => have.has(m.front) || p.cards.push({ front: m.front, back: m.back, type: 'missed', difficulty: 2 })); S.cardFilter = 'missed'; persistPaper(p); showPaper('cards'); });
   };
   S.keys = e => {
     if (G.locked) { if (e.key === 'Enter' || e.key === ' ') { /* button has focus */ } return; }
@@ -1787,6 +2028,7 @@ function playMatch() {
 
 /* ---------- boot ---------- */
 $('#brand').onclick = () => showHome();
+$('#btn-lib').onclick = () => showLibrary();
 $('#btn-settings').onclick = () => openSettings();
 $('#btn-look').onclick = openLook;
 $('#btn-theme').onclick = () => { setTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'); };
@@ -1798,6 +2040,7 @@ addEventListener('appinstalled', () => { $('#btn-install').hidden = true; toast(
 addEventListener('offline', () => toast('You are offline. Saved papers still work; new analyses need internet.'));
 addEventListener('online', () => toast('Back online'));
 if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+migrateLegacy().then(refreshLibCount, () => {});
 showHome();
 
 </script>
