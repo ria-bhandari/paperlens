@@ -731,8 +731,10 @@ function figRegion(L, bands, cap, blk, band, type) {
     return { dir: 'down', x0, x1, y0: Math.max(0, blk.top - 2), y1: edge >= L.h ? L.h : edge - 2, gfx: (edge - 2) - (blk.bot + 2) };
   };
   const need = type === 'table' ? 24 : 40, order = type === 'table' ? [down, up] : [up, down];
-  for (const f of order) { const r = f(); if (r.gfx >= need && r.y1 - r.y0 <= 0.85 * L.h) return r; }
-  return null;
+  const all = order.map(f => f()).filter(r => r.gfx >= 16 && r.y1 - r.y0 <= 0.9 * L.h);
+  all.sort((p, q) => (q.gfx >= need) - (p.gfx >= need));                      // likely ones first; order otherwise kept
+  all.forEach(r => { r.capTop = blk.top; r.capBot = blk.bot; });
+  return all;
 }
 
 /* ---- find a figure by its printed caption anywhere in the PDF ---- */
@@ -762,7 +764,8 @@ async function figLocate(pdf, f, cache) {
     if (best && best.page === claimed && best.score >= 6) break;
   }
   if (!best) return null;
-  best.region = figRegion(best.L, best.bands, best.cap, best.blk, best.band, best.parsed.type);
+  best.regions = figRegion(best.L, best.bands, best.cap, best.blk, best.band, best.parsed.type);
+  best.region = best.regions[0] || null;
   return best;
 }
 
@@ -786,17 +789,33 @@ async function figRender(pdf, n, scale) {
   figCanvases.set(key, c); if (figCanvases.size > 4) figCanvases.delete(figCanvases.keys().next().value);
   return c;
 }
+/* Ink in the figure part (everything except the caption lines). A gap of white space has none. */
+function figInk(data, w, rowFrom, rowTo) {
+  rowFrom = Math.max(0, Math.floor(rowFrom)); rowTo = Math.floor(rowTo);
+  if (rowTo - rowFrom < 8) return 0;
+  let ink = 0;
+  for (let y = rowFrom; y < rowTo; y++) for (let x = 0; x < w; x++) { const i = (y * w + x) * 4; if (data[i + 3] > 20 && (data[i] < 232 || data[i + 1] < 232 || data[i + 2] < 232)) ink++; }
+  return ink / ((rowTo - rowFrom) * w);
+}
 async function figCrop(pdf, loc) {
-  const r = loc.region; if (!r) return null;
-  const scale = 2.4, src = await figRender(pdf, loc.page, scale);
-  const sx = Math.max(0, Math.floor(r.x0 * scale)), sy = Math.max(0, Math.floor(r.y0 * scale));
-  const sw = Math.min(src.width - sx, Math.ceil((r.x1 - r.x0) * scale)), sh = Math.min(src.height - sy, Math.ceil((r.y1 - r.y0) * scale));
-  if (sw < 20 || sh < 20) return null;
-  const tmp = document.createElement('canvas'); tmp.width = sw; tmp.height = sh;
-  const tx = tmp.getContext('2d', { willReadFrequently: true }); tx.drawImage(src, sx, sy, sw, sh, 0, 0, sw, sh);
-  const t = figTrim(tx.getImageData(0, 0, sw, sh).data, sw, sh); if (!t || t.w < 40 || t.h < 30) return null;
+  const scale = 2.4, src = await figRender(pdf, loc.page, scale), tries = [];
+  for (const r of (loc.regions || (loc.region ? [loc.region] : []))) {
+    const sx = Math.max(0, Math.floor(r.x0 * scale)), sy = Math.max(0, Math.floor(r.y0 * scale));
+    const sw = Math.min(src.width - sx, Math.ceil((r.x1 - r.x0) * scale)), sh = Math.min(src.height - sy, Math.ceil((r.y1 - r.y0) * scale));
+    if (sw < 20 || sh < 20) continue;
+    const tmp = document.createElement('canvas'); tmp.width = sw; tmp.height = sh;
+    const tx = tmp.getContext('2d', { willReadFrequently: true }); tx.drawImage(src, sx, sy, sw, sh, 0, 0, sw, sh);
+    const data = tx.getImageData(0, 0, sw, sh).data;
+    const ink = r.dir === 'up' ? figInk(data, sw, 0, (r.capTop - r.y0) * scale - 2) : figInk(data, sw, (r.capBot - r.y0) * scale + 2, sh);
+    tries.push({ r, tmp, data, sw, sh, ink });
+    if (ink >= 0.003) break;                                                       // this one really contains a figure
+  }
+  const pick = tries.find(t => t.ink >= 0.003) || tries.sort((p, q) => q.ink - p.ink).find(t => t.ink >= 0.0008);
+  if (!pick) return null;
+  const t = figTrim(pick.data, pick.sw, pick.sh); if (!t || t.w < 40 || t.h < 30) return null;
   const out = document.createElement('canvas'); out.width = t.w; out.height = t.h;
-  out.getContext('2d').drawImage(tmp, t.x, t.y, t.w, t.h, 0, 0, t.w, t.h);
+  out.getContext('2d').drawImage(pick.tmp, t.x, t.y, t.w, t.h, 0, 0, t.w, t.h);
+  loc.used = pick.r.dir;
   return out.toDataURL('image/jpeg', 0.92);
 }
 
@@ -1325,7 +1344,7 @@ function viewFigures(p) {
       const full = art.querySelector('.fig-actions'); full.hidden = false;
       full.querySelector('[data-full]').onclick = async () => { const u = await getPageImg(loc.page); u ? openLightbox(u, 'PDF page ' + loc.page) : toast('Could not render that page'); };
       const btn = art.querySelector('.fig-img'); let url = null;
-      try { url = loc.region ? await figCrop(S.pdf, loc) : null; } catch (e) { console.warn(e); }
+      try { url = loc.region || (loc.regions && loc.regions.length) ? await figCrop(S.pdf, loc) : null; } catch (e) { console.warn(e); }
       if (S.tab !== 'figures' || !art.isConnected) return;
       if (url) {
         btn.innerHTML = `<img alt="${esc((f.label || '') + ': ' + (f.title || ''))}" src="${url}">`;

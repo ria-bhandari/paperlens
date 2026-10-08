@@ -1,7 +1,7 @@
 /* Paperlens service worker: makes the app load instantly and work offline.
    The Anthropic API is never touched, so your paper and key only go where you send them.
    To ship an update, change VERSION. */
-const VERSION = 'paperlens-v3';
+const VERSION = 'paperlens-v4';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-maskable-512.png', './apple-touch-icon.png', './favicon-32.png', './icon.svg'];
 
 self.addEventListener('install', e => {
