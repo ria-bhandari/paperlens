@@ -22,6 +22,7 @@
 | **Notes** | A private notepad for each paper, saved as you type, with a place for "relevance to my research" and themes. Drop findings and chat answers straight in with **＋ note** and **Save to notes**. |
 | **Cite** | On every Overview: APA, BibTeX and RIS (imports into Zotero, Mendeley and EndNote). Details are editable, and a DOI is only included if it is printed in the paper itself. |
 | **Compare** | Select 2 to 8 papers and get a literature-review matrix: aim, method, findings and limitations side by side, oldest first, plus your own "relevance" and "theme" columns. Export to Excel (CSV), Markdown or BibTeX. |
+| **Zotero and Obsidian** | Push papers, tags, folders and a summary note to Zotero, and import papers back from it. Send notes to your Obsidian vault, with two-way syncing of your own notes. See [Connect Zotero and Obsidian](#connect-zotero-and-obsidian). |
 
 Equations are typeset like LaTeX, so $e^{x}$ shows as a proper formula. Also: six themes (Paper, Spring, Golden hour, Fall, Winter, Dusk) with light and dark modes and an optional "follow the seasons" setting, Markdown notes export, and an "explain it for" setting (nearby-field researcher, specialist, or newcomer).
 
@@ -54,7 +55,27 @@ Anthropic is the most thoroughly tested option. The others use the standard Open
 
 ## Updates and checking your version
 
-Open **Settings** (the gear icon): the version appears under **App version** (currently 2026.10.8). If something you expect is missing, press **Update app**. It clears the saved copy of the app and loads the newest one, and your papers, notes and settings are kept.
+Open **Settings** (the gear icon): the version appears under **App version** (currently 2026.10.9). If something you expect is missing, press **Update app**. It clears the saved copy of the app and loads the newest one, and your papers, notes and settings are kept.
+
+## Connect Zotero and Obsidian
+
+Open **Library, then Connections**. Your Zotero key and settings stay on this device, and nothing goes through any other server.
+
+### Zotero
+1. Go to **zotero.org/settings/keys/new**, tick **Allow library access**, **Allow notes access** and **Allow write access**, save, and paste the key into Paperlens. (Paperlens finds your account from the key, so you don't need to type a user ID.)
+2. **Push** sends papers (authors, year, journal, DOI), your tags and folders (as Zotero collections), and one child note called "Paperlens summary" holding the summary and your notes. **Import from Zotero** brings papers in, with their collections as folders and tags as status and themes. **Sync** does both and also pulls changes you made in Zotero.
+3. Papers already in Zotero are linked, not duplicated. Syncing only **adds** tags and collections. It never overwrites titles, authors or other details you have in Zotero.
+4. Papers imported from Zotero show their abstract until you add the PDF and analyze them. Your notes, folders and Zotero link are kept when you do.
+
+Limits: personal libraries only (not group libraries). PDFs are not uploaded to Zotero. Downloading PDFs from Zotero is a best effort that browsers often block.
+
+### Obsidian
+Pick how notes should reach your vault:
+- **Write straight into my vault folder** (Chrome or Edge on a computer): the best option. Notes land in a folder you choose, and edits you make to **My notes** in Obsidian can be pulled back into Paperlens. If both sides changed, both versions are kept.
+- **Open each note in Obsidian**: copies the note and opens it using an obsidian:// link. Works on phones and computers, but one way only, and it asks before overwriting a note that already exists.
+- **Download .md files**: one note, or a zip for several. Drop them into your vault.
+
+Each note has properties (title, authors, year, DOI, status, Zotero link), the AI summary, optional flashcards as `Question::Answer` lines, and your own notes. Equations stay as `$LaTeX$`, which Obsidian renders. Only the parts between the `paperlens` comment markers are managed, so anything else you write in a note is left alone.
 
 ## Install it as an app
 
@@ -106,6 +127,8 @@ There is **no Paperlens server**. When you analyse a paper or ask a question, yo
 
 | Problem | Try this |
 |---|---|
+| Zotero says "Could not reach api.zotero.org" | Check your connection and any extension that blocks requests from web pages. |
+| Zotero says the key isn't allowed | Create a new key with library, notes and write access ticked, then reconnect in Connections. |
 | I don't see a new feature | The site is still showing an older copy. Open Settings and press **Update app**. If there's no App version line, the new files haven't reached the site yet: check that `index.html` and `sw.js` were replaced (not saved as `index (1).html`) and wait a few minutes. |
 | "…rejected the API key" | Open Settings, make sure the right AI service is selected, and re-paste that service's key. Check it hasn't been revoked. |
 | "Could not reach …" | Check your connection, and look for an ad blocker or privacy extension. If it names a service other than Anthropic or OpenRouter, that service may not allow requests from web pages (a browser rule called CORS). OpenAI often blocks them: use OpenRouter instead, or enter a proxy address in Settings. |

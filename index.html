@@ -15,7 +15,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Paperlens">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="app-version" content="2026.10.8">
+<meta name="app-version" content="2026.10.9">
 <meta name="author" content="Ria Bhandari">
 <meta name="copyright" content="© 2026 Ria Bhandari. All rights reserved.">
 <meta name="description" content="Understand any research paper fast: overview, key figures, mind map, flashcards and games.">
@@ -409,6 +409,22 @@ table.cmp td textarea,table.cmp td input{width:100%;min-height:44px;padding:8px 
 .katex-display{margin:0}
 .face .tex-d,.opt .tex-d{margin:.3em 0}
 .mark .katex{color:var(--mark-ink)}
+
+/* ---------- connections (Zotero, Obsidian) ---------- */
+.modal.wide{width:min(720px,100%)}
+.conn{margin-top:18px;padding:16px;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+.conn h3{font-size:20px;margin-bottom:8px}
+.conn .field{margin-top:10px}
+fieldset.meth{border:0;padding:0;margin:14px 0 0}
+fieldset.meth legend{font-weight:600;font-size:14px;margin-bottom:4px;padding:0}
+.steps-help{margin:0 0 6px;padding-left:20px;color:var(--muted);font-size:14.5px}
+.steps-help li+li{margin-top:4px}
+.lib-conn{margin:0 0 18px}
+.lib-conn h3{font-size:18px;margin-bottom:2px}
+.zi-list{max-height:46vh;overflow:auto;margin-top:12px;border:1px solid var(--line);border-radius:10px;background:var(--bg)}
+.zi-row{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border-bottom:1px solid var(--line);cursor:pointer}
+.zi-row:last-child{border-bottom:0}
+.zi-row input{width:20px;height:20px;margin-top:2px;accent-color:var(--blue);flex:none}
 
 </style>
 </head>
@@ -1281,7 +1297,7 @@ document.addEventListener('keydown', e => {
 });
 
 /* ---------- version + clean refresh ---------- */
-const APP_VERSION = '2026.10.8';
+const APP_VERSION = '2026.10.9';
 function reloadApp() { location.replace(location.pathname + '?u=' + Date.now()); }
 async function refreshApp() {                                  // clears the saved copy of the APP only; papers, notes and settings are untouched
   try { const regs = (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) ? await navigator.serviceWorker.getRegistrations() : []; await Promise.all(regs.map(r => r.unregister())); } catch (e) {}
@@ -1466,8 +1482,8 @@ async function analyze(src) {
     catch (e) { throw new Error(stop === 'max_tokens' ? 'The analysis was cut off because the paper is very dense. Try again or choose a faster model.' : 'The response could not be read. Try again.'); }
     const paper = normalize(data);
     paper.meta.doi = await verifyDoi(paper.meta.doi, src);
-    paper.id = 'p' + Date.now().toString(36);
-    try { await saveToLibrary(paper, src); } catch (e) { console.warn(e); toast('Could not save to your library (storage may be full)'); }
+    paper.id = src.mergeId || ('p' + Date.now().toString(36));
+    try { const rec = await saveToLibrary(paper, src); if (typeof autoSyncNew === 'function') autoSyncNew(rec); } catch (e) { console.warn(e); toast('Could not save to your library (storage may be full)'); }
     S.abort = null; S.paper = paper; updateStages(text, true);
     setTimeout(() => showPaper('overview'), 350);
   } catch (e) {
@@ -1621,6 +1637,7 @@ function viewOverview(p) {
   const o = p.ov, m = p.meta;
   app().innerHTML = `
   ${p.id === 'demo' ? `<div class="sample"><span class="grow"><b>Sample paper.</b> This is a finished example of what Paperlens produces.</span><button class="btn small" id="own">Analyze your own</button></div>` : ''}
+  <div id="stub-slot"></div>
   <div class="paper-head">
     <div class="meta">${m.field ? `<span class="chip">${esc(m.field)}</span>` : ''}${m.type ? `<span class="chip plain">${esc(m.type)}</span>` : ''}${m.venue ? `<span class="chip plain">${esc(m.venue)}</span>` : ''}</div>
     <h1 style="margin-top:14px">${rich(m.title)}</h1>
@@ -1645,7 +1662,7 @@ function viewOverview(p) {
     <div class="row" style="margin-top:14px"><button class="btn primary" id="go-figs">See the key figures</button><button class="btn" id="go-cards">Study the flashcards</button><button class="btn" id="go-chat">Ask a question</button></div></div>
   <div class="row" style="margin-top:18px"><button class="btn small" id="copy">Copy summary</button><button class="btn small" id="md">${ICON.dl}Download notes (.md)</button></div>
   <p class="disclaimer">Written by AI from the paper. Page links show where each claim comes from, so check anything important against the source.</p>`;
-  renderCite(p); $$('[data-note]').forEach(b => b.onclick = () => { const f = o.findings[+b.dataset.note]; addToNotes(p, f.t, f.p); });
+  renderCite(p); if (typeof renderStubBanner === 'function') renderStubBanner(p); $$('[data-note]').forEach(b => b.onclick = () => { const f = o.findings[+b.dataset.note]; addToNotes(p, f.t, f.p); });
   $('#go-figs').onclick = () => showPaper('figures'); $('#go-chat').onclick = () => showPaper('chat'); $('#own')?.addEventListener('click', showHome);
   $('#go-cards').onclick = () => showPaper('cards');
   $('#copy').onclick = () => navigator.clipboard.writeText(toMarkdown(p)).then(() => toast('Summary copied'), () => toast('Copy failed. Use the download instead.'));
@@ -1885,7 +1902,7 @@ const idb = (store, mode, fn) => idbOpen().then(db => new Promise((res, rej) => 
   t.oncomplete = () => res(out); t.onerror = () => rej(t.error); t.onabort = () => rej(t.error || new Error('Storage was refused (it may be full)'));
 }));
 const progKey = id => 'pl.prog.' + id, chatKey = id => 'pl.chat.' + id, bestKey = (id, m) => 'pl.best.' + id + '.' + m;
-const recDefaults = () => ({ folders: [], status: '', starred: false, notes: '', relevance: '', theme: '' });
+const recDefaults = () => ({ folders: [], status: '', starred: false, notes: '', relevance: '', theme: '', zotero: null, obsidian: null, imported: '' });
 const withDefaults = r => Object.assign(recDefaults(), r);
 const legacyRec = x => Object.assign(recDefaults(), { added: x.date || 0, opened: x.date || 0, hasSource: null, srcName: '', srcSize: 0, authors: x.data?.meta?.authors || '', type: x.data?.meta?.type || '', venue: x.data?.meta?.venue || '' }, x);
 
@@ -1986,12 +2003,18 @@ async function saveToLibrary(p, src) {
       else if (src.text && await lib.putSource(p.id, { text: src.text.slice(0, 450000) })) { rec.hasSource = 'text'; rec.srcSize = src.text.length; }
     } catch (e) { console.warn('Could not keep a copy of the source:', e); }
   }
+  const prev = await lib.get(p.id).catch(() => null);
+  if (prev) {                                                   // analyzing a paper that's already here (such as one imported from Zotero): keep everything the user added
+    ['folders', 'status', 'starred', 'notes', 'relevance', 'theme', 'zotero', 'obsidian', 'imported'].forEach(k => { rec[k] = prev[k]; }); rec.added = prev.added || rec.added;
+    if (!rec.hasSource && prev.hasSource) { rec.hasSource = prev.hasSource; rec.srcName = prev.srcName; rec.srcSize = prev.srcSize; }
+    if (prev.data && prev.data.stub) { ['title', 'authors', 'authorsFull', 'year', 'doi', 'journal'].forEach(k => { const v = prev.data.meta[k]; if (Array.isArray(v) ? v.length : v) p.meta[k] = v; }); rec.title = p.meta.title; rec.authors = p.meta.authors; }
+  }
   const notes = [];
   try {
     const nt = normName(p.meta.title), doi = (p.meta.doi || '').toLowerCase();
-    const dup = (await lib.list()).find(x => x.id !== p.id && ((nt && normName(x.title) === nt) || (doi && String(x.data?.meta?.doi || '').toLowerCase() === doi)));
+    const dup = prev ? null : (await lib.list()).find(x => x.id !== p.id && ((nt && normName(x.title) === nt) || (doi && String(x.data?.meta?.doi || '').toLowerCase() === doi)));
     if (dup) notes.push('Looks like a paper you already saved ("' + dup.title.slice(0, 50) + '"). Both are kept.');
-    const mf = matchFolder(p.meta.field); if (mf) { rec.folders = [mf.id]; notes.push('Filed in ' + mf.name); }
+    const mf = prev ? null : matchFolder(p.meta.field); if (mf) { rec.folders = [mf.id]; notes.push('Filed in ' + mf.name); }
   } catch (e) {}
   await lib.put(rec);
   try { navigator.storage?.persist?.(); } catch (e) {}          // ask the browser not to evict it
@@ -2027,7 +2050,7 @@ function libCard(r) {
     <div class="libc-main">
       <h3><button class="linklike" data-open>${esc(r.title)}</button></h3>
       ${r.authors || r.venue ? `<p class="muted libc-authors">${esc([r.authors, r.venue].filter(Boolean).join(' · '))}</p>` : ''}
-      <div class="row" style="gap:6px;margin-top:8px">${r.field ? `<span class="chip">${esc(r.field)}</span>` : ''}${r.type ? `<span class="chip plain">${esc(r.type)}</span>` : ''}${fchips}${r.hasSource ? `<span class="chip plain" title="A copy is saved on this device">${r.hasSource === 'pdf' ? 'PDF saved' : 'Text saved'}${r.srcSize ? ' · ' + fmtBytes(r.srcSize) : ''}</span>` : ''}</div>
+      <div class="row" style="gap:6px;margin-top:8px">${r.field ? `<span class="chip">${esc(r.field)}</span>` : ''}${r.type ? `<span class="chip plain">${esc(r.type)}</span>` : ''}${fchips}${r.data && r.data.stub ? '<span class="chip" title="Imported from Zotero. Add the PDF to analyze it.">Not analyzed</span>' : ''}${r.zotero && r.zotero.key ? '<span class="chip plain" title="Linked to Zotero">Zotero</span>' : ''}${r.obsidian && r.obsidian.path ? '<span class="chip plain" title="Has a note in Obsidian">Obsidian</span>' : ''}${r.hasSource ? `<span class="chip plain" title="A copy is saved on this device">${r.hasSource === 'pdf' ? 'PDF saved' : 'Text saved'}${r.srcSize ? ' · ' + fmtBytes(r.srcSize) : ''}</span>` : ''}</div>
       <p class="muted libc-meta">Added ${esc(fmtAgo(r.added))}${r.opened && r.opened !== r.added ? ' · Opened ' + esc(fmtAgo(r.opened)) : ''}</p>
       ${st.total ? `<div class="libc-prog"><div class="bar" role="progressbar" aria-label="Flashcards learned" aria-valuemin="0" aria-valuemax="${st.total}" aria-valuenow="${st.known}"><i style="width:${pct}%"></i></div><span>${st.known} of ${st.total} flashcards learned${scores.length ? ' · ' + esc(scores.join(' · ')) : ''}</span></div>` : ''}
     </div>
@@ -2100,6 +2123,7 @@ async function showLibrary() {
     <button class="btn" id="lib-view" aria-pressed="${libState.view === 'compact'}" title="Switch between detailed cards and a compact list">${libState.view === 'compact' ? 'Detailed view' : 'Compact view'}</button></div>
   <div id="selbar" class="selbar" hidden></div>` : ''}
   <div id="lib-list" class="lib-list"></div>
+  <div id="conn-slot"></div>
   <section class="card lib-data"><h3>Your data</h3>
     <p class="muted" id="lib-usage">Calculating…</p>
     <p class="muted" style="margin-top:8px">${mode === 'idb' ? 'Your library lives only in this browser on this device. Clearing your browsing data, using a private window, or switching browser or device starts a fresh library, and some browsers clear data for sites you rarely visit. Export a backup to keep a copy or move to another device.' : 'This browser doesn\'t allow saving PDFs here (private mode, perhaps), so only your notes are kept, up to 15 papers.'}</p>
@@ -2138,8 +2162,8 @@ async function showLibrary() {
       : `<div class="done"><h2>${cur ? 'This folder is empty' : 'Nothing here'}</h2><p>${cur ? 'Drag a paper onto this folder in the bar above, or use Folders on any paper.' : 'No papers in this view yet.'}</p></div>`;
     // selection bar
     const n = libState.sel.size, sb = $('#selbar'); sb.hidden = !n;
-    if (n) { sb.innerHTML = `<b>${n} selected</b><button class="btn small primary" id="s-cmp" ${n < 2 || n > 8 ? 'disabled' : ''} title="${n > 8 ? 'Pick up to 8 papers' : 'Side-by-side matrix'}">Compare${n >= 2 ? ' ' + n : ''}</button><button class="btn small" id="s-fold">Add to folder…</button><button class="btn small ghost" id="s-clr">Clear</button>${n < 2 ? '<span class="muted">Pick 2 or more to compare.</span>' : ''}`;
-      $('#s-cmp').onclick = () => showCompare([...libState.sel]); $('#s-fold').onclick = () => openFolderPicker([...libState.sel], reload); $('#s-clr').onclick = () => { libState.sel.clear(); paint(); }; }
+    if (n) { sb.innerHTML = `<b>${n} selected</b><button class="btn small primary" id="s-cmp" ${n < 2 || n > 8 ? 'disabled' : ''} title="${n > 8 ? 'Pick up to 8 papers' : 'Side-by-side matrix'}">Compare${n >= 2 ? ' ' + n : ''}</button><button class="btn small" id="s-fold">Add to folder…</button><button class="btn small" id="s-send">Send to Zotero or Obsidian…</button><button class="btn small ghost" id="s-clr">Clear</button>${n < 2 ? '<span class="muted">Pick 2 or more to compare.</span>' : ''}`;
+      $('#s-cmp').onclick = () => showCompare([...libState.sel]); $('#s-fold').onclick = () => openFolderPicker([...libState.sel], reload); $('#s-send').onclick = () => openSendMenu([...libState.sel]); $('#s-clr').onclick = () => { libState.sel.clear(); paint(); }; }
     // folder bar
     $$('[data-f]').forEach(b => { b.onclick = () => { libState.folder = b.dataset.f; paint(); };
       b.addEventListener('dragover', e => { if (b.hasAttribute('data-drop')) { e.preventDefault(); b.classList.add('over'); } }); b.addEventListener('dragleave', () => b.classList.remove('over'));
@@ -2175,7 +2199,7 @@ async function showLibrary() {
   $('#lib-view')?.addEventListener('click', e => { libState.view = libState.view === 'compact' ? 'cards' : 'compact'; ls.set('pl.libview', libState.view); e.target.textContent = libState.view === 'compact' ? 'Detailed view' : 'Compact view'; e.target.setAttribute('aria-pressed', libState.view === 'compact'); $('#lib-list').classList.toggle('compact', libState.view === 'compact'); });
   $('#lib-export').onclick = () => exportLibrary($('#lib-incl').checked);
   $('#lib-import').onchange = async e => { const f = e.target.files[0]; if (f) { await importLibrary(f); showLibrary(); } };
-  paint(); fillUsage();
+  paint(); fillUsage(); if (typeof renderConnectionsCard === 'function') renderConnectionsCard();
 }
 
 /* ---------- backup: the no-account way to move or keep your library ---------- */
@@ -2291,7 +2315,7 @@ function renderCite(p) {
   slot.innerHTML = `<div class="card cite"><h3>Cite this paper</h3>
     <p class="cite-apa" id="cite-apa">${esc(citeAPA(m))}</p>
     <div class="row" style="margin-top:12px"><button class="btn small" data-c="apa">Copy APA</button><button class="btn small" data-c="bib">Copy BibTeX</button><button class="btn small" data-c="ris">Copy RIS</button>
-      <button class="btn small ghost" id="c-bib">${ICON.dl}.bib</button><button class="btn small ghost" id="c-ris">${ICON.dl}.ris</button><button class="btn small ghost" id="c-edit">Edit details</button></div>
+      <button class="btn small ghost" id="c-bib">${ICON.dl}.bib</button><button class="btn small ghost" id="c-ris">${ICON.dl}.ris</button><button class="btn small ghost" id="c-edit">Edit details</button><button class="btn small" id="c-zot">Add to Zotero</button></div>
     <p class="muted" style="font-size:13.5px;margin-top:10px">Read from the paper by AI, so check authors, year and venue before you cite.${m.doi ? ' The DOI was found printed in the paper.' : ' No DOI was found printed in the paper, so none is included.'} RIS and BibTeX import into Zotero, Mendeley and EndNote.</p>
     <div id="c-form" hidden style="margin-top:14px">
       <div class="field"><label for="ce-t">Title</label><input id="ce-t" value="${esc(m.title)}"></div>
@@ -2302,6 +2326,7 @@ function renderCite(p) {
   const get = { apa: () => citeAPA(m), bib: () => citeBibTeX(m), ris: () => citeRIS(m) };
   $$('[data-c]', slot).forEach(b => b.onclick = () => navigator.clipboard.writeText(get[b.dataset.c]()).then(() => toast('Copied'), () => toast('Copy failed. Use the download instead.')));
   $('#c-bib', slot).onclick = () => download(slug(m.title) + '.bib', citeBibTeX(m) + '\n', 'text/plain'); $('#c-ris', slot).onclick = () => download(slug(m.title) + '.ris', citeRIS(m) + '\n', 'text/plain');
+  $('#c-zot', slot).onclick = () => sendOne(p, 'zotero');
   $('#c-edit', slot).onclick = () => { $('#c-form', slot).hidden = !$('#c-form', slot).hidden; };
   $('#ce-cancel', slot).onclick = () => { $('#c-form', slot).hidden = true; };
   $('#ce-save', slot).onclick = async () => {
@@ -2333,7 +2358,7 @@ async function viewNotes(p) {
     <button class="btn small ghost star" id="n-star" aria-pressed="${!!rec.starred}"></button>
     <label class="sr" for="n-status">Reading status</label>
     <select id="n-status" class="small-select"><option value="">No status</option><option value="toread">To read</option><option value="reading">Reading</option><option value="read">Read</option></select>
-    <button class="btn small" id="n-fold">Folders</button><span class="muted" id="n-fl"></span></div>
+    <button class="btn small" id="n-fold">Folders</button><button class="btn small" id="n-zot">Push to Zotero</button><button class="btn small" id="n-obs">Send to Obsidian</button><span class="muted" id="n-fl"></span></div>
   <div class="two"><div class="field"><label for="n-rel">Relevance to my research</label><textarea id="n-rel" rows="3" placeholder="Why does this paper matter for your project?"></textarea></div>
     <div class="field"><label for="n-theme">Theme(s)</label><input id="n-theme" placeholder="e.g. attention, scaling"><small>Short labels. They become a column in the comparison matrix.</small></div></div>
   <div class="field" style="margin-top:14px"><label for="n-notes">Notes</label><textarea id="n-notes" rows="14" placeholder="Your thoughts, quotes, questions…"></textarea>
@@ -2347,6 +2372,7 @@ async function viewNotes(p) {
   $('#n-star').onclick = async () => { rec = await lib.update(p.id, { starred: !rec.starred }); star(); };
   $('#n-status').onchange = async e => { rec = await lib.update(p.id, { status: e.target.value }); };
   $('#n-fold').onclick = () => openFolderPicker([p.id], async () => { rec = await lib.get(p.id); showFl(); });
+  $('#n-zot').onclick = async () => { await save(); sendOne(p, 'zotero'); }; $('#n-obs').onclick = async () => { await save(); sendOne(p, 'obsidian'); };
   $('#n-dl').onclick = async () => { await save(); download(slug(p.meta.title) + '-my-notes.md', notesMarkdown(rec), 'text/markdown'); };
 }
 function notesMarkdown(r) {
@@ -2402,6 +2428,551 @@ async function showCompare(ids) {
   $('#cmp-csv').onclick = () => download('literature-matrix.csv', matrixCSV(sortRecs(recs, how)), 'text/csv'); $('#cmp-md').onclick = () => download('literature-matrix.md', matrixMD(sortRecs(recs, how)), 'text/markdown');
   $('#cmp-bib').onclick = () => download('citations.bib', sortRecs(recs, how).map(r => citeBibTeX(r.data.meta)).join('\n\n') + '\n', 'text/plain');
   S.cleanups.push(() => Object.values(timers).forEach(clearTimeout)); draw();
+}
+
+/* =====================================================================
+   Paperlens — Zotero and Obsidian.
+   Zotero: your own library through Zotero's web API (key kept on this device).
+   Obsidian: notes written into your vault, or handed over via obsidian://.
+   Nothing here goes through any server of ours.
+   ===================================================================== */
+
+/* ---------- connection settings (this device only) ---------- */
+const syncDefaults = () => ({ zotero: { key: '', userID: 0, username: '', auto: false }, obsidian: { vault: '', folder: 'Papers', method: 'download', flashcards: true, auto: false, dirName: '' } });
+function syncCfg() {
+  const s = ls.get('pl.sync', null) || {}, d = syncDefaults();
+  return { zotero: Object.assign(d.zotero, s.zotero || {}), obsidian: Object.assign(d.obsidian, s.obsidian || {}) };
+}
+const saveSyncCfg = c => ls.set('pl.sync', c);
+const STATUS_TAGS = { toread: 'to-read', reading: 'reading', read: 'read' };
+const TAG_STATUS = { 'to-read': 'toread', reading: 'reading', read: 'read' };
+const sleepMs = ms => new Promise(r => setTimeout(r, ms));
+const hashStr = s => { let h = 5381; s = String(s); for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return String(h >>> 0); };
+function writeToken() { const a = new Uint8Array(16); (window.crypto || {}).getRandomValues ? crypto.getRandomValues(a) : a.forEach((_, i) => a[i] = Math.floor(Math.random() * 256)); return [...a].map(x => x.toString(16).padStart(2, '0')).join(''); }
+
+/* =====================================================================
+   ZOTERO
+   ===================================================================== */
+const ZOTERO_API = 'https://api.zotero.org';
+function zotFriendly(status, body) {
+  if (status === 403) return 'This Zotero key isn\'t allowed to do that. Create a key at zotero.org/settings/keys/new with library, notes and write access ticked, then reconnect.';
+  if (status === 404) return 'Zotero couldn\'t find that item or library.';
+  if (status === 409) return 'Your Zotero library is locked right now. Try again in a moment.';
+  if (status === 412) return 'That item changed in Zotero since Paperlens last saw it. Refresh from Zotero first, then try again.';
+  if (status === 413) return 'That was too much for Zotero in one go. Try fewer papers at a time.';
+  if (status === 428) return 'Zotero needs a version number for that change. Refresh from Zotero first.';
+  if (status === 429) return 'Zotero asked us to slow down. Try again in a minute.';
+  if (status >= 500) return 'Zotero is having trouble right now. Try again in a moment.';
+  if (status === 400) return 'Zotero rejected that item: ' + String(body || '').slice(0, 160);
+  return 'Zotero returned an error (' + status + ').' + (body ? ' ' + String(body).slice(0, 120) : '');
+}
+async function zot(path, opt = {}) {
+  const cfg = syncCfg().zotero; if (!cfg.key) throw new Error('Connect your Zotero account first (Library, then Connections).');
+  const headers = Object.assign({ 'Zotero-API-Key': cfg.key, 'Zotero-API-Version': '3' }, opt.body !== undefined ? { 'Content-Type': 'application/json' } : {}, opt.headers || {});
+  let res;
+  try { res = await fetch(ZOTERO_API + path, { method: opt.method || 'GET', headers, body: opt.body !== undefined ? JSON.stringify(opt.body) : undefined }); }
+  catch (e) { throw new Error('Could not reach api.zotero.org. Check your connection. If it keeps failing, a browser extension may be blocking requests from web pages.'); }
+  const backoff = res.headers && res.headers.get && parseInt(res.headers.get('Backoff') || '0', 10); if (backoff > 0) await sleepMs(Math.min(backoff, 30) * 1000);
+  if (!res.ok) { let t = ''; try { t = await res.text(); } catch (e) {} throw Object.assign(new Error(zotFriendly(res.status, t)), { status: res.status }); }
+  return res;
+}
+const zotJSON = async (path, opt) => (await zot(path, opt)).json();
+async function zotConnect(key) {
+  const c = syncCfg(); c.zotero.key = String(key || '').trim(); if (!c.zotero.key) throw new Error('Paste your Zotero API key first.'); saveSyncCfg(c);
+  try {
+    const info = await zotJSON('/keys/current'), acc = (info.access && info.access.user) || {};
+    if (!info.userID) throw new Error('Zotero didn\'t return an account for that key.');
+    const notes = [!acc.library && 'library access', !acc.write && 'write access', acc.notes === false && 'notes access'].filter(Boolean);
+    c.zotero.userID = info.userID; c.zotero.username = info.username || ''; saveSyncCfg(c);
+    return { ok: true, username: c.zotero.username, userID: info.userID, missing: notes };
+  } catch (e) { c.zotero.key = ''; c.zotero.userID = 0; saveSyncCfg(c); throw e; }
+}
+const zotUid = () => { const u = syncCfg().zotero.userID; if (!u) throw new Error('Connect your Zotero account first.'); return u; };
+async function zotCollections() {
+  const out = []; for (let start = 0; ; start += 100) { const page = await zotJSON(`/users/${zotUid()}/collections?limit=100&start=${start}&format=json`); out.push(...page.map(c => ({ key: c.key, name: c.data.name, parent: c.data.parentCollection }))); if (page.length < 100) break; }
+  return out;
+}
+async function zotEnsureCollections(names) {                    // folder name → Zotero collection key (creating what's missing)
+  const have = await zotCollections(), map = {}; const need = [];
+  [...new Set(names)].forEach(n => { const f = have.find(c => normName(c.name) === normName(n) && !c.parent) || have.find(c => normName(c.name) === normName(n)); if (f) map[n] = f.key; else need.push(n); });
+  if (need.length) {
+    const r = await zotJSON(`/users/${zotUid()}/collections`, { method: 'POST', body: need.map(name => ({ name })), headers: { 'Zotero-Write-Token': writeToken() } });
+    Object.entries(r.successful || {}).forEach(([i, v]) => { map[need[+i]] = v.key; });
+  }
+  return map;
+}
+const lastVersion = async (res, key) => { const v = res.headers && res.headers.get && res.headers.get('Last-Modified-Version'); if (v) return +v; const it = await zotJSON(`/users/${zotUid()}/items/${key}?format=json`); return it.version || it.data.version; };
+
+/* ---- paper → Zotero item ---- */
+const noteHtml = s => String(s || '').split(/\n{2,}/).map(par => { const ls_ = par.split('\n'); return ls_.every(l => /^\s*[-*•]\s+/.test(l)) ? '<ul>' + ls_.map(l => '<li>' + esc(l.replace(/^\s*[-*•]\s+/, '')) + '</li>').join('') + '</ul>' : '<p>' + ls_.map(esc).join('<br>') + '</p>'; }).join('');
+function zoteroTags(rec) {
+  const t = ['paperlens']; if (rec.status && STATUS_TAGS[rec.status]) t.push(STATUS_TAGS[rec.status]); if (rec.starred) t.push('starred');
+  String(rec.theme || '').split(/[,;]/).map(x => x.trim()).filter(Boolean).forEach(x => t.push(x)); return [...new Set(t)];
+}
+function zoteroItemFor(rec, collKeys) {
+  const m = rec.data.meta, v = venueName(m), conf = isConf(v), { list } = authorList(m);
+  const it = { itemType: conf ? 'conferencePaper' : 'journalArticle', title: m.title, creators: list.map(n => { const p = splitName(n); return p.given ? { creatorType: 'author', firstName: p.given, lastName: p.family } : { creatorType: 'author', name: p.family }; }),
+    abstractNote: rec.data.abstract || '', date: m.year ? String(m.year) : '', DOI: m.doi || '', extra: 'Paperlens ID: ' + rec.id, tags: zoteroTags(rec).map(tag => ({ tag })), collections: collKeys || [] };
+  it[conf ? 'proceedingsTitle' : 'publicationTitle'] = v; return it;
+}
+function zoteroNoteFor(rec) {
+  const p = rec.data, o = p.ov || {}, parts = ['<h1>Paperlens summary</h1>'];
+  if (!p.stub) {
+    if (o.tldr) parts.push(`<p><b>TL;DR:</b> ${esc(o.tldr)}</p>`);
+    if (arr(o.findings).length) parts.push('<h2>Key findings</h2><ul>' + o.findings.map(f => `<li>${esc(f.t)}${f.p ? ' (p. ' + f.p + ')' : ''}</li>`).join('') + '</ul>');
+    if (o.problem) parts.push(`<h2>Problem</h2><p>${esc(o.problem)}</p>`); if (o.approach) parts.push(`<h2>Approach</h2><p>${esc(o.approach)}</p>`);
+    if (arr(o.limits).length) parts.push('<h2>Caveats</h2><ul>' + o.limits.map(l => `<li>${esc(l)}</li>`).join('') + '</ul>');
+  }
+  if (rec.relevance) parts.push(`<h2>Relevance to my research</h2>${noteHtml(rec.relevance)}`);
+  if (rec.notes) parts.push(`<h2>My notes</h2>${noteHtml(rec.notes)}`);
+  parts.push('<p><i>Written by Paperlens (AI summary, check against the paper).</i></p>');
+  return parts.join('');
+}
+const hasNoteContent = rec => !rec.data.stub || rec.notes || rec.relevance;
+
+/* ---- push ---- */
+async function zotPush(recs, progress = () => {}) {
+  const uid = zotUid(), out = { created: 0, updated: 0, notes: 0, failed: [] };
+  const names = [...new Set(recs.flatMap(r => arr(r.folders).map(id => (folders.all().find(f => f.id === id) || {}).name).filter(Boolean)))];
+  const cmap = names.length ? await zotEnsureCollections(names) : {};
+  const keysFor = r => arr(r.folders).map(id => cmap[(folders.all().find(f => f.id === id) || {}).name]).filter(Boolean);
+  const fresh = recs.filter(r => !(r.zotero && r.zotero.key)), linked = recs.filter(r => r.zotero && r.zotero.key);
+  // new items, 50 at a time
+  for (let i = 0; i < fresh.length; i += 50) {
+    const batch = fresh.slice(i, i + 50); progress(`Adding ${Math.min(i + 50, fresh.length)} of ${fresh.length} to Zotero…`);
+    const r = await zotJSON(`/users/${uid}/items`, { method: 'POST', body: batch.map(x => zoteroItemFor(x, keysFor(x))), headers: { 'Zotero-Write-Token': writeToken() } });
+    for (const [idx, v] of Object.entries(r.successful || {})) { const rec = batch[+idx]; rec.zotero = { key: v.key, version: v.version, noteKey: null, noteVersion: 0, syncedAt: Date.now() }; out.created++; }
+    for (const [idx, f] of Object.entries(r.failed || {})) out.failed.push({ title: batch[+idx].title, message: f.message || 'rejected' });
+  }
+  // already linked: only ADD tags and collections, never overwrite what's in Zotero
+  for (let i = 0; i < linked.length; i += 50) {
+    const batch = linked.slice(i, i + 50); progress(`Updating ${Math.min(i + 50, linked.length)} of ${linked.length} in Zotero…`);
+    const cur = await zotJSON(`/users/${uid}/items?itemKey=${batch.map(x => x.zotero.key).join(',')}&format=json`), byKey = Object.fromEntries(cur.map(c => [c.key, c]));
+    for (const rec of batch) {
+      const c = byKey[rec.zotero.key]; if (!c) { out.failed.push({ title: rec.title, message: 'no longer in Zotero' }); continue; }
+      const tags = [...new Set([...arr(c.data.tags).map(t => t.tag), ...zoteroTags(rec)])], colls = [...new Set([...arr(c.data.collections), ...keysFor(rec)])];
+      const same = tags.length === arr(c.data.tags).length && colls.length === arr(c.data.collections).length;
+      if (!same) { try { const res = await zot(`/users/${uid}/items/${rec.zotero.key}`, { method: 'PATCH', body: { tags: tags.map(tag => ({ tag })), collections: colls }, headers: { 'If-Unmodified-Since-Version': String(c.version) } }); rec.zotero.version = await lastVersion(res, rec.zotero.key); out.updated++; } catch (e) { out.failed.push({ title: rec.title, message: e.message }); continue; } }
+      else rec.zotero.version = c.version;
+      rec.zotero.syncedAt = Date.now();
+    }
+  }
+  // the Paperlens summary + notes live in ONE child note per paper
+  for (const rec of recs) {
+    if (!(rec.zotero && rec.zotero.key) || !hasNoteContent(rec)) continue; progress('Writing notes…'); const html = zoteroNoteFor(rec);
+    try {
+      if (rec.zotero.noteKey) {
+        const sendNote = async ver => zot(`/users/${uid}/items/${rec.zotero.noteKey}`, { method: 'PATCH', body: { note: html }, headers: { 'If-Unmodified-Since-Version': String(ver) } });
+        let res; try { res = await sendNote(rec.zotero.noteVersion); } catch (e) { if (e.status !== 412) throw e; const cur = await zotJSON(`/users/${uid}/items/${rec.zotero.noteKey}?format=json`); res = await sendNote(cur.version); }   // the note is ours to overwrite
+        rec.zotero.noteVersion = await lastVersion(res, rec.zotero.noteKey);
+      } else {
+        const r = await zotJSON(`/users/${uid}/items`, { method: 'POST', body: [{ itemType: 'note', parentItem: rec.zotero.key, note: html, tags: [{ tag: 'paperlens' }] }], headers: { 'Zotero-Write-Token': writeToken() } });
+        const ok_ = (r.successful || {})['0']; if (ok_) { rec.zotero.noteKey = ok_.key; rec.zotero.noteVersion = ok_.version; out.notes++; } else out.failed.push({ title: rec.title, message: 'note: ' + ((r.failed || {})['0'] || {}).message });
+      }
+    } catch (e) { out.failed.push({ title: rec.title, message: e.message }); }
+  }
+  for (const rec of recs) if (rec.zotero) await lib.update(rec.id, { zotero: rec.zotero });
+  return out;
+}
+
+/* ---- pull ---- */
+const SKIP_TYPES = new Set(['attachment', 'note', 'annotation']);
+const ITEM_LABEL = { journalArticle: 'Journal article', conferencePaper: 'Conference paper', preprint: 'Preprint', book: 'Book', bookSection: 'Book chapter', thesis: 'Thesis', report: 'Report', magazineArticle: 'Article', webpage: 'Web page' };
+async function zotList({ q = '', collection = '', start = 0, limit = 50 } = {}) {
+  const base = collection ? `/users/${zotUid()}/collections/${collection}/items/top` : `/users/${zotUid()}/items/top`;
+  const res = await zot(`${base}?limit=${limit}&start=${start}&sort=dateModified&direction=desc&format=json&include=data${q ? '&q=' + encodeURIComponent(q) + '&qmode=titleCreatorYear' : ''}`);
+  const items = (await res.json()).filter(i => !SKIP_TYPES.has(i.data.itemType)), total = parseInt((res.headers && res.headers.get && res.headers.get('Total-Results')) || '0', 10) || start + items.length;
+  return { items, total };
+}
+function creatorsOf(d) { return arr(d.creators).filter(c => !c.creatorType || c.creatorType === 'author').map(c => c.name || [c.firstName, c.lastName].filter(Boolean).join(' ')).filter(Boolean); }
+function shortAuthors(list) { const fam = n => splitName(n).family; return !list.length ? '' : list.length === 1 ? fam(list[0]) : list.length === 2 ? fam(list[0]) + ' & ' + fam(list[1]) : fam(list[0]) + ' et al.'; }
+function fromZoteroTags(tags) {
+  const t = arr(tags).map(x => x.tag), status = (t.map(x => TAG_STATUS[x.toLowerCase()]).filter(Boolean))[0] || '';
+  return { status, starred: t.some(x => x.toLowerCase() === 'starred'), theme: t.filter(x => !['paperlens', 'starred'].includes(x.toLowerCase()) && !TAG_STATUS[x.toLowerCase()]).join(', ') };
+}
+function stubFromZotero(item) {
+  const d = item.data, authors = creatorsOf(d), journal = d.publicationTitle || d.proceedingsTitle || d.conferenceName || d.bookTitle || d.repository || d.websiteTitle || '', year = yearFrom(d.date);
+  const p = normalize({ meta: { title: d.title || 'Untitled', authors: shortAuthors(authors), authors_full: authors, year, doi: d.DOI || '', journal, venue_year: [journal, year].filter(Boolean).join(' '), field: '', paper_type: ITEM_LABEL[d.itemType] || 'Paper', one_liner: '' },
+    overview: { tldr: d.abstractNote || '' } });
+  p.stub = true; p.abstract = d.abstractNote || ''; p.sourceUrl = d.url || ''; return p;
+}
+async function zotTryPdf(parentKey) {                          // best effort: browsers often block this download
+  try {
+    const kids = await zotJSON(`/users/${zotUid()}/items/${parentKey}/children?format=json`);
+    const att = kids.find(k => k.data.itemType === 'attachment' && /pdf/i.test(k.data.contentType || '') && /imported/.test(k.data.linkMode || '')); if (!att) return null;
+    const blob = await (await zot(`/users/${zotUid()}/items/${att.key}/file`)).blob(); return blob && blob.size > 0 && blob.size < 24 * 1048576 ? blob : null;
+  } catch (e) { return null; }
+}
+async function zotImport(items, { pdf = false, progress = () => {} } = {}) {
+  const have = await lib.list(), colls = await zotCollections(), cname = Object.fromEntries(colls.map(c => [c.key, c.name])), out = { added: 0, linked: 0, pdfs: 0, pdfMissed: 0 };
+  for (const [i, item] of items.entries()) {
+    progress(`Importing ${i + 1} of ${items.length}…`);
+    const d = item.data, tg = fromZoteroTags(d.tags), fids = arr(d.collections).map(k => cname[k]).filter(Boolean).map(n => folders.add(n).id);
+    const doi = String(d.DOI || '').toLowerCase(), nt = normName(d.title);
+    const dup = have.find(r => (r.zotero && r.zotero.key === item.key) || (doi && String(r.data.meta.doi || '').toLowerCase() === doi) || (nt && normName(r.title) === nt));
+    if (dup) {                                                   // never duplicate: link what's already here
+      await lib.update(dup.id, x => ({ zotero: Object.assign({}, x.zotero || {}, { key: item.key, version: item.version, syncedAt: Date.now() }), folders: [...new Set([...arr(x.folders), ...fids])], status: x.status || tg.status, starred: x.starred || tg.starred, theme: x.theme || tg.theme })); out.linked++; continue;
+    }
+    const p = stubFromZotero(item); p.id = 'z' + item.key;
+    const rec = Object.assign(recDefaults(), { id: p.id, title: p.meta.title, authors: p.meta.authors, field: '', type: p.meta.type, venue: p.meta.venue, added: Date.now(), opened: Date.now(), hasSource: null, srcName: '', srcSize: 0, data: p,
+      folders: fids, status: tg.status, starred: tg.starred, theme: tg.theme, imported: 'zotero', zotero: { key: item.key, version: item.version, noteKey: null, noteVersion: 0, syncedAt: Date.now() } });
+    if (pdf) { const blob = await zotTryPdf(item.key); if (blob) { try { await lib.putSource(p.id, { blob }); rec.hasSource = 'pdf'; rec.srcName = (d.title || 'paper').slice(0, 60) + '.pdf'; rec.srcSize = blob.size; out.pdfs++; } catch (e) { out.pdfMissed++; } } else out.pdfMissed++; }
+    await lib.put(rec); out.added++; have.push(rec);
+  }
+  refreshLibCount(); return out;
+}
+async function zotRefresh(recs, progress = () => {}) {          // pull changes to papers already linked
+  const linked = recs.filter(r => r.zotero && r.zotero.key), out = { updated: 0, missing: 0, same: 0 }; if (!linked.length) return out;
+  const colls = await zotCollections(), cname = Object.fromEntries(colls.map(c => [c.key, c.name]));
+  for (let i = 0; i < linked.length; i += 50) {
+    const batch = linked.slice(i, i + 50); progress(`Checking ${Math.min(i + 50, linked.length)} of ${linked.length}…`);
+    const cur = await zotJSON(`/users/${zotUid()}/items?itemKey=${batch.map(x => x.zotero.key).join(',')}&format=json&include=data`), byKey = Object.fromEntries(cur.map(c => [c.key, c]));
+    for (const rec of batch) {
+      const c = byKey[rec.zotero.key]; if (!c) { await lib.update(rec.id, x => ({ zotero: Object.assign({}, x.zotero, { missing: true }) })); out.missing++; continue; }
+      if (c.version <= (rec.zotero.version || 0)) { out.same++; continue; }
+      const d = c.data, tg = fromZoteroTags(d.tags), authors = creatorsOf(d), journal = d.publicationTitle || d.proceedingsTitle || d.conferenceName || d.bookTitle || '', year = yearFrom(d.date);
+      const fids = arr(d.collections).map(k => cname[k]).filter(Boolean).map(n => folders.add(n).id);
+      await lib.update(rec.id, x => { const data = x.data; Object.assign(data.meta, { title: d.title || data.meta.title, authorsFull: authors.length ? authors : data.meta.authorsFull, authors: authors.length ? shortAuthors(authors) : data.meta.authors, year: year || data.meta.year, doi: d.DOI || data.meta.doi, journal: journal || data.meta.journal });
+        if (data.stub && d.abstractNote) { data.abstract = d.abstractNote; data.ov.tldr = d.abstractNote; }
+        return { title: data.meta.title, authors: data.meta.authors, data, folders: [...new Set([...arr(x.folders), ...fids])], status: tg.status || x.status, starred: x.starred || tg.starred, theme: tg.theme || x.theme, zotero: Object.assign({}, x.zotero, { version: c.version, syncedAt: Date.now(), missing: false }) }; });
+      out.updated++;
+    }
+  }
+  return out;
+}
+
+/* =====================================================================
+   OBSIDIAN
+   ===================================================================== */
+const AI_START = '<!-- paperlens:start -->', AI_END = '<!-- paperlens:end -->', NOTES_START = '<!-- paperlens:notes:start -->', NOTES_END = '<!-- paperlens:notes:end -->';
+const MANAGED_KEYS = ['title', 'authors', 'year', 'doi', 'journal', 'type', 'field', 'status', 'starred', 'folders', 'zotero', 'paperlens_id', 'synced'];
+const yq = s => JSON.stringify(String(s ?? ''));
+const yamlList = a => '[' + arr(a).map(yq).join(', ') + ']';
+const obsTag = s => String(s).toLowerCase().replace(/[^a-z0-9_\-\/]+/g, '-').replace(/^-+|-+$/g, '');
+const normNotes = s => String(s || '').replace(/\r\n/g, '\n').replace(/\s+$/, '');
+const fileName = rec => { const m = rec.data.meta, { list } = authorList(m), fam = list.length ? splitName(list[0]).family : '', yr = m.year || yearFrom(m.venue) || ''; const base = [[fam, yr].filter(Boolean).join(' '), m.title].filter(Boolean).join(' - ');
+  return base.replace(/[\\/:*?"<>|#^\[\]]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 110) || 'Paper'; };
+function obsidianFrontmatter(rec) {
+  const m = rec.data.meta, { list } = authorList(m), fl = arr(rec.folders).map(id => (folders.all().find(f => f.id === id) || {}).name).filter(Boolean), v = {
+    title: yq(m.title), authors: yamlList(list), year: m.year || yearFrom(m.venue) || '""', doi: yq(m.doi || ''), journal: yq(venueName(m)), type: yq(m.type || ''), field: yq(m.field || ''),
+    status: yq(rec.status ? STATUS_TAGS[rec.status] : ''), starred: rec.starred ? 'true' : 'false', folders: yamlList(fl), zotero: yq(rec.zotero && rec.zotero.key ? `zotero://select/library/items/${rec.zotero.key}` : ''), paperlens_id: yq(rec.id), synced: new Date().toISOString().slice(0, 10) };
+  const tags = ['paper', ...(rec.status ? [obsTag(STATUS_TAGS[rec.status])] : []), ...String(rec.theme || '').split(/[,;]/).map(obsTag).filter(Boolean)];
+  return { values: v, tags };
+}
+function obsidianAI(rec, cfg) {
+  const p = rec.data, o = p.ov || {}, m = p.meta, L = [AI_START, '', '# ' + m.title];
+  if (o.tldr) L.push('', '> ' + o.tldr.replace(/\n+/g, ' '));
+  L.push('', '**Cite:** ' + citeAPA(m) + (rec.zotero && rec.zotero.key ? `  \n[Open in Zotero](zotero://select/library/items/${rec.zotero.key})` : ''));
+  if (p.stub) L.push('', '*Imported from Zotero and not analyzed yet. Open it in Paperlens and add the PDF to get the summary, figures and flashcards.*');
+  const sec = (h, body) => { if (body && String(body).trim()) L.push('', '## ' + h, body); };
+  sec('At a glance', arr(o.snapshot).map(s => `- **${s.label}:** ${s.value}`).join('\n'));
+  sec('Key findings', arr(o.findings).map(f => `- ${f.t}${f.p ? ' (p. ' + f.p + ')' : ''}`).join('\n'));
+  sec('Problem', o.problem); sec('Approach', o.approach); sec('In plain English', o.plain); sec('Why it matters', o.why);
+  sec('Caveats', arr(o.limits).map(x => '- ' + x).join('\n')); sec('Terms', arr(p.glossary).map(g => `- **${g.term}:** ${g.definition}`).join('\n'));
+  sec('Figures and tables', arr(p.figures).map(f => `- **${f.label || f.kind || 'Figure'}**${f.title ? ': ' + f.title : ''}${f.takeaway ? ' (' + f.takeaway + ')' : ''}`).join('\n'));
+  if (cfg.flashcards && arr(p.cards).length) { L.push('', '## Flashcards', '#flashcards'); p.cards.forEach(c => L.push(`${String(c.front).replace(/\n+/g, ' ')}::${String(c.back).replace(/\n+/g, ' ')}`)); }
+  L.push('', AI_END); return L.join('\n');
+}
+const notesBlock = rec => { const parts = []; if (rec.relevance) parts.push('**Relevance to my research:** ' + rec.relevance.replace(/\n+/g, ' ') + '\n'); parts.push(normNotes(rec.notes)); return NOTES_START + '\n' + parts.join('\n').replace(/\s+$/, '') + '\n' + NOTES_END; };
+function buildObsidianNote(rec, cfg, existing) {
+  const fm = obsidianFrontmatter(rec), ai = obsidianAI(rec, cfg), nb = notesBlock(rec);
+  if (!existing) {
+    const head = ['---', ...MANAGED_KEYS.map(k => `${k}: ${fm.values[k]}`), `tags: [${fm.tags.map(yq).join(', ')}]`, '---', ''];
+    return head.join('\n') + '\n' + ai + '\n\n## My notes\n' + nb + '\n';
+  }
+  let t = existing.replace(/\r\n/g, '\n');                                                   // update in place, keep everything the user wrote
+  const fmm = /^---\n([\s\S]*?)\n---\n?/.exec(t);
+  if (fmm) { let lines = fmm[1].split('\n'); MANAGED_KEYS.forEach(k => { const i = lines.findIndex(l => l.startsWith(k + ':')); const nl = `${k}: ${fm.values[k]}`; if (i >= 0) lines[i] = nl; else lines.push(nl); }); t = '---\n' + lines.join('\n') + '\n---\n' + t.slice(fmm[0].length); }
+  const swap = (s, e, text) => { const a = t.indexOf(s), b = t.indexOf(e); if (a >= 0 && b > a) { t = t.slice(0, a) + text + t.slice(b + e.length); return true; } return false; };
+  if (!swap(AI_START, AI_END, ai)) t = t.replace(/\s+$/, '') + '\n\n' + ai + '\n';
+  if (!swap(NOTES_START, NOTES_END, nb)) t = t.replace(/\s+$/, '') + '\n\n## My notes\n' + nb + '\n';
+  return t;
+}
+function extractNotes(text) {
+  const m = /<!-- paperlens:notes:start -->\n?([\s\S]*?)\n?<!-- paperlens:notes:end -->/.exec(String(text || '').replace(/\r\n/g, '\n')); if (!m) return null;
+  return normNotes(m[1].replace(/^\*\*Relevance to my research:\*\*.*\n?/m, ''));
+}
+function extractRelevance(text) { const m = /<!-- paperlens:notes:start -->\n?\*\*Relevance to my research:\*\* (.*)/.exec(String(text || '').replace(/\r\n/g, '\n')); return m ? m[1].trim() : null; }
+function reconcileNotes(rec, fileNotes) {                       // what happened to the notes since the last sync?
+  const last = rec.obsidian && rec.obsidian.notesHash, mine = normNotes(rec.notes);
+  if (fileNotes == null) return { notes: mine, action: 'push' };
+  const hf = hashStr(fileNotes), hm = hashStr(mine);
+  if (last == null || hf === hm) return { notes: mine, action: 'push' };
+  if (hf === last) return { notes: mine, action: 'push' };               // Obsidian untouched
+  if (hm === last) return { notes: fileNotes, action: 'pull' };          // only Obsidian changed
+  return { notes: mine + '\n\n---\n*From Obsidian:*\n' + fileNotes, action: 'merge' };   // both changed: keep both
+}
+function uniquePath(rec, cfg, taken) {
+  const dir = String(cfg.folder || '').replace(/^\/+|\/+$/g, ''), base = fileName(rec); let name = base, n = 2;
+  while (taken.has((dir ? dir + '/' : '') + name + '.md') && taken.get((dir ? dir + '/' : '') + name + '.md') !== rec.id) name = `${base} (${n++})`;
+  return (dir ? dir + '/' : '') + name + '.md';
+}
+
+/* ---- the vault folder (Chrome and Edge on desktop) ---- */
+const fsSupported = () => typeof window.showDirectoryPicker === 'function';
+let _vault = null;
+async function vaultSave(handle) { _vault = handle; try { await lib.putSource('__obsidian_vault', { handle }); } catch (e) {} }
+async function vaultLoad() { if (_vault) return _vault; try { const r = await lib.getSource('__obsidian_vault'); if (r && r.handle) _vault = r.handle; } catch (e) {} return _vault; }
+async function vaultReady(ask) {
+  const h = await vaultLoad(); if (!h) return null;
+  try { if ((await h.queryPermission({ mode: 'readwrite' })) === 'granted') return h; if (ask && (await h.requestPermission({ mode: 'readwrite' })) === 'granted') return h; } catch (e) { return null; }
+  return null;
+}
+async function pickVault() {
+  const h = await window.showDirectoryPicker({ mode: 'readwrite' }); await vaultSave(h);
+  const c = syncCfg(); c.obsidian.dirName = h.name; if (!c.obsidian.vault) c.obsidian.vault = h.name; c.obsidian.method = 'fs'; saveSyncCfg(c); return h;
+}
+async function fsDir(root, path, create) { let d = root; for (const part of path.split('/').filter(Boolean)) d = await d.getDirectoryHandle(part, { create }); return d; }
+async function fsRead(root, path) {
+  try { const parts = path.split('/'), name = parts.pop(), d = await fsDir(root, parts.join('/'), false), f = await (await d.getFileHandle(name)).getFile(); return { text: await f.text(), modified: f.lastModified }; } catch (e) { return null; }
+}
+async function fsWrite(root, path, text) { const parts = path.split('/'), name = parts.pop(), d = await fsDir(root, parts.join('/'), true), w = await (await d.getFileHandle(name, { create: true })).createWritable(); await w.write(text); await w.close(); }
+
+/* ---- zip (store only) for sending several notes at once ---- */
+const CRC_T = (() => { const t = []; for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+const crc32 = u => { let c = 0xFFFFFFFF; for (let i = 0; i < u.length; i++) c = CRC_T[(c ^ u[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; };
+function zipStore(files) {
+  const enc = new TextEncoder(), chunks = [], central = []; let off = 0; const now = new Date(), dt = ((now.getFullYear() - 1980) << 9) | ((now.getMonth() + 1) << 5) | now.getDate(), tm = (now.getHours() << 11) | (now.getMinutes() << 5) | (now.getSeconds() >> 1);
+  const u16 = (v, a) => { a.push(v & 255, (v >> 8) & 255); }, u32 = (v, a) => { a.push(v & 255, (v >> 8) & 255, (v >> 16) & 255, (v >>> 24) & 255); };
+  for (const f of files) {
+    const name = enc.encode(f.name), data = enc.encode(f.data), crc = crc32(data), h = [];
+    u32(0x04034b50, h); u16(20, h); u16(0x0800, h); u16(0, h); u16(tm, h); u16(dt, h); u32(crc, h); u32(data.length, h); u32(data.length, h); u16(name.length, h); u16(0, h);
+    chunks.push(new Uint8Array(h), name, data);
+    const c = []; u32(0x02014b50, c); u16(20, c); u16(20, c); u16(0x0800, c); u16(0, c); u16(tm, c); u16(dt, c); u32(crc, c); u32(data.length, c); u32(data.length, c); u16(name.length, c); u16(0, c); u16(0, c); u16(0, c); u16(0, c); u32(0, c); u32(off, c);
+    central.push(new Uint8Array(c), name); off += h.length + name.length + data.length;
+  }
+  const cdSize = central.reduce((s, x) => s + x.length, 0), end = []; u32(0x06054b50, end); u16(0, end); u16(0, end); u16(files.length, end); u16(files.length, end); u32(cdSize, end); u32(off, end); u16(0, end);
+  return new Blob([...chunks, ...central, new Uint8Array(end)], { type: 'application/zip' });
+}
+
+/* ---- send notes to Obsidian ---- */
+function openExternal(uri) { const a = document.createElement('a'); a.href = uri; document.body.appendChild(a); a.click(); a.remove(); }
+async function sendToObsidian(recs, opt = {}) {
+  const c = syncCfg(), cfg = c.obsidian, out = { written: 0, pulled: 0, merged: 0, method: cfg.method, skipped: 0 }, all = await lib.list();
+  const taken = new Map(all.filter(r => r.obsidian && r.obsidian.path).map(r => [r.obsidian.path, r.id]));
+  const method = cfg.method === 'fs' && !(await vaultReady(true)) ? 'download' : cfg.method; out.method = method;
+  if (method === 'fs') {
+    const root = await vaultReady(true);
+    for (const rec of recs) {
+      const path = (rec.obsidian && rec.obsidian.path) || uniquePath(rec, cfg, taken); taken.set(path, rec.id);
+      const f = await fsRead(root, path), fileNotes = f ? extractNotes(f.text) : null, rn = reconcileNotes(rec, fileNotes);
+      if (rn.action !== 'push') { rec.notes = rn.notes; await lib.update(rec.id, { notes: rn.notes }); rn.action === 'pull' ? out.pulled++ : out.merged++; }
+      await fsWrite(root, path, buildObsidianNote(rec, cfg, f ? f.text : null));
+      rec.obsidian = { path, syncedAt: Date.now(), notesHash: hashStr(normNotes(rec.notes)) }; await lib.update(rec.id, { obsidian: rec.obsidian }); out.written++;
+    }
+    return out;
+  }
+  if (method === 'uri') {
+    if (!cfg.vault) throw new Error('Enter your Obsidian vault name first.');
+    for (const rec of recs) {
+      const path = (rec.obsidian && rec.obsidian.path) || uniquePath(rec, cfg, taken); taken.set(path, rec.id); const md = buildObsidianNote(rec, cfg, null);
+      await navigator.clipboard.writeText(md);
+      const overwrite = !!(rec.obsidian && rec.obsidian.path && opt.overwrite);
+      openExternal(`obsidian://new?vault=${encodeURIComponent(cfg.vault)}&file=${encodeURIComponent(path.replace(/\.md$/, ''))}&clipboard${overwrite ? '&overwrite=true' : ''}`);
+      rec.obsidian = { path, syncedAt: Date.now(), notesHash: hashStr(normNotes(rec.notes)) }; await lib.update(rec.id, { obsidian: rec.obsidian }); out.written++;
+      if (recs.length > 1) await sleepMs(900);                     // give Obsidian a moment per note
+    }
+    return out;
+  }
+  // downloads: one .md, or a zip
+  const files = recs.map(rec => { const path = (rec.obsidian && rec.obsidian.path) || uniquePath(rec, cfg, taken); taken.set(path, rec.id); return { rec, path, name: path.split('/').pop(), data: buildObsidianNote(rec, cfg, null) }; });
+  if (files.length === 1) download(files[0].name, files[0].data, 'text/markdown'); else download('paperlens-obsidian-notes.zip', zipStore(files.map(f => ({ name: f.path, data: f.data }))), 'application/zip');
+  for (const f of files) { f.rec.obsidian = { path: f.path, syncedAt: Date.now(), notesHash: hashStr(normNotes(f.rec.notes)) }; await lib.update(f.rec.id, { obsidian: f.rec.obsidian }); out.written++; }
+  return out;
+}
+async function pullObsidianNotes(recs) {                       // read notes you wrote in Obsidian back into Paperlens
+  const root = await vaultReady(true); if (!root) throw new Error('Choose your vault folder first (Chrome or Edge on a computer).');
+  const out = { pulled: 0, merged: 0, same: 0, missing: 0 };
+  for (const rec of recs) {
+    if (!(rec.obsidian && rec.obsidian.path)) continue; const f = await fsRead(root, rec.obsidian.path); if (!f) { out.missing++; continue; }
+    const fn = extractNotes(f.text); if (fn == null) { out.missing++; continue; }
+    const rn = reconcileNotes(rec, fn); if (rn.action === 'push') { out.same++; continue; }
+    const rel = extractRelevance(f.text); await lib.update(rec.id, Object.assign({ notes: rn.notes }, rel != null ? { relevance: rel } : {}, { obsidian: Object.assign({}, rec.obsidian, { notesHash: hashStr(normNotes(rn.notes)), syncedAt: Date.now() }) }));
+    rn.action === 'pull' ? out.pulled++ : out.merged++;
+  }
+  return out;
+}
+
+/* =====================================================================
+   Paperlens — Zotero and Obsidian screens
+   ===================================================================== */
+const zotReady = () => { const z = syncCfg().zotero; return !!(z.key && z.userID); };
+const obsReady = () => { const o = syncCfg().obsidian; return o.method === 'fs' ? !!o.dirName : o.method === 'uri' ? !!o.vault : true; };
+
+function scrim(html, wide) {
+  $('.scrim')?.remove();
+  const el = document.createElement('div'); el.className = 'scrim';
+  el.innerHTML = `<div class="modal${wide ? ' wide' : ''}" role="dialog" aria-modal="true">${html}</div>`; document.body.appendChild(el);
+  el.addEventListener('click', e => { if (e.target === el) el.remove(); }); return el;
+}
+async function withProgress(title, task) {                       // a small dialog that shows progress, then a plain-English result
+  const el = scrim(`<h2>${esc(title)}</h2><p id="wp-m" role="status" class="muted">Starting…</p><div id="wp-r"></div><div class="row" style="margin-top:16px"><button class="btn primary" id="wp-ok" hidden>Done</button></div>`);
+  const done = (html, bad) => { const r = $('#wp-r', el); if (!r) return; $('#wp-m', el).textContent = bad ? 'That didn\'t work' : 'Finished'; r.innerHTML = html; $('#wp-ok', el).hidden = false; $('#wp-ok', el).onclick = () => el.remove(); $('#wp-ok', el).focus(); };
+  try { const res = await task(m => { const e = $('#wp-m', el); if (e) e.textContent = m; }); done(res && res.html || ''); return res; }
+  catch (e) { done(`<p>${esc(e.message || String(e))}</p>`, true); return null; }
+}
+function askChoice({ title, body, choices }) {
+  return new Promise(res => {
+    const el = scrim(`<h2>${esc(title)}</h2><p class="muted">${esc(body)}</p><div class="row" style="margin-top:18px">${choices.map((c, i) => `<button class="btn ${c.primary ? 'primary' : ''}" data-i="${i}">${esc(c.label)}</button>`).join('')}<button class="btn ghost" data-i="-1">Cancel</button></div>`);
+    $$('[data-i]', el).forEach(b => b.onclick = () => { el.remove(); res(+b.dataset.i < 0 ? null : choices[+b.dataset.i].value); }); el.addEventListener('click', e => { if (e.target === el) res(null); });
+  });
+}
+const summary = lines => '<ul class="limits" style="margin-top:6px">' + lines.filter(Boolean).map(l => `<li>${esc(l)}</li>`).join('') + '</ul>';
+const plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
+function zotResultLines(r) {
+  return [r.created && `Added ${plural(r.created, 'paper')} to Zotero.`, r.updated && `Updated tags and folders on ${plural(r.updated, 'paper')}.`, r.notes && `Wrote ${plural(r.notes, 'note')} to Zotero.`, !r.created && !r.updated && !r.notes && !r.failed.length && 'Everything was already up to date.',
+    ...r.failed.slice(0, 5).map(f => `Couldn't send "${String(f.title).slice(0, 50)}": ${f.message}`)];
+}
+async function recsFor(ids) { const all = await lib.list(); return ids ? all.filter(r => ids.includes(r.id)) : all; }
+
+/* ---------- Zotero actions ---------- */
+async function pushToZotero(ids) {
+  if (!zotReady()) return openConnections('zotero');
+  const recs = await recsFor(ids); if (!recs.length) return toast('Nothing to send');
+  await withProgress('Sending to Zotero', async up => { const r = await zotPush(recs, up); return { html: summary(zotResultLines(r)) }; });
+  if (S.view === 'library') showLibrary();
+}
+async function syncZoteroAll() {
+  if (!zotReady()) return openConnections('zotero');
+  await withProgress('Syncing with Zotero', async up => {
+    const recs = await recsFor(); const a = await zotRefresh(recs, up); const b = await zotPush(await recsFor(), up);
+    return { html: summary([a.updated && `Pulled changes for ${plural(a.updated, 'paper')} from Zotero.`, a.missing && `${plural(a.missing, 'paper')} no longer exist in Zotero.`, ...zotResultLines(b)]) };
+  });
+  if (S.view === 'library') showLibrary();
+}
+async function openZoteroImport() {
+  if (!zotReady()) return openConnections('zotero');
+  const el = scrim(`<h2>Import from Zotero</h2><p class="muted">Pick papers to bring into your library. They arrive with their details, tags and collections (as folders).</p>
+    <div class="row" style="margin-top:12px"><div class="field" style="flex:1;min-width:200px"><label class="sr" for="zi-q">Search Zotero</label><input id="zi-q" type="search" placeholder="Search your Zotero library…"></div>
+      <div class="field"><label class="sr" for="zi-c">Collection</label><select id="zi-c"><option value="">All collections</option></select></div></div>
+    <div id="zi-list" class="zi-list" role="group" aria-label="Zotero items"></div><p id="zi-state" class="muted" role="status"></p>
+    <label class="check"><input type="checkbox" id="zi-pdf"><span><b>Also try to download the PDFs</b><small>Browsers often block this. If it fails, you can attach the PDF later.</small></span></label>
+    <div class="row" style="margin-top:14px"><button class="btn primary" id="zi-go" disabled>Import</button><button class="btn" id="zi-more" hidden>Load more</button><button class="btn ghost" id="zi-x">Close</button></div>`, true);
+  let items = [], total = 0, sel = new Set(), mine = await lib.list();
+  const have = it => mine.some(r => (r.zotero && r.zotero.key === it.key) || (it.data.DOI && String(r.data.meta.doi || '').toLowerCase() === it.data.DOI.toLowerCase()) || (normName(it.data.title) && normName(r.title) === normName(it.data.title)));
+  const draw = () => {
+    $('#zi-list', el).innerHTML = items.length ? items.map(it => { const d = it.data, au = shortAuthors(creatorsOf(d)), yr = yearFrom(d.date);
+      return `<label class="zi-row"><input type="checkbox" data-k="${esc(it.key)}" ${sel.has(it.key) ? 'checked' : ''}><span><b>${esc(d.title || 'Untitled')}</b><br><span class="muted">${esc([au, yr, d.publicationTitle || d.proceedingsTitle || ''].filter(Boolean).join(' · '))}${have(it) ? ' · <b>already in your library (will be linked)</b>' : ''}</span></span></label>`; }).join('') : '<p class="muted" style="padding:12px">Nothing found.</p>';
+    $$('[data-k]', el).forEach(cb => cb.onchange = () => { cb.checked ? sel.add(cb.dataset.k) : sel.delete(cb.dataset.k); $('#zi-go', el).disabled = !sel.size; $('#zi-go', el).textContent = sel.size ? `Import ${sel.size}` : 'Import'; });
+    $('#zi-more', el).hidden = items.length >= total; $('#zi-state', el).textContent = `${items.length} of ${total} shown`;
+  };
+  const load = async reset => {
+    if (reset) { items = []; total = 0; } $('#zi-state', el).textContent = 'Loading…';
+    try { const r = await zotList({ q: $('#zi-q', el).value.trim(), collection: $('#zi-c', el).value, start: items.length }); items = items.concat(r.items); total = r.total; draw(); }
+    catch (e) { $('#zi-state', el).textContent = e.message; }
+  };
+  try { (await zotCollections()).sort((a, b) => a.name.localeCompare(b.name)).forEach(c => $('#zi-c', el).insertAdjacentHTML('beforeend', `<option value="${esc(c.key)}">${esc(c.name)}</option>`)); } catch (e) {}
+  let t = null; $('#zi-q', el).addEventListener('input', () => { clearTimeout(t); t = setTimeout(() => load(true), 400); }); $('#zi-c', el).onchange = () => load(true);
+  $('#zi-more', el).onclick = () => load(false); $('#zi-x', el).onclick = () => el.remove();
+  $('#zi-go', el).onclick = async () => {
+    const pick = items.filter(i => sel.has(i.key)), pdf = $('#zi-pdf', el).checked; el.remove();
+    await withProgress('Importing from Zotero', async up => { const r = await zotImport(pick, { pdf, progress: up });
+      return { html: summary([r.added && `Added ${plural(r.added, 'paper')} to your library.`, r.linked && `Linked ${plural(r.linked, 'paper')} you already had.`, pdf && r.pdfs && `Downloaded ${plural(r.pdfs, 'PDF')}.`, pdf && r.pdfMissed && `Couldn't download ${plural(r.pdfMissed, 'PDF')}. Open the paper and attach it when you want a full analysis.`, r.added && 'Imported papers show their abstract until you analyze them with the PDF.']) }; });
+    if (S.view === 'library') showLibrary(); else refreshLibCount();
+  };
+  load(true);
+}
+
+/* ---------- Obsidian actions ---------- */
+async function sendNotesToObsidian(ids) {
+  const cfg = syncCfg().obsidian; if (cfg.method === 'uri' && !cfg.vault) return openConnections('obsidian');
+  const recs = await recsFor(ids); if (!recs.length) return toast('Nothing to send');
+  let overwrite = false;
+  if (cfg.method === 'uri' && recs.some(r => r.obsidian && r.obsidian.path)) {
+    const c = await askChoice({ title: 'Some notes already exist in Obsidian', body: 'This route can\'t read your vault, so it can\'t keep changes you made there. Overwriting replaces those notes with the Paperlens version.', choices: [{ label: 'Overwrite them', value: 'over', primary: true }, { label: 'Add new copies', value: 'copy' }] });
+    if (!c) return; overwrite = c === 'over'; if (c === 'copy') recs.forEach(r => { r.obsidian = null; });
+  }
+  await withProgress('Sending to Obsidian', async up => {
+    up(`Sending ${plural(recs.length, 'note')}…`); const r = await sendToObsidian(recs, { overwrite });
+    return { html: summary([r.method === 'fs' ? `Wrote ${plural(r.written, 'note')} into your vault.` : r.method === 'uri' ? `Opened ${plural(r.written, 'note')} in Obsidian.` : `Downloaded ${r.written === 1 ? 'a note' : 'a zip of ' + plural(r.written, 'note')}. Drop ${r.written === 1 ? 'it' : 'the folder'} into your vault.`,
+      r.pulled && `Pulled changes to ${plural(r.pulled, 'note')} you edited in Obsidian.`, r.merged && `${plural(r.merged, 'note')} changed on both sides, so both versions were kept.`]) };
+  });
+  if (S.view === 'library') showLibrary();
+}
+async function pullFromObsidian() {
+  await withProgress('Reading notes from Obsidian', async up => { up('Reading your vault…'); const r = await pullObsidianNotes(await recsFor());
+    return { html: summary([r.pulled && `Updated ${plural(r.pulled, 'paper')} from your Obsidian notes.`, r.merged && `${plural(r.merged, 'note')} changed on both sides, so both versions were kept.`, !r.pulled && !r.merged && 'No notes changed in Obsidian.', r.missing && `${plural(r.missing, 'note')} couldn't be found in the vault.`]) }; });
+}
+async function sendOne(p, where) {
+  if (!p.id || p.id === 'demo') return toast('Analyze and save a paper first. The sample paper can\'t be sent.');
+  const r = await lib.get(p.id); if (!r) return toast('This paper isn\'t in your library yet.');
+  where === 'zotero' ? pushToZotero([r.id]) : sendNotesToObsidian([r.id]);
+}
+function openSendMenu(ids) {
+  const z = zotReady(), o = obsReady(), n = ids.length;
+  const el = scrim(`<h2>Send ${plural(n, 'paper')}</h2><p class="muted">Where should they go?</p><div class="row" style="margin-top:14px"><button class="btn primary" id="sm-z">${z ? 'Push to Zotero' : 'Connect Zotero…'}</button><button class="btn primary" id="sm-o">Send notes to Obsidian</button><button class="btn ghost" id="sm-x">Cancel</button></div>`);
+  $('#sm-z', el).onclick = () => { el.remove(); pushToZotero(ids); }; $('#sm-o', el).onclick = () => { el.remove(); o ? sendNotesToObsidian(ids) : openConnections('obsidian'); }; $('#sm-x', el).onclick = () => el.remove();
+}
+
+/* ---------- the Connections screen ---------- */
+function openConnections(focus) {
+  const c = syncCfg(), z = c.zotero, o = c.obsidian, fsOk = fsSupported();
+  const el = scrim(`<h2>Connections</h2><p class="muted">Link Paperlens to Zotero and Obsidian. Your keys and settings stay on this device, and nothing goes through any other server.</p>
+    <section class="conn" id="cz"><h3>Zotero</h3>
+      <div id="cz-body"></div></section>
+    <section class="conn" id="co"><h3>Obsidian</h3>
+      <div class="field"><label for="ov">Vault name</label><input id="ov" autocomplete="off" value="${esc(o.vault)}" placeholder="The name shown at the top of your vault"></div>
+      <div class="field"><label for="of">Folder for paper notes</label><input id="of" autocomplete="off" value="${esc(o.folder)}" placeholder="Papers"></div>
+      <fieldset class="meth"><legend>How should notes get there?</legend>
+        ${fsOk ? `<label class="check"><input type="radio" name="om" value="fs" ${o.method === 'fs' ? 'checked' : ''}><span><b>Write straight into my vault folder</b><small>Best option. Also lets you edit notes in Obsidian and pull the changes back. Chrome or Edge on a computer.</small></span></label>` : ''}
+        <label class="check"><input type="radio" name="om" value="uri" ${o.method === 'uri' ? 'checked' : ''}><span><b>Open each note in Obsidian</b><small>Copies the note and opens it with an obsidian:// link. Works on phones and computers with Obsidian installed.</small></span></label>
+        <label class="check"><input type="radio" name="om" value="download" ${o.method === 'download' ? 'checked' : ''}><span><b>Download .md files</b><small>One note, or a zip for several. Drop them into your vault.</small></span></label></fieldset>
+      <div id="co-fs" class="row" style="margin:8px 0"><button class="btn small" id="co-pick" type="button">${o.dirName ? 'Change vault folder' : 'Choose vault folder'}</button><span class="muted" id="co-dir">${o.dirName ? 'Using: ' + esc(o.dirName) : 'No folder chosen yet'}</span></div>
+      <label class="check"><input type="checkbox" id="of-fc" ${o.flashcards ? 'checked' : ''}><span><b>Include flashcards</b><small>As Question::Answer lines for Obsidian's spaced-repetition plugins.</small></span></label>
+      <div class="row" style="margin-top:10px"><button class="btn small" id="co-save" type="button">Save Obsidian settings</button><button class="btn small" id="co-all" type="button">Send my whole library</button><button class="btn small" id="co-pull" type="button">Pull notes from Obsidian</button></div>
+      <p class="muted" style="font-size:13.5px;margin-top:10px">Only the parts between Paperlens's markers are managed. Anything else you write in a note is left alone.</p></section>
+    <div class="row" style="margin-top:20px"><button class="btn primary" id="cx">Done</button></div>`, true);
+  const drawZ = () => {
+    const zz = syncCfg().zotero;
+    $('#cz-body', el).innerHTML = zz.key && zz.userID ? `<p>Connected${zz.username ? ' as <b>' + esc(zz.username) + '</b>' : ''}.</p>
+      <label class="check"><input type="checkbox" id="zauto" ${zz.auto ? 'checked' : ''}><span><b>Add new papers to Zotero automatically</b><small>Right after each analysis.</small></span></label>
+      <div class="row" style="margin-top:10px"><button class="btn small" id="z-imp" type="button">Import from Zotero…</button><button class="btn small" id="z-sync" type="button">Sync with Zotero</button><button class="btn small" id="z-push" type="button">Push my whole library</button><button class="btn small ghost" id="z-off" type="button">Disconnect</button></div>
+      <p class="muted" style="font-size:13.5px;margin-top:10px">Sync adds tags, collections and a "Paperlens summary" note to your Zotero items, and brings in changes you made in Zotero. It never overwrites titles, authors or other details in Zotero.</p>`
+      : `<ol class="steps-help"><li>Open <b>zotero.org/settings/keys/new</b> and sign in.</li><li>Tick <b>Allow library access</b>, <b>Allow notes access</b> and <b>Allow write access</b>, then save.</li><li>Paste the key here.</li></ol>
+      <div class="field"><label for="zk">Zotero API key</label><input id="zk" type="password" autocomplete="off" placeholder="Paste your key"></div>
+      <div class="row" style="margin-top:10px"><button class="btn primary small" id="z-go" type="button">Connect</button><span id="z-msg" role="status" class="muted" style="flex:1;min-width:160px"></span></div>`;
+    $('#z-go', el)?.addEventListener('click', async () => { const m = $('#z-msg', el); m.textContent = 'Connecting…'; try { const r = await zotConnect($('#zk', el).value); drawZ(); if (r.missing.length) $('#cz-body', el).insertAdjacentHTML('beforeend', `<p class="muted">Heads up: this key may be missing ${esc(r.missing.join(', '))}.</p>`); } catch (e) { m.textContent = '✗ ' + e.message; } });
+    $('#zauto', el)?.addEventListener('change', e => { const cc = syncCfg(); cc.zotero.auto = e.target.checked; saveSyncCfg(cc); });
+    $('#z-off', el)?.addEventListener('click', () => { const cc = syncCfg(); cc.zotero = syncDefaults().zotero; saveSyncCfg(cc); drawZ(); toast('Disconnected from Zotero'); });
+    $('#z-imp', el)?.addEventListener('click', () => { el.remove(); openZoteroImport(); }); $('#z-sync', el)?.addEventListener('click', () => { el.remove(); syncZoteroAll(); }); $('#z-push', el)?.addEventListener('click', () => { el.remove(); pushToZotero(null); });
+  };
+  drawZ();
+  const method = () => ($('input[name=om]:checked', el) || {}).value || 'download';
+  const saveO = () => { const cc = syncCfg(); cc.obsidian.vault = $('#ov', el).value.trim(); cc.obsidian.folder = $('#of', el).value.trim().replace(/^\/+|\/+$/g, ''); cc.obsidian.method = method(); cc.obsidian.flashcards = $('#of-fc', el).checked; saveSyncCfg(cc); };
+  const showFs = () => { $('#co-fs', el).hidden = method() !== 'fs'; }; $$('input[name=om]', el).forEach(r => r.onchange = showFs); showFs();
+  $('#co-pick', el).onclick = async () => { try { const h = await pickVault(); $('#co-dir', el).textContent = 'Using: ' + h.name; $('#co-pick', el).textContent = 'Change vault folder'; if (!$('#ov', el).value) $('#ov', el).value = h.name; const r = el.querySelector('input[name=om][value=fs]'); if (r) r.checked = true; showFs(); } catch (e) { if (e.name !== 'AbortError') toast('Couldn\'t open that folder'); } };
+  $('#co-save', el).onclick = () => { saveO(); toast('Obsidian settings saved'); };
+  $('#co-all', el).onclick = () => { saveO(); el.remove(); sendNotesToObsidian(null); };
+  $('#co-pull', el).onclick = () => { saveO(); el.remove(); pullFromObsidian(); };
+  $('#cx', el).onclick = () => { saveO(); el.remove(); if (S.view === 'library') showLibrary(); };
+  if (focus) setTimeout(() => $(focus === 'zotero' ? '#zk' : '#ov', el)?.focus(), 40);
+}
+
+/* ---------- the Library panel ---------- */
+function renderConnectionsCard() {
+  const slot = $('#conn-slot'); if (!slot) return; const c = syncCfg(), z = zotReady(), o = c.obsidian;
+  const obs = o.method === 'fs' ? (o.dirName ? 'Obsidian vault: ' + o.dirName : 'Obsidian: choose a vault folder') : o.method === 'uri' ? (o.vault ? 'Obsidian vault: ' + o.vault : 'Obsidian: set your vault name') : 'Obsidian: download .md files';
+  slot.innerHTML = `<section class="card lib-conn"><div class="row" style="align-items:center;gap:12px"><div style="flex:1;min-width:220px"><h3>Zotero and Obsidian</h3><p class="muted" style="font-size:14px">${z ? 'Zotero: connected' + (c.zotero.username ? ' as ' + esc(c.zotero.username) : '') : 'Zotero: not connected'} · ${esc(obs)}</p></div>
+    <button class="btn small" id="cn-open">Connections</button>${z ? '<button class="btn small" id="cn-imp">Import from Zotero</button><button class="btn small" id="cn-sync">Sync with Zotero</button>' : ''}<button class="btn small" id="cn-obs">Send all to Obsidian</button></div></section>`;
+  $('#cn-open').onclick = () => openConnections(); $('#cn-imp')?.addEventListener('click', openZoteroImport); $('#cn-sync')?.addEventListener('click', syncZoteroAll); $('#cn-obs').onclick = () => sendNotesToObsidian(null);
+}
+
+/* ---------- papers imported from Zotero but not analyzed yet ---------- */
+function renderStubBanner(p) {
+  const slot = $('#stub-slot'); if (!slot || !p.stub) return;
+  slot.innerHTML = `<div class="sample"><span class="grow"><b>Imported from Zotero.</b> This paper hasn't been analyzed yet, so you see its abstract. Add the PDF to get the summary, figures, mind map, flashcards and games.</span>
+    ${S.srcFile ? '<button class="btn small" id="stub-go">Analyze the saved PDF</button>' : '<label class="btn small">Choose the PDF<input type="file" accept=".pdf,application/pdf" id="stub-f" class="sr"></label>'}</div>`;
+  $('#stub-go')?.addEventListener('click', () => analyze({ pdf: S.srcFile, mergeId: p.id })); $('#stub-f')?.addEventListener('change', e => { const f = e.target.files[0]; if (f) analyze({ pdf: f, mergeId: p.id }); });
+}
+
+/* ---------- automatic sending right after an analysis (off unless you switch it on) ---------- */
+async function autoSyncNew(rec) {
+  try {
+    const c = syncCfg(); const msgs = [];
+    if (c.zotero.auto && zotReady()) { const r = await zotPush([rec]); msgs.push(r.failed.length ? 'Zotero: ' + r.failed[0].message : 'Added to Zotero'); }
+    if (c.obsidian.auto && c.obsidian.method === 'fs' && (await vaultReady(false))) { const fresh = await lib.get(rec.id); await sendToObsidian([fresh]); msgs.push('Saved to Obsidian'); }
+    if (msgs.length) toast(msgs.join(' · '));
+  } catch (e) { toast('Couldn\'t send automatically: ' + (e.message || e)); }
 }
 
 /* =====================================================================
