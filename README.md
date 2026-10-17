@@ -12,9 +12,9 @@
 
 | Tab | What it does |
 |---|---|
-| **Overview** | A TL;DR, a "worth a full read if…" line, a snapshot (study type, data, method, headline result), key findings with numbers, the problem and approach, a plain-English version, caveats, and a glossary. Each finding links to the PDF page it came from. **✨ Share card** makes a ready-to-post image of the paper's gist (plus your highlight counts). |
-| **Read & annotate** | The PDF itself, ready to mark up. Select any passage and Paperlens works out what kind it is and colors it: **yellow = claim**, **green = question**, **blue = evidence**, **purple = method** (the key is pinned at the top). Change a label with one tap, star what's important, add a note, or send the passage to Chat. Filter by color, and export your highlights as Markdown or into your notes. With an AI key, an optional ✨ AI check double-checks each label. The sample paper comes with practice pages so you can try it straight away. |
-| **Figures** | The figures, tables and diagrams that carry the paper. Each one is matched to its numbered caption in your PDF and cropped straight from the page (click to enlarge, then scroll or zoom to see tall figures in full), with what it shows, why it matters, a one-line takeaway, and a "Look closely" prompt for reading critically. Anything that can't be found in the PDF is set aside and clearly marked, never shown as a figure. |
+| **Overview** | A TL;DR, a "worth a full read if…" line, a snapshot (study type, data, method, headline result), key findings with numbers, the problem and approach, a plain-English version, caveats, and a glossary. Each finding links to the PDF page it came from. |
+| **Read** | Open the PDF and mark it up in four colours, with the key shown at the top: **yellow for claims, green for questions, blue for evidence, pink for key terms**. Pick a colour then select text (or select first, then pick). Click any highlight to add a note, change its colour or delete it, and see everything in a list grouped by colour that you can add to your notes. Highlights are saved with the paper. |
+| **Figures** | The figures, tables and diagrams that carry the paper. Each one is matched to its numbered caption in your PDF and cropped straight from the page, with what it shows, why it matters, a one-line takeaway, and a "Look closely" prompt for reading critically. Anything that can't be found in the PDF is set aside and clearly marked, never shown as a figure. |
 | **Mind map** | An interactive map you can pan, zoom, expand and collapse. Click a node to read its note. Export as SVG or PNG for slides. |
 | **Flashcards** | Flip cards with *Show again soon*, *Hard, later* and *I know this*. Filter by type (concepts, methods, results, terms, critique). Export to Anki. |
 | **Play** | **Quiz blitz** (lives, a timer and streak bonuses), **Fact or fiction**, and **Pair up** (match terms to meanings against the clock). Questions you miss can be turned into flashcards in one click. |
@@ -56,7 +56,7 @@ Anthropic is the most thoroughly tested option. The others use the standard Open
 
 ## Updates and checking your version
 
-Open **Settings** (the gear icon): the version appears under **App version** (currently 2026.10.16). If something you expect is missing, press **Update app**. It clears the saved copy of the app and loads the newest one, and your papers, notes and settings are kept.
+Open **Settings** (the gear icon): the version appears under **App version** (currently 2026.10.11). If something you expect is missing, press **Update app**. It clears the saved copy of the app and loads the newest one, and your papers, notes and settings are kept.
 
 ## Connect Zotero and Obsidian
 
@@ -108,8 +108,8 @@ There is **no Paperlens server**. When you analyse a paper or ask a question, yo
 | Flashcards | `Space` flip, `1` show again, `2` hard, `3` know it (or `←` / `→`) |
 | Quiz blitz | `1` to `4` to answer |
 | Fact or fiction | `T` / `F` (or `←` / `→`) |
-| Read & annotate | With a highlight open: `1` claim, `2` question, `3` evidence, `4` method, `I` important, `Delete` remove |
 | Chat | `Enter` send, `Shift+Enter` new line |
+| Read | `1` to `4` pick a colour, `Esc` stops highlighting |
 | Anywhere | `Esc` closes dialogs |
 
 ---
@@ -131,6 +131,7 @@ There is **no Paperlens server**. When you analyse a paper or ask a question, yo
 |---|---|
 | Zotero says "Could not reach api.zotero.org" | Check your connection and any extension that blocks requests from web pages. |
 | Zotero says the key isn't allowed | Create a new key with library, notes and write access ticked, then reconnect in Connections. |
+| Read asks me to add the PDF | The PDF isn't saved with that paper (it was reopened from the library without "Keep a copy", or imported from Zotero). Choose the PDF there and it will open. |
 | I don't see a new feature | The site is still showing an older copy. Open Settings and press **Update app**. If there's no App version line, the new files haven't reached the site yet: check that `index.html` and `sw.js` were replaced (not saved as `index (1).html`) and wait a few minutes. |
 | "…rejected the API key" | Open Settings, make sure the right AI service is selected, and re-paste that service's key. Check it hasn't been revoked. |
 | "Could not reach …" | Check your connection, and look for an ad blocker or privacy extension. If it names a service other than Anthropic or OpenRouter, that service may not allow requests from web pages (a browser rule called CORS). OpenAI often blocks them: use OpenRouter instead, or enter a proxy address in Settings. |

@@ -15,7 +15,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Paperlens">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="app-version" content="2026.10.16">
+<meta name="app-version" content="2026.10.11">
 <meta name="author" content="Ria Bhandari">
 <meta name="copyright" content="© 2026 Ria Bhandari. All rights reserved.">
 <meta name="description" content="Understand any research paper fast: overview, key figures, mind map, flashcards and games.">
@@ -197,9 +197,10 @@ details.paste summary{cursor:pointer;color:var(--blue);font-weight:600;padding:6
 .fig-body h3{font-size:19px}
 .fig-body .why{font-size:15px;color:var(--muted)}
 .fig-body .take{font-weight:600;font-size:15.5px}
-.lightbox{position:fixed;inset:0;z-index:60;background:rgba(8,12,24,.86);display:grid;place-items:center;padding:20px}
-.lightbox img{max-width:min(960px,100%);max-height:100%;border-radius:8px;background:#fff}
-.lightbox button{position:absolute;top:14px;right:14px}
+.lightbox{position:fixed;inset:0;z-index:60;background:rgba(8,12,24,.86);overflow:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:64px 20px 28px}
+.lb-inner{min-height:100%;display:flex}
+.lightbox img{display:block;margin:auto;max-width:min(960px,100%);height:auto;border-radius:8px;background:#fff}
+.lightbox .lb-x{position:fixed;top:14px;right:14px;z-index:2}
 
 /* ---------- mind map ---------- */
 .mm-wrap{border:1px solid var(--line);border-radius:12px;background:var(--card);overflow:hidden}
@@ -427,140 +428,73 @@ fieldset.meth legend{font-weight:600;font-size:14px;margin-bottom:4px;padding:0}
 .zi-row input{width:20px;height:20px;margin-top:2px;accent-color:var(--blue);flex:none}
 
 
-/* ---------- brand ---------- */
-.brand svg{width:30px;height:30px;transition:transform .35s cubic-bezier(.3,1.6,.5,1)}
-.brand:hover svg{transform:rotate(-8deg) scale(1.08)}
-.brand:hover .lg-spark{animation:twinkle .8s ease-in-out}
-.lg-spark{transform-box:fill-box;transform-origin:center}
-@keyframes twinkle{50%{transform:scale(1.5) rotate(90deg)}}
-.brand-t i{font-style:normal;background:linear-gradient(100deg,#ff6fa5,#7c8bff);-webkit-background-clip:text;background-clip:text;color:transparent}
-:root[data-theme=dark] .brand-t i{background-image:linear-gradient(100deg,#ffd93d,#ff8fbd 55%,#9aa6ff)}
+/* ---------- read & highlight ---------- */
+.rd-bar{position:sticky;top:calc(var(--hh) + var(--tabs-h,50px));z-index:14;display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding:10px 0 8px;background:var(--bg);background:color-mix(in srgb,var(--bg) 94%,transparent);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.rd-keys{display:flex;gap:8px;flex-wrap:wrap;flex:1}
+.rd-t{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 15px;border-radius:999px;border:1.5px solid var(--edge);background:var(--card);font-weight:600;transition:transform .08s,box-shadow .15s}
+.rd-t i{width:16px;height:16px;border-radius:50%;background:var(--c);border:1px solid rgba(0,0,0,.3);flex:none}
+.rd-t:hover{border-color:var(--ink)}
+.rd-t:active{transform:translateY(1px)}
+.rd-t[aria-pressed=true]{background:var(--c);border-color:var(--ink);color:#121a2f}
+.rd-t.suggest{box-shadow:0 0 0 3px var(--blue)}
+.rd-t.small{min-height:36px;padding:0 11px;font-size:13.5px}
+.rd-hint{flex-basis:100%;margin:0;font-size:14px;color:var(--muted)}
+.rd-hint b{color:var(--ink)}
+.rd-wrap{position:relative;margin-top:14px}
+.rd-pages{display:flex;flex-direction:column;align-items:center;gap:34px;padding-bottom:20px}
+.rd-page{position:relative;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.18),0 8px 24px rgba(0,0,0,.08);border-radius:4px;max-width:100%}
+.rd-canvas{position:absolute;inset:0;display:block}
+.rd-hl{position:absolute;inset:0;pointer-events:none;mix-blend-mode:multiply}
+.rd-hl .hl i{position:absolute;background:var(--c);opacity:.62;border-bottom:2px solid rgba(0,0,0,.4);border-radius:2px}
+.hl[data-t=question] i{border-bottom-style:dashed}
+.hl[data-t=evidence] i{border-bottom-style:dotted}
+.hl[data-t=term] i{border-bottom-style:double;border-bottom-width:3px}
+.hl.has-note i:last-child::after{content:"";position:absolute;right:-5px;top:-6px;width:9px;height:9px;border-radius:50%;background:#121a2f;border:2px solid #fff}
+.hl.flash i{outline:3px solid var(--blue);animation:hlflash 1.6s ease-out forwards}
+@keyframes hlflash{0%,55%{outline-color:var(--blue)}100%{outline-color:transparent}}
+.textLayer{position:absolute;inset:0;overflow:hidden;line-height:1;opacity:1;text-size-adjust:none;forced-color-adjust:none}
+.textLayer span,.textLayer br{color:transparent;position:absolute;white-space:pre;cursor:text;transform-origin:0 0}
+.textLayer ::selection{background:rgba(36,71,214,.3)}
+.pen-claim .textLayer ::selection{background:rgba(255,224,102,.85)}
+.pen-question .textLayer ::selection{background:rgba(140,233,154,.85)}
+.pen-evidence .textLayer ::selection{background:rgba(142,203,255,.85)}
+.pen-term .textLayer ::selection{background:rgba(255,168,204,.85)}
+.rd-pn{position:absolute;left:50%;transform:translateX(-50%);bottom:-24px;font-size:12px;color:var(--muted)}
+.rd-pop{position:absolute;z-index:20;width:300px;max-width:calc(100% - 16px);padding:12px;border-radius:12px;background:var(--card);border:1px solid var(--edge);box-shadow:0 10px 30px rgba(0,0,0,.28)}
+.rd-pop-t{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.rd-quote{font:italic 14px/1.4 var(--serif);color:var(--muted);margin:0 0 8px;max-height:3.9em;overflow:hidden}
+.rd-pop textarea{width:100%;min-height:64px;padding:8px 10px;border-radius:8px;border:1px solid var(--edge);background:var(--bg);resize:vertical}
+.rd-panel{margin-top:12px;padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:var(--card);max-height:42vh;overflow:auto}
+.rd-grp{margin-top:12px;padding-left:12px;border-left:5px solid var(--c)}
+.rd-grp h4{font-family:var(--serif);font-size:16px;margin:0 0 6px;display:flex;align-items:center;gap:8px}
+.rd-grp h4 i{width:12px;height:12px;border-radius:50%;background:var(--c);border:1px solid rgba(0,0,0,.3)}
+.rd-item{padding:6px 0;border-bottom:1px solid var(--line);font-size:14.5px}
+.rd-item:last-child{border-bottom:0}
+.rd-itemnote{margin:4px 0 2px;padding:6px 10px;background:var(--bg);border-radius:6px;font-size:14px}
+.rd-empty{margin-top:4vh}
 
-/* ---------- home extras ---------- */
-.hero{position:relative}
-.hero-art{position:absolute;right:-250px;top:4px;width:200px;height:200px;filter:drop-shadow(0 18px 30px rgba(51,40,127,.35));animation:floaty 6s ease-in-out infinite}
-.hero-art svg{width:100%;height:100%}
-.hero-art .lg-l1,.hero-art .lg-l2,.hero-art .lg-l3{transform-box:fill-box;transform-origin:left;animation:sweep 3.6s cubic-bezier(.6,0,.3,1) infinite}
-.hero-art .lg-l2{animation-delay:.25s}.hero-art .lg-l3{animation-delay:.5s}
-.hero-art .lg-spark{animation:twinkle 3s ease-in-out infinite}
-@keyframes floaty{50%{transform:translateY(-12px) rotate(3deg)}}
-@keyframes sweep{0%{transform:scaleX(0)}30%,85%{transform:scaleX(1)}100%{transform:scaleX(0)}}
-@media(max-width:1000px){.hero-art{display:none}}
-.feats{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 22px}
-.feat{display:inline-flex;align-items:center;gap:7px;min-height:38px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:var(--card);font-size:14px;font-weight:600;color:var(--ink);
-  opacity:0;animation:rise .5s cubic-bezier(.2,.8,.2,1) forwards;transition:transform .15s,border-color .15s}
-.feat:hover{border-color:var(--blue);transform:translateY(-2px)}
-.feat i{width:9px;height:9px;border-radius:50%;background:var(--c)}
-.feat.new{border-color:transparent;background:linear-gradient(var(--card),var(--card)) padding-box,linear-gradient(100deg,#ffd93d,#ff6fa5,#7c8bff) border-box;border:2px solid transparent}
-.feat.new sup{font-size:10.5px;font-weight:800;letter-spacing:.06em;color:#fff;background:linear-gradient(100deg,#ff6fa5,#7c8bff);padding:2px 6px;border-radius:6px;vertical-align:0}
+/* ---------- a little polish: one signature move (the highlighter swipe), used sparingly ---------- */
+.swipe{background-repeat:no-repeat;background-position:0 0;animation:swipe .85s .2s cubic-bezier(.3,.7,.2,1) both}
+@keyframes swipe{from{background-size:0 100%}to{background-size:100% 100%}}
+.how{display:flex;gap:10px 22px;flex-wrap:wrap;list-style:none;padding:0;margin:20px 0 0;font-weight:600;font-size:15px}
+.how li{display:flex;align-items:center;gap:9px}
+.how i{width:13px;height:13px;border-radius:50%;background:var(--c);border:1px solid rgba(0,0,0,.25);flex:none}
+.load-logo svg{width:60px;height:60px;display:block;margin-bottom:14px;animation:bob 2.6s ease-in-out infinite}
+.load-logo .logo-mark{animation:glow 1.8s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-5px) rotate(-3deg)}}
+@keyframes glow{50%{opacity:.5}}
+#app.enter>*{animation:rise .34s cubic-bezier(.2,.7,.2,1) both}
 @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.btn.primary:hover{box-shadow:0 6px 18px color-mix(in srgb,var(--blue) 32%,transparent);transform:translateY(-1px)}
+.btn.primary:active{transform:translateY(1px);box-shadow:none}
 
-/* ---------- figures: a lightbox you can scroll and zoom ---------- */
-.lightbox{display:flex;flex-direction:column;place-items:initial;overflow:auto;overscroll-behavior:contain;padding:68px clamp(10px,3vw,28px) 40px;background:rgba(8,12,24,.9)}
-.lightbox img{margin:auto;display:block;max-width:min(1100px,100%);max-height:none;height:auto;cursor:zoom-in;box-shadow:0 20px 60px rgba(0,0,0,.45)}
-.lightbox img.zoom{max-width:none;width:min(2400px,220%);cursor:zoom-out}
-.lightbox .lb-bar{position:fixed;top:14px;right:14px;left:14px;display:flex;gap:8px;align-items:center;justify-content:flex-end;pointer-events:none;z-index:1}
-.lightbox .lb-bar>*{pointer-events:auto}
-.lightbox .lb-bar button{position:static}
-.lightbox .lb-hint{margin-right:auto;color:#fff;opacity:.75;font-size:14px;background:rgba(0,0,0,.35);padding:6px 12px;border-radius:8px}
-@media(max-width:560px){.lightbox .lb-hint{display:none}}
-
-/* ---------- read & annotate ---------- */
-main.wide{max-width:1320px}
-.ann-top{margin-bottom:14px}
-.ann-legend{position:sticky;top:calc(var(--hh) + 50px);z-index:20;display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 12px;margin:0 0 16px;border:1px solid var(--line);border-radius:14px;
-  background:var(--card);background:color-mix(in srgb,var(--card) 90%,transparent);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:0 6px 20px rgba(18,26,47,.06)}
-.ann-legend .grow{flex:1}
-.ann-l-t{font-size:12.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-right:2px}
-.ann-chip{display:inline-flex;align-items:center;gap:7px;min-height:38px;padding:0 12px;border-radius:999px;border:1px solid var(--line);background:var(--card);font-size:14px;transition:transform .12s,border-color .12s,box-shadow .12s}
-.ann-chip:hover{transform:translateY(-1px);border-color:var(--edge)}
-.ann-chip i{width:22px;height:13px;border-radius:4px;background:var(--c);box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
-.ann-chip .w{color:var(--muted);font-size:12.5px}
-.ann-chip em{font-style:normal;font-weight:700;font-size:12.5px;min-width:22px;height:20px;display:inline-grid;place-items:center;padding:0 6px;border-radius:10px;background:var(--bg);color:var(--muted)}
-.ann-chip[aria-pressed=true]{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
-.ann-chip.star b{color:var(--ink)}
-.ann-ai{display:inline-flex;align-items:center;gap:6px;font-size:13.5px;font-weight:600;color:var(--muted);cursor:pointer}
-.ann-ai input{width:18px;height:18px;accent-color:var(--blue)}
-.ann-wrap{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:20px;align-items:start}
-@media(max-width:900px){.ann-wrap{grid-template-columns:1fr}}
-@media(max-width:640px){.ann-legend{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin:0 -4px 14px;padding:8px}.ann-legend::-webkit-scrollbar{display:none}.ann-chip{flex:none;min-height:36px;padding:0 10px}.ann-legend .grow{display:none}.ann-ai{flex:none}}
-@media(pointer:coarse){.ann-legend{top:calc(var(--hh) + 56px)}}
-.ann-doc{display:flex;flex-direction:column;gap:18px;min-width:0}
-.ann-page{position:relative;width:100%;background:#fff;border-radius:6px;box-shadow:0 1px 2px rgba(0,0,0,.08),0 10px 30px rgba(18,26,47,.10);overflow:hidden}
-.ann-page canvas{position:absolute;inset:0;width:100%;height:100%;opacity:0;transition:opacity .3s}
-.ann-page.ready canvas{opacity:1}
-.ann-page:not(.ready)::before{content:"";position:absolute;inset:8% 10%;background:repeating-linear-gradient(#eef0f5 0 10px,transparent 10px 26px);opacity:.8;animation:blink 1.4s infinite}
-.ann-pn{position:absolute;right:10px;bottom:8px;font-size:12px;color:#7b859c;background:rgba(255,255,255,.85);padding:1px 7px;border-radius:6px;z-index:3;pointer-events:none}
-.ann-hl{position:absolute;inset:0;z-index:1;pointer-events:none;mix-blend-mode:multiply}
-.ann-hl i{position:absolute;background:var(--c);border-radius:3px;transition:background .35s,opacity .2s,box-shadow .2s}
-.ann-hl i.dim{opacity:.18}
-.ann-hl i.star{box-shadow:0 2px 0 #e23d6f}
-.ann-hl i.on{box-shadow:0 0 0 2px rgba(18,26,47,.45)}
-.ann-hl i.pop{animation:hlpop .6s cubic-bezier(.3,1.6,.5,1)}
-@keyframes hlpop{0%{transform:scaleX(.2);transform-origin:left;opacity:.3}100%{transform:none;opacity:1}}
-.ann-hl i b{position:absolute;right:-9px;top:-11px;width:18px;height:18px;border-radius:50%;background:#121a2f;color:#fff;font-size:10px;display:grid;place-items:center;mix-blend-mode:normal}
-/* pdf.js text layer: invisible text on top of the page, so it can be selected */
-.textLayer{position:absolute;text-align:initial;inset:0;overflow:hidden;line-height:1;-webkit-text-size-adjust:none;text-size-adjust:none;forced-color-adjust:none;transform-origin:0 0;z-index:2;caret-color:transparent}
-.textLayer :is(span,br){color:transparent;position:absolute;white-space:pre;cursor:text;transform-origin:0% 0%}
-.textLayer span.markedContent{top:0;height:0}
-.textLayer ::selection{background:rgba(36,71,214,.28)}
-.textLayer br::selection{background:transparent}
-.textLayer .endOfContent{display:block;position:absolute;inset:100% 0 0;z-index:-1;cursor:default;-webkit-user-select:none;user-select:none}
-.textLayer.selecting .endOfContent{top:0}
-.ann-sample{padding:12px 16px;border-radius:10px;background:var(--blue-soft);font-size:14.5px}
-.ann-msg{padding:40px 10px;text-align:center}
-.ann-none{padding:40px 24px;border:2px dashed var(--edge);border-radius:14px;text-align:center;background:var(--card)}
-.ann-none h3{font-size:22px;margin-bottom:6px}
-.ann-side{position:sticky;top:calc(var(--hh) + 128px);max-height:calc(100vh - var(--hh) - 148px);display:flex;flex-direction:column;border:1px solid var(--line);border-radius:14px;background:var(--card);overflow:hidden}
-@media(max-width:900px){.ann-side{position:static;max-height:none;order:-1}.ann-list{max-height:280px}}
-.ann-side-h{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line);font-family:var(--serif);font-size:17px}
-.ann-side-h .linklike{font:600 13px var(--sans)}
-.ann-list{overflow:auto;padding:8px;display:flex;flex-direction:column;gap:6px;flex:1}
-.ann-item{display:flex;flex-direction:column;gap:5px;text-align:left;padding:10px 12px 10px 14px;border:1px solid transparent;border-left:4px solid var(--c);border-radius:8px;background:none;transition:background .12s,border-color .12s}
-.ann-item:hover{background:var(--bg);border-color:var(--line);border-left-color:var(--c)}
-.ann-item-h{display:flex;align-items:center;gap:7px;font-size:12.5px}
-.ann-item-h i{width:10px;height:10px;border-radius:3px;background:var(--c)}
-.ann-item-h b{font-weight:700;text-transform:uppercase;letter-spacing:.05em}
-.ann-item-h .muted{margin-left:auto}
-.ann-st{color:#e23d6f}
-.ann-q{font:400 15px/1.45 var(--serif)}
-.ann-note{font-size:13.5px;color:var(--muted);padding:6px 8px;border-radius:6px;background:var(--bg)}
-.ann-empty{padding:14px;font-size:14.5px}
-.ann-demo{margin-top:10px;line-height:2.1;color:var(--muted)}
-.ann-demo span{background:var(--c);color:#121a2f;padding:2px 5px;border-radius:4px}
-.ann-exp{padding:10px 12px;border-top:1px solid var(--line)}
-.ann-pop{position:fixed;z-index:45;width:min(380px,calc(100vw - 16px));padding:14px;border-radius:14px;border:1px solid var(--line);background:var(--card);
-  box-shadow:0 18px 50px rgba(8,12,24,.25);opacity:0;transform:translateY(6px) scale(.98);transition:opacity .16s,transform .16s}
-.ann-pop.in{opacity:1;transform:none}
-.ann-pop.sheet{left:8px!important;right:8px;bottom:calc(8px + env(safe-area-inset-bottom));top:auto!important;width:auto}
-.ann-pop-h{display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:14px}
-.ann-how{flex:1}
-.ann-x{border:0;background:none;font-size:22px;line-height:1;width:32px;height:32px;border-radius:8px;color:var(--muted)}
-.ann-x:hover{background:var(--bg);color:var(--ink)}
-.ann-cats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
-.ann-cats button{position:relative;display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px 4px 6px;border-radius:10px;border:1.5px solid var(--line);background:var(--card);font-size:13px;font-weight:600}
-.ann-cats button i{width:100%;max-width:46px;height:10px;border-radius:4px;background:var(--c)}
-.ann-cats button kbd{position:absolute;top:3px;right:5px;font:600 10px var(--sans);color:var(--muted)}
-.ann-cats button[aria-checked=true]{border-color:var(--ink);background:color-mix(in srgb,var(--c) 22%,var(--card))}
-.ann-pop blockquote{margin:12px 0 10px;padding:8px 10px;border-left:4px solid var(--c);background:var(--bg);border-radius:0 8px 8px 0;font:400 14.5px/1.45 var(--serif);max-height:120px;overflow:auto}
-.ann-pop textarea{width:100%;min-height:60px;padding:8px 10px;border-radius:10px;border:1px solid var(--edge);background:var(--bg);resize:vertical;font-size:14.5px}
-.ann-pop-a{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;align-items:center}
-.ann-pop-a .grow{flex:1}
-.ann-pop-a .btn{min-height:36px;padding:0 10px;font-size:13.5px}
-.ann-pop-a .btn.on{background:#ffe1ea;border-color:#e23d6f;color:#a3123f}
-.ann-fab{position:fixed;z-index:46;min-height:44px;padding:0 18px;border:0;border-radius:999px;background:var(--ink);color:var(--bg);font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.25)}
-
-/* ---------- share card + celebration ---------- */
-.share-prev{margin-top:14px;border-radius:12px;overflow:hidden;background:var(--card);border:1px solid var(--line);min-height:120px;display:grid;place-items:center}
-.share-prev img{display:block;width:100%;height:auto}
-.confetti{position:fixed;inset:0;width:100vw;height:100vh;z-index:80;pointer-events:none}
 </style>
 </head>
 <body>
 <header class="top">
   <button class="brand" id="brand" aria-label="Paperlens home">
-    <svg viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="hb" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#16133f"/><stop offset="1" stop-color="#33287f"/></linearGradient><linearGradient id="hr" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffd93d"/><stop offset=".5" stop-color="#ff6fa5"/><stop offset="1" stop-color="#7c8bff"/></linearGradient><clipPath id="hc"><circle cx="28" cy="28" r="15"/></clipPath></defs><rect width="64" height="64" rx="16" fill="url(#hb)"/><g clip-path="url(#hc)"><rect x="10" y="10" width="36" height="36" fill="#fffdf6"/><rect x="13" y="17.5" width="27" height="5.5" rx="1.6" fill="#ffd93d"/><rect x="13" y="25.5" width="20" height="5.5" rx="1.6" fill="#5fdc8f"/><rect x="13" y="33.5" width="24" height="5.5" rx="1.6" fill="#8fc0ff"/><path d="M17 15.5a14 14 0 0 1 9-3" stroke="#fff" stroke-width="2.2" stroke-linecap="round" fill="none" opacity=".85"/></g><circle cx="28" cy="28" r="16" fill="none" stroke="url(#hr)" stroke-width="5"/><path d="M40 40l11 11" stroke="url(#hr)" stroke-width="7" stroke-linecap="round"/><path class="lg-spark" d="M52 8.5l1.5 3.8 3.8 1.5-3.8 1.5L52 19.1l-1.5-3.8-3.8-1.5 3.8-1.5z" fill="#ffd93d"/></svg>
-    <span class="brand-t">Paper<i>lens</i></span>
+    <svg viewBox="0 0 32 32" aria-hidden="true"><rect x="2" y="2" width="28" height="28" rx="8" fill="#121a2f"/><rect class="logo-mark" x="7" y="19" width="18" height="6" rx="1.5"/><circle cx="14.5" cy="13.5" r="5" fill="none" stroke="#fff" stroke-width="2.4"/><path d="M18.3 17.3 23 22" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg>
+    <span class="brand-t">Paperlens</span>
   </button>
   <button class="btn small ghost" id="btn-lib" aria-label="Your library of saved papers">Library<span class="count" id="lib-n"></span></button>
   <span class="spacer"></span>
@@ -652,6 +586,9 @@ const DEMO = {
       {term:"Residual connection",definition:"Adds input to output"},
       {term:"Scaled dot-product",definition:"Divide scores by sqrt(d_k)"}]}
 };
+
+/* A tiny original sample PDF for the built-in demo (written for Paperlens). */
+const DEMO_PDF_B64 = "JVBERi0xLjMKJZOMi54gUmVwb3J0TGFiIEdlbmVyYXRlZCBQREYgZG9jdW1lbnQgKG9wZW5zb3VyY2UpCjEgMCBvYmoKPDwKL0YxIDIgMCBSIC9GMiAzIDAgUiAvRjMgNCAwIFIgL0Y0IDUgMCBSCj4+CmVuZG9iagoyIDAgb2JqCjw8Ci9CYXNlRm9udCAvSGVsdmV0aWNhIC9FbmNvZGluZyAvV2luQW5zaUVuY29kaW5nIC9OYW1lIC9GMSAvU3VidHlwZSAvVHlwZTEgL1R5cGUgL0ZvbnQKPj4KZW5kb2JqCjMgMCBvYmoKPDwKL0Jhc2VGb250IC9UaW1lcy1Cb2xkIC9FbmNvZGluZyAvV2luQW5zaUVuY29kaW5nIC9OYW1lIC9GMiAvU3VidHlwZSAvVHlwZTEgL1R5cGUgL0ZvbnQKPj4KZW5kb2JqCjQgMCBvYmoKPDwKL0Jhc2VGb250IC9UaW1lcy1JdGFsaWMgL0VuY29kaW5nIC9XaW5BbnNpRW5jb2RpbmcgL05hbWUgL0YzIC9TdWJ0eXBlIC9UeXBlMSAvVHlwZSAvRm9udAo+PgplbmRvYmoKNSAwIG9iago8PAovQmFzZUZvbnQgL1RpbWVzLVJvbWFuIC9FbmNvZGluZyAvV2luQW5zaUVuY29kaW5nIC9OYW1lIC9GNCAvU3VidHlwZSAvVHlwZTEgL1R5cGUgL0ZvbnQKPj4KZW5kb2JqCjYgMCBvYmoKPDwKL0NvbnRlbnRzIDExIDAgUiAvTWVkaWFCb3ggWyAwIDAgNjEyIDc5MiBdIC9QYXJlbnQgMTAgMCBSIC9SZXNvdXJjZXMgPDwKL0ZvbnQgMSAwIFIgL1Byb2NTZXQgWyAvUERGIC9UZXh0IC9JbWFnZUIgL0ltYWdlQyAvSW1hZ2VJIF0KPj4gL1JvdGF0ZSAwIC9UcmFucyA8PAoKPj4gCiAgL1R5cGUgL1BhZ2UKPj4KZW5kb2JqCjcgMCBvYmoKPDwKL0NvbnRlbnRzIDEyIDAgUiAvTWVkaWFCb3ggWyAwIDAgNjEyIDc5MiBdIC9QYXJlbnQgMTAgMCBSIC9SZXNvdXJjZXMgPDwKL0ZvbnQgMSAwIFIgL1Byb2NTZXQgWyAvUERGIC9UZXh0IC9JbWFnZUIgL0ltYWdlQyAvSW1hZ2VJIF0KPj4gL1JvdGF0ZSAwIC9UcmFucyA8PAoKPj4gCiAgL1R5cGUgL1BhZ2UKPj4KZW5kb2JqCjggMCBvYmoKPDwKL1BhZ2VNb2RlIC9Vc2VOb25lIC9QYWdlcyAxMCAwIFIgL1R5cGUgL0NhdGFsb2cKPj4KZW5kb2JqCjkgMCBvYmoKPDwKL0F1dGhvciAoYW5vbnltb3VzKSAvQ3JlYXRpb25EYXRlIChEOjIwMjYxMDE3MTYwNzM2KzAwJzAwJykgL0NyZWF0b3IgKGFub255bW91cykgL0tleXdvcmRzICgpIC9Nb2REYXRlIChEOjIwMjYxMDE3MTYwNzM2KzAwJzAwJykgL1Byb2R1Y2VyIChSZXBvcnRMYWIgUERGIExpYnJhcnkgLSBcKG9wZW5zb3VyY2VcKSkgCiAgL1N1YmplY3QgKHVuc3BlY2lmaWVkKSAvVGl0bGUgKEhvdyBhdHRlbnRpb24gaGVscHMgYSBtb2RlbCB0cmFuc2xhdGUgXChQYXBlcmxlbnMgc2FtcGxlXCkpIC9UcmFwcGVkIC9GYWxzZQo+PgplbmRvYmoKMTAgMCBvYmoKPDwKL0NvdW50IDIgL0tpZHMgWyA2IDAgUiA3IDAgUiBdIC9UeXBlIC9QYWdlcwo+PgplbmRvYmoKMTEgMCBvYmoKPDwKL0ZpbHRlciBbIC9BU0NJSTg1RGVjb2RlIC9GbGF0ZURlY29kZSBdIC9MZW5ndGggMTE3MQo+PgpzdHJlYW0KR2F0PSo5bEpmRiZBQDcuYmNyYk5sOlVxXnFjImgrTUFCbFUhKyRkXFh1TVNIO3JpXC9YSmluSk8vKz1GKiQ1NnU9OUQ0PDFOMi1qY208USE7bDhHcDpcPFU2Xl0uRzc9amE0QkVhUzF0b0ZIQDRdaEBOJzxTTWIpPyhJOiZKX1EnIltzKXJabCdLME84MFMwcDYhNlBxbFxkLFZdcDVaSjMrOUg4SlVhTkZeTkI8aFdQLCdJPjkkUG1XXTdecXMqL2BdcCJ0dSVYOispWEonZ3JiO21AMnRla3RYdTUpVGUxYyxQdC5oQTEzUic2VT5CMWQ0M25RO2Y4PUdIW3QjYy8iRkxvbGcnc1ErTllPTDhgI1UmcGwrT1xcdFlcSGI3M0tRaFZpazopUkJaTGMicUwjT1hgWDtfcEVMJnNSWjxhUlFtXWJHMDI+JFRKV3JrNypFQVddVEwiaj5fOVg/QSVyWkBvNmdnSjFEMCMlRFdXSDdQXDBYYyhOMEJZcDQsJVJvRFFXXyFxU1ZAMW9eYEBkPS5HTWdITTAlS05PV0M3T1twOU1jLGcsIURKNyYpN01OTFxwclBAQEVEViFAMEsnZ3ByJG4wRSFeNDpDUTtfayJUKFcjbEtfSyEtIUlZVDMzbDJBbkZuPEVpaFQ+QFdpM2xdNHRwaEg/aSRwVmQrJmtaUzlkVFtSamh1WzlbOl1fZWQ7VGtcaC0pUHNaUmk/Mz5Jcmo5K2AxayFebTsiJDtBaEpTMkpNRXMwNFw5RjdvMStxXmFeaFdxTS9aZ18uciteYiQ7UmwwQ0Y5OS9vaWhMbTY8aUpeYVJuVyNJayNuckQ4XmI0aUdFKkFxYVVgUSQuZidIKywoWkBPI24kJVtbQ0kqKEovJC9pXlREZHRqakQsNj07RSJrNC1xR3ExRjtFOz40KHRFP1ZZODUhUC85ay5BM2g8SSg1KGY5ZTYkNT09R1VDXzI8WWY/TD0nVEpBZExjIU5aZS8nOGJkMDdjJ0NwT29COmIrW1FXZWFaMSpsTDg/SCNTbzdMMXEjL3RTTzBSVyszT3F0Uz47RlZpLDM7aUcsK1RPMCUoN1VRLVosOTIjPUQtMi84UzREdWFNXC1VMm44P0lnZEArPmkzNk1SKUpvPCwxSUUwRnMpaF9BckdVbk47bDQ2Oy1EOjZWUWA9KFNUL15wblkvJUtYY1NcSTtHR09uaGZrXWczZU1lPkJgWSVwTVIrVjQmPT9PUyldL25nMFlpTXFhQypDWDRKLlspUUZVYmU2ajMxYEYvOHNKLDs4RSphQDVSXlxjcEo3XiE9SzYtb244a2NAcERxZF4oMFxfPVc8cWtpP00rdXJ1W2ljSSU9cVUvUEpyLDZPbTQrJURMTTojJGlqNm1yRTN1S08wJVlcP00lUygsWWYiMVZkXnFPOiczVkY+XzNiImIhZ2NidVQpQihGa2doX2ktJ2UwaCI+KShcOUg4KD0sRFlDKWI/aDxibUFDQGNyIkNLTFBRL0dWVjFYR1FWR2JWTUdFOlYxak80WS5jRCtvXjcyTVovL1V+PmVuZHN0cmVhbQplbmRvYmoKMTIgMCBvYmoKPDwKL0ZpbHRlciBbIC9BU0NJSTg1RGVjb2RlIC9GbGF0ZURlY29kZSBdIC9MZW5ndGggNzY2Cj4+CnN0cmVhbQpHYXQ9aGdNNUx0JjtLWkYnYFZgSyZpXFpHMkhRXnUjNz8kSmkmbFBAVCFkLDRPRCpdXFtTUGVDbHRrK3VNZGQrNzg+RlFrczg6bWlrT09sNT8hSDZlX1dUWWRqVUJaVGplPmtNXSNSTmZQMU89cGtKXTRGWEdZXWM6LHNaM1IsUiVQTlFVN3UqLWBVbzojcUE2SVxRW1w5WDZvZE5fL0JQcU9ePltsUU9Bb0xFImhgYy51T3BCNlAma0VlbSJBMkNgR3BoXTlQM2NrPEV1YTw2U0U0KD9GYiFlLDlBbzY7YChKS3VpZ2dqOy8xbTM0bzdyL1JZKT8vdThXOS9nZEYsPWkhNS49X3BLYW1wbWZYJWhKYmY3RyEraCYsLFFJb15TL2FPTTtRNDlAMC5cTTQrUEQ1MVZUUkFcc3AjSW01RChrLnNNZE9wWjw8MkE4JGlwT2peKz1hVHFgYUJgYlNUUlcyO0djYlcrU2dKZy5KaTNuPT4kSnRiXCpcUSVxUFZrRU1zX3JqVnA5Wk5BKkRWMjtzREc4Z2pTLyFvcCtZN2BQVGhMWGA0Y2lrMmNAUyNLWUZTbDtOTTRpQGViLjl0c2E7W2ojVFlYZDwjLXNhRlhkWV9PST8jTVlHSyc0cFcyWTlbYHMoRkxGXlpcXCxYTzNCTDs+dCcvUUwhV1xkL3BpLz5rY0k6Y0BocFhYNEwlMXBrY3BrSDIsMSdnU1NGaiFnOz0nNHNdUy8xckZVPE9fUz8raUlKJEgmJypUcz5HZGBOI0U/RjtbcmcsV1FVRUdcTW9bVCtFLGg8QSxXQj9EbG9Qak1fUCFjaHJccWQsUSQiMT8zOmxLLV5lQCgwSSwvIzNOZ05uLmpiXEdtbF5Pcy9pOmcwITM2UydzP1s/IUJSMDMuREZ0aSIyZkc0MT1YVmA9ZylKcyYjMiVQIVsjaG5NaU1jRypTbV1qVlNhMSZuPnBPQjJBTHMsXW1ZMlo/Tk4yKDUxOzFrNW1GUkF0MWA1dXJMTjJzU34+ZW5kc3RyZWFtCmVuZG9iagp4cmVmCjAgMTMKMDAwMDAwMDAwMCA2NTUzNSBmIAowMDAwMDAwMDYxIDAwMDAwIG4gCjAwMDAwMDAxMjIgMDAwMDAgbiAKMDAwMDAwMDIyOSAwMDAwMCBuIAowMDAwMDAwMzM3IDAwMDAwIG4gCjAwMDAwMDA0NDcgMDAwMDAgbiAKMDAwMDAwMDU1NiAwMDAwMCBuIAowMDAwMDAwNzUxIDAwMDAwIG4gCjAwMDAwMDA5NDYgMDAwMDAgbiAKMDAwMDAwMTAxNSAwMDAwMCBuIAowMDAwMDAxMzI2IDAwMDAwIG4gCjAwMDAwMDEzOTIgMDAwMDAgbiAKMDAwMDAwMjY1NSAwMDAwMCBuIAp0cmFpbGVyCjw8Ci9JRCAKWzw2YmFiZDlhMmZhMzJiNzk3MWNkNDg1MDIxM2UyMWQxMD48NmJhYmQ5YTJmYTMyYjc5NzFjZDQ4NTAyMTNlMjFkMTA+XQolIFJlcG9ydExhYiBnZW5lcmF0ZWQgUERGIGRvY3VtZW50IC0tIGRpZ2VzdCAob3BlbnNvdXJjZSkKCi9JbmZvIDkgMCBSCi9Sb290IDggMCBSCi9TaXplIDEzCj4+CnN0YXJ0eHJlZgozNTEyCiUlRU9GCg==";
 
 const PALETTES = {
  "paper": {
@@ -1425,7 +1362,7 @@ document.addEventListener('keydown', e => {
 });
 
 /* ---------- version + clean refresh ---------- */
-const APP_VERSION = '2026.10.16';
+const APP_VERSION = '2026.10.11';
 function reloadApp() { location.replace(location.pathname + '?u=' + Date.now()); }
 async function refreshApp() {                                  // clears the saved copy of the APP only; papers, notes and settings are untouched
   try { const regs = (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) ? await navigator.serviceWorker.getRegistrations() : []; await Promise.all(regs.map(r => r.unregister())); } catch (e) {}
@@ -1646,15 +1583,13 @@ function normalize(d) {
 /* ---------- screens: home ---------- */
 const app = () => $('#app');
 function showHome() {
-  teardown(); S.paper = null; S.view = 'home'; $('#tabs').hidden = true; document.title = 'Paperlens';
+  teardown(); S.paper = null; S.view = 'home'; enterView(); $('#tabs').hidden = true; document.title = 'Paperlens';
   app().innerHTML = `
   <section class="hero">
-    <div class="hero-art" aria-hidden="true">${LOGO_SVG('ha', 200)}</div>
-    <h1>Read any paper in the time it takes to make coffee.</h1>
+    <h1>Read any paper in the time it takes to make <span class="mark swipe">coffee</span>.</h1>
     <p>Drop in a PDF and get the gist, the figures that matter, a mind map, flashcards and a game that makes it stick. Works in any field.</p>
+    <ol class="how" aria-label="How it works"><li><i style="--c:#ffe066"></i>Drop in a paper</li><li><i style="--c:#8ce99a"></i>Read and highlight it</li><li><i style="--c:#8ecbff"></i>Remember what matters</li></ol>
   </section>
-  <div class="feats" aria-label="Try the sample">${[['overview', 'The gist', '#2447d6'], ['read', 'Read &amp; annotate', '#ffd93d', 1], ['figures', 'Key figures', '#5fdc8f'], ['mindmap', 'Mind map', '#8fc0ff'], ['cards', 'Flashcards', '#dcc2ff'], ['play', 'Games', '#ff6fa5'], ['chat', 'Chat', '#7c8bff']]
-    .map(([t, n, c, isNew], i) => `<button class="feat${isNew ? ' new' : ''}" data-try="${t}" style="--c:${c};animation-delay:${i * 60}ms" title="Try it on the sample paper"><i></i>${n}${isNew ? ' <sup>NEW</sup>' : ''}</button>`).join('')}</div>
   <label class="drop" id="drop" tabindex="0">
     ${ICON.upload}<strong>Drop a research paper here</strong><span>or click to choose a PDF (up to 24 MB). Takes about a minute.</span>
     <input type="file" id="file" accept=".pdf,application/pdf,.txt,.md,text/plain" class="sr">
@@ -1688,8 +1623,7 @@ function showHome() {
   ['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
   drop.addEventListener('drop', e => take(e.dataTransfer.files[0]));
   $('#gotxt').onclick = () => { const t = $('#txt').value.trim(); if (t.length < 400) toast('Paste a bit more text (at least a few paragraphs)'); else analyze({ text: t }); };
-  const openDemo = tab => { const p = normalize(DEMO); p.id = 'demo'; S.paper = p; S.pdf = null; S.srcFile = S.srcText = null; S.pageImgs = {}; S.pdfReady = Promise.resolve(); showPaper(tab || 'overview'); };
-  $('#demo').onclick = () => openDemo(); $$('[data-try]').forEach(b => b.onclick = () => openDemo(b.dataset.try));
+  $('#demo').onclick = () => { const p = normalize(DEMO); p.id = 'demo'; S.paper = p; S.pdf = null; S.srcFile = S.srcText = null; S.pageImgs = {}; S.pdfReady = Promise.resolve(); showPaper('overview'); };
   $('#needkey')?.addEventListener('click', () => openSettings());
   fillRecent();
 }
@@ -1704,9 +1638,12 @@ async function fillRecent() {
 
 /* ---------- screens: loading & error ---------- */
 const EXPECT_CHARS = 17000;
+const LOGO_SVG = '<svg viewBox="0 0 32 32" aria-hidden="true"><rect x="2" y="2" width="28" height="28" rx="8" fill="#121a2f"/><rect class="logo-mark" x="7" y="19" width="18" height="6" rx="1.5"/><circle cx="14.5" cy="13.5" r="5" fill="none" stroke="#fff" stroke-width="2.4"/><path d="M18.3 17.3 23 22" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg>';
+let _enterT = null;
+function enterView() { const a = app(); clearTimeout(_enterT); a.classList.remove('enter'); void a.offsetWidth; a.classList.add('enter'); _enterT = setTimeout(() => a.classList.remove('enter'), 500); }   // one timer, so quick navigation never cuts an animation short
 function showLoading(label) {
   $('#tabs').hidden = true; S.progress = 0; S.t0 = Date.now();
-  app().innerHTML = `<div class="loading"><h2>Reading ${esc(label)}</h2>
+  app().innerHTML = `<div class="loading"><div class="load-logo">${LOGO_SVG}</div><h2>Reading ${esc(label)}</h2>
     <p class="muted" style="margin-top:8px">Most papers take 30 to 90 seconds. The overview appears below as soon as it's written.</p>
     <div class="prog"><div class="bar" role="progressbar" aria-label="Analysis progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="pbar" style="width:2%"></i></div>
       <div class="prog-meta"><span id="ptxt">Starting…</span><span id="eta"></span></div></div>
@@ -1744,15 +1681,15 @@ function showError(msg) {
 }
 
 /* ---------- screens: paper shell + tabs ---------- */
-const TABS = [['overview', 'Overview'], ['read', 'Read &amp; annotate'], ['figures', 'Figures'], ['mindmap', 'Mind map'], ['cards', 'Flashcards'], ['play', 'Play'], ['chat', 'Chat'], ['notes', 'Notes']];
+const TABS = [['overview', 'Overview'], ['read', 'Read'], ['figures', 'Figures'], ['mindmap', 'Mind map'], ['cards', 'Flashcards'], ['play', 'Play'], ['chat', 'Chat'], ['notes', 'Notes']];
 function showPaper(tab) {
   const p = S.paper; if (!p) return showHome();
   document.title = p.meta.title + ' · Paperlens';
-  const counts = { figures: p.figures.length, cards: p.cards.length, read: S.ann && S.ann.id === p.id ? S.ann.list.length : 0 };
+  const counts = { figures: p.figures.length, cards: p.cards.length };
   const t = $('#tabs'); t.hidden = false;
   t.innerHTML = TABS.map(([id, name]) => `<button class="tab" role="tab" data-t="${id}" aria-selected="${id === tab}">${name}${counts[id] ? `<small>${counts[id]}</small>` : ''}</button>`).join('');
   $$('.tab', t).forEach(b => b.onclick = () => showPaper(b.dataset.t));
-  teardown(); S.tab = tab; S.view = 'paper'; window.scrollTo(0, 0);
+  teardown(); S.tab = tab; S.view = 'paper'; window.scrollTo(0, 0); enterView();
   ({ overview: viewOverview, read: viewRead, figures: viewFigures, mindmap: viewMindmap, cards: viewCards, play: viewPlay, chat: viewChat, notes: viewNotes })[tab](p);
 }
 
@@ -1774,7 +1711,7 @@ function viewOverview(p) {
     <div class="meta">${m.field ? `<span class="chip">${esc(m.field)}</span>` : ''}${m.type ? `<span class="chip plain">${esc(m.type)}</span>` : ''}${m.venue ? `<span class="chip plain">${esc(m.venue)}</span>` : ''}</div>
     <h1 style="margin-top:14px">${rich(m.title)}</h1>
     ${m.authors ? `<p class="authors">${esc(m.authors)}</p>` : ''}
-    ${o.tldr ? `<p class="tldr"><span class="mark">${rich(o.tldr)}</span></p>` : ''}
+    ${o.tldr ? `<p class="tldr"><span class="mark swipe">${rich(o.tldr)}</span></p>` : ''}
     ${o.readIf ? `<p class="readif" style="margin-top:14px">${rich(o.readIf)}</p>` : ''}
   </div>
   ${o.snapshot.length ? `<dl class="snap" style="margin-bottom:0">${o.snapshot.map(s => `<div><dt>${rich(s.label)}</dt><dd>${rich(s.value)}</dd></div>`).join('')}</dl>` : ''}
@@ -1791,15 +1728,14 @@ function viewOverview(p) {
   ${p.glossary.length ? `<h2 class="section-h">Terms worth knowing</h2><div class="gloss">${p.glossary.map(g => `<div><b>${rich(g.term)}</b><p>${rich(g.definition)}</p></div>`).join('')}</div>` : ''}
   <div id="cite-slot" style="margin-top:30px"></div>
   <div class="next-step"><h3>Want more than the gist?</h3><p class="muted">Check the evidence next, then lock it in.</p>
-    <div class="row" style="margin-top:14px"><button class="btn primary" id="go-figs">See the key figures</button><button class="btn" id="go-read">Highlight the paper</button><button class="btn" id="go-cards">Study the flashcards</button><button class="btn" id="go-chat">Ask a question</button></div></div>
-  <div class="row" style="margin-top:18px"><button class="btn small" id="copy">Copy summary</button><button class="btn small" id="md">${ICON.dl}Download notes (.md)</button><button class="btn small" id="share">✨ Share card</button></div>
+    <div class="row" style="margin-top:14px"><button class="btn primary" id="go-figs">See the key figures</button><button class="btn" id="go-cards">Study the flashcards</button><button class="btn" id="go-chat">Ask a question</button></div></div>
+  <div class="row" style="margin-top:18px"><button class="btn small" id="copy">Copy summary</button><button class="btn small" id="md">${ICON.dl}Download notes (.md)</button></div>
   <p class="disclaimer">Written by AI from the paper. Page links show where each claim comes from, so check anything important against the source.</p>`;
   renderCite(p); if (typeof renderStubBanner === 'function') renderStubBanner(p); $$('[data-note]').forEach(b => b.onclick = () => { const f = o.findings[+b.dataset.note]; addToNotes(p, f.t, f.p); });
   $('#go-figs').onclick = () => showPaper('figures'); $('#go-chat').onclick = () => showPaper('chat'); $('#own')?.addEventListener('click', showHome);
-  $('#go-cards').onclick = () => showPaper('cards'); $('#go-read').onclick = () => showPaper('read');
+  $('#go-cards').onclick = () => showPaper('cards');
   $('#copy').onclick = () => navigator.clipboard.writeText(toMarkdown(p)).then(() => toast('Summary copied'), () => toast('Copy failed. Use the download instead.'));
   $('#md').onclick = () => download(slug(p.meta.title) + '-notes.md', toMarkdown(p), 'text/markdown');
-  $('#share').onclick = () => openShareCard(p);
 }
 function toMarkdown(p) {
   const o = p.ov, m = p.meta, L = [];
@@ -1874,12 +1810,10 @@ function viewFigures(p) {
   });
 }
 function openLightbox(url, alt) {
-  const el = document.createElement('div'); el.className = 'lightbox'; el.setAttribute('role', 'dialog');
-  el.innerHTML = `<div class="lb-bar"><span class="lb-hint">Scroll to see all of it · click the image to zoom</span><button class="btn" data-z>Zoom in</button><button class="btn" data-c aria-label="Close">Close</button></div><img src="${url}" alt="${esc(alt)}">`;
-  const img = $('img', el), z = $('[data-z]', el), zoom = () => { const on = img.classList.toggle('zoom'); z.textContent = on ? 'Fit to screen' : 'Zoom in'; };
-  img.onclick = e => { e.stopPropagation(); zoom(); }; z.onclick = e => { e.stopPropagation(); zoom(); };
-  el.onclick = e => { if (e.target === el || e.target.closest('[data-c]')) el.remove(); };
-  document.body.appendChild(el); $('[data-c]', el).focus();
+  const el = document.createElement('div'); el.className = 'lightbox'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Enlarged: ' + alt);
+  el.innerHTML = `<button class="btn lb-x" aria-label="Close">Close</button><div class="lb-inner"><img src="${url}" alt="${esc(alt)}"></div>`;
+  el.addEventListener('click', e => { if (e.target === el || e.target.classList.contains('lb-inner') || e.target.closest('.lb-x')) el.remove(); });   // clicking the picture itself never closes it, so you can scroll and look
+  document.body.appendChild(el); $('.lb-x', el).focus();
 }
 
 /* =====================================================================
@@ -1959,7 +1893,6 @@ function viewChat(p) {
   </div>`;
 
   const msgsEl = $('#msgs'), q = $('#q');
-  if (S.chatDraft) { q.value = S.chatDraft; S.chatDraft = ''; setTimeout(() => { q.focus(); q.setSelectionRange(q.value.length, q.value.length); }, 30); }
   const paint = () => {
     msgsEl.innerHTML = chat.msgs.map((m, i) => m.role === 'user'
       ? `<div class="msg user"><div class="bubble">${esc(m.content)}</div></div>`
@@ -2039,7 +1972,7 @@ const idb = (store, mode, fn) => idbOpen().then(db => new Promise((res, rej) => 
   t.oncomplete = () => res(out); t.onerror = () => rej(t.error); t.onabort = () => rej(t.error || new Error('Storage was refused (it may be full)'));
 }));
 const progKey = id => 'pl.prog.' + id, chatKey = id => 'pl.chat.' + id, bestKey = (id, m) => 'pl.best.' + id + '.' + m;
-const recDefaults = () => ({ folders: [], status: '', starred: false, notes: '', relevance: '', theme: '', zotero: null, obsidian: null, imported: '' });
+const recDefaults = () => ({ folders: [], status: '', starred: false, notes: '', relevance: '', theme: '', zotero: null, obsidian: null, imported: '', highlights: [] });
 const withDefaults = r => Object.assign(recDefaults(), r);
 const legacyRec = x => Object.assign(recDefaults(), { added: x.date || 0, opened: x.date || 0, hasSource: null, srcName: '', srcSize: 0, authors: x.data?.meta?.authors || '', type: x.data?.meta?.type || '', venue: x.data?.meta?.venue || '' }, x);
 
@@ -2515,7 +2448,7 @@ async function viewNotes(p) {
 function notesMarkdown(r) {
   const m = r.data.meta, L = ['# ' + m.title, '*' + citeAPA(m) + '*'];
   if (r.theme) L.push('', '**Theme(s):** ' + r.theme); if (r.relevance) L.push('', '**Relevance to my research:** ' + r.relevance);
-  L.push('', '## My notes', r.notes || '*(none yet)*'); return L.join('\n') + '\n';
+  L.push('', '## My notes', r.notes || '*(none yet)*'); return L.join('\n') + (typeof highlightsMarkdown === 'function' ? highlightsMarkdown(r) : '') + '\n';
 }
 
 /* ---------- the literature-review matrix ---------- */
@@ -2534,7 +2467,7 @@ async function exportScope(kind, recs, name) {
   recs = sortRecs(recs, 'old'); const base = slug(name || 'library');
   if (kind === 'bib') download(base + '-citations.bib', recs.map(r => citeBibTeX(r.data.meta)).join('\n\n') + '\n', 'text/plain');
   else if (kind === 'csv') download(base + '-matrix.csv', matrixCSV(recs), 'text/csv');
-  else download(base + '-notes.md', '# ' + (name || 'Library') + '\n\n' + recs.map(r => toMarkdown(r.data) + '\n### My notes\n' + (r.theme ? '**Theme(s):** ' + r.theme + '\n\n' : '') + (r.relevance ? '**Relevance to my research:** ' + r.relevance + '\n\n' : '') + (r.notes || '*(none yet)*') + '\n\n**Cite:** ' + citeAPA(r.data.meta) + '\n').join('\n---\n\n'), 'text/markdown');
+  else download(base + '-notes.md', '# ' + (name || 'Library') + '\n\n' + recs.map(r => toMarkdown(r.data) + '\n### My notes\n' + (r.theme ? '**Theme(s):** ' + r.theme + '\n\n' : '') + (r.relevance ? '**Relevance to my research:** ' + r.relevance + '\n\n' : '') + (r.notes || '*(none yet)*') + (typeof highlightsMarkdown === 'function' ? highlightsMarkdown(r) : '') + '\n\n**Cite:** ' + citeAPA(r.data.meta) + '\n').join('\n---\n\n'), 'text/markdown');
   toast('Exported ' + recs.length + ' paper' + (recs.length === 1 ? '' : 's'));
 }
 async function showCompare(ids) {
@@ -2565,6 +2498,231 @@ async function showCompare(ids) {
   $('#cmp-csv').onclick = () => download('literature-matrix.csv', matrixCSV(sortRecs(recs, how)), 'text/csv'); $('#cmp-md').onclick = () => download('literature-matrix.md', matrixMD(sortRecs(recs, how)), 'text/markdown');
   $('#cmp-bib').onclick = () => download('citations.bib', sortRecs(recs, how).map(r => citeBibTeX(r.data.meta)).join('\n\n') + '\n', 'text/plain');
   S.cleanups.push(() => Object.values(timers).forEach(clearTimeout)); draw();
+}
+
+/* =====================================================================
+   Paperlens — Read: open the paper, highlight it, add notes.
+   Four colours, each with a meaning, shown at the top. Pick a colour then
+   select text (or select first, then pick). Everything stays on this device.
+   ===================================================================== */
+const HL_TYPES = [
+  { id: 'claim', name: 'Claim', color: '#ffe066', hint: 'A point the authors argue' },
+  { id: 'question', name: 'Question', color: '#8ce99a', hint: 'Something to look into' },
+  { id: 'evidence', name: 'Evidence', color: '#8ecbff', hint: 'Data or proof' },
+  { id: 'term', name: 'Key term', color: '#ffa8cc', hint: 'A definition worth remembering' }
+];
+const hlType = id => HL_TYPES.find(t => t.id === id) || HL_TYPES[0];
+
+/* a gentle guess at what a passage is, so the right colour can be offered first */
+function suggestType(text) {
+  const t = String(text || '').trim();
+  if (/\?\s*$/.test(t) || (/^(why|how|what|when|where|does|do|is|are|can|could|should|would)\b/i.test(t) && /\?/.test(t) && t.length < 220)) return 'question';
+  if (/\d/.test(t) && /(%|\bp\s*[<=]|\bBLEU\b|accuracy|score|\bmean\b|\bvs\.?\b|\bthan\b|increase|decrease|reduc|improv|\bn\s*=|lowers|reaches|outperform)/i.test(t)) return 'evidence';
+  if (t.length < 240 && (/\b(we define|is defined as|refers? to|is a way (for|to)|is known as)\b/i.test(t) || /^[A-Z][\w\- ]{2,40} (is|are) (a|an|the) /.test(t))) return 'term';
+  return 'claim';
+}
+
+/* ---- geometry (pure, so it can be tested): rectangles are [x, y, w, h] as fractions of the page ---- */
+function mergeRects(rs) {
+  rs = rs.filter(r => r[2] > 0.002 && r[3] > 0.002 && r[2] < 1.01 && r[3] < 0.5);
+  rs = rs.filter((a, i) => !rs.some((b, j) => j !== i && a[0] >= b[0] - 0.002 && a[1] >= b[1] - 0.002 && a[0] + a[2] <= b[0] + b[2] + 0.002 && a[1] + a[3] <= b[1] + b[3] + 0.002 && (b[2] * b[3] > a[2] * a[3] || j < i)));   // drop boxes inside others
+  rs.sort((a, b) => (a[1] + a[3] / 2) - (b[1] + b[3] / 2) || a[0] - b[0]);
+  const out = [];
+  for (const r of rs) {
+    const last = out[out.length - 1];
+    if (last && Math.abs((last[1] + last[3] / 2) - (r[1] + r[3] / 2)) < 0.6 * Math.max(last[3], r[3]) && r[0] - (last[0] + last[2]) < 0.04) {   // same line, no big gap: join
+      const x0 = Math.min(last[0], r[0]), y0 = Math.min(last[1], r[1]), x1 = Math.max(last[0] + last[2], r[0] + r[2]), y1 = Math.max(last[1] + last[3], r[1] + r[3]);
+      last[0] = x0; last[1] = y0; last[2] = x1 - x0; last[3] = y1 - y0;
+    } else out.push(r.slice());
+  }
+  return out.map(r => r.map(v => Math.round(v * 10000) / 10000));
+}
+function normRects(clientRects, pageRect) {
+  return mergeRects(clientRects.filter(r => r.width > 1 && r.height > 1).map(r => [(r.left - pageRect.left) / pageRect.width, (r.top - pageRect.top) / pageRect.height, r.width / pageRect.width, r.height / pageRect.height]));
+}
+const rectHit = (rects, x, y) => rects.some(r => x >= r[0] && x <= r[0] + r[2] && y >= r[1] && y <= r[1] + r[3]);
+
+/* ---- where does the PDF come from? ---- */
+const bytesFromB64 = b => { const s = atob(b), u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return u; };
+async function readerDoc(p) {
+  if (p.id === 'demo') { if (!S.demoDoc) { await ensurePdfJs(); S.demoDoc = await pdfjsLib.getDocument({ data: bytesFromB64(DEMO_PDF_B64) }).promise; } return S.demoDoc; }
+  if (S.srcFile) { await S.pdfReady; return S.pdf; }
+  return null;
+}
+async function loadHighlights(p) { if (p.id === 'demo' || !p.id) return S.demoHl || []; try { const r = await lib.get(p.id); return arr(r && r.highlights); } catch (e) { return []; } }
+
+/* ---- the view ---- */
+async function viewRead(p) {
+  const R = { p, doc: null, hls: [], pen: null, sel: null, W: 780, pages: [], io: null, pop: null };
+  app().innerHTML = `<div class="rd"><p class="muted" role="status">Opening the paper…</p></div>`;
+  try { R.doc = await readerDoc(p); } catch (e) { console.warn(e); R.doc = null; }
+  if (S.tab !== 'read') return;
+  if (!R.doc) {
+    app().innerHTML = `<div class="done rd-empty"><h2>Read and highlight</h2><p>Add the PDF to read and highlight it.</p>
+      <label class="btn primary">Choose the PDF<input type="file" accept=".pdf,application/pdf" id="rd-file" class="sr"></label></div>`;
+    $('#rd-file').onchange = e => { const f = e.target.files[0]; if (f) { attachPdf(f); toast('Opening your PDF…'); S.pdfReady.then(() => { if (S.tab === 'read') viewRead(p); }); } };
+    return;
+  }
+  R.hls = await loadHighlights(p); if (S.tab !== 'read') return;
+  document.documentElement.style.setProperty('--tabs-h', ($('#tabs') && $('#tabs').offsetHeight || 50) + 'px');
+  app().innerHTML = `
+  <div class="rd" id="rd">
+    <div class="rd-bar" role="toolbar" aria-label="Highlight colours">
+      <div class="rd-keys">${HL_TYPES.map(t => `<button class="rd-t" data-t="${t.id}" style="--c:${t.color}" aria-pressed="false" title="${esc(t.hint)}"><i></i>${esc(t.name)}</button>`).join('')}</div>
+      <button class="btn small" id="rd-list" aria-expanded="false" aria-controls="rd-panel">Highlights <span class="count" id="rd-n"></span></button>
+      <p class="rd-hint" id="rd-hint" role="status"></p>
+    </div>
+    <section class="rd-panel" id="rd-panel" hidden aria-label="Your highlights"></section>
+    <div class="rd-wrap" id="rd-wrap"><div class="rd-pages" id="rd-pages"></div></div>
+  </div>`;
+  const root = $('#rd-pages'), hint = $('#rd-hint');
+  const type = id => hlType(id);
+
+  /* ----- saving ----- */
+  const save = async () => { if (p.id === 'demo' || !p.id) { S.demoHl = R.hls; return; } try { await lib.update(p.id, { highlights: R.hls }); } catch (e) { toast('Couldn\'t save your highlights'); } };
+
+  /* ----- highlights drawn on each page ----- */
+  const drawHl = i => {
+    const pg = R.pages[i]; if (!pg) return; const layer = $('.rd-hl', pg.el); layer.innerHTML = '';
+    R.hls.filter(h => h.page === i + 1).forEach(h => {
+      const g = document.createElement('div'); g.className = 'hl'; g.dataset.id = h.id; g.dataset.t = h.type; g.style.setProperty('--c', type(h.type).color); if (h.note) g.classList.add('has-note');
+      g.innerHTML = h.rects.map(r => `<i style="left:${r[0] * 100}%;top:${r[1] * 100}%;width:${r[2] * 100}%;height:${r[3] * 100}%"></i>`).join(''); layer.appendChild(g);
+    });
+  };
+  const drawAll = () => R.pages.forEach((_, i) => drawHl(i));
+
+  /* ----- the colour key at the top ----- */
+  const status = () => {
+    const sug = R.sel && R.sel.suggested; $('#rd-n').textContent = R.hls.length ? String(R.hls.length) : '';
+    $$('.rd-t', $('#rd')).forEach(b => { b.setAttribute('aria-pressed', String(R.pen === b.dataset.t)); b.classList.toggle('suggest', !!R.sel && !R.pen && b.dataset.t === sug); });
+    root.className = 'rd-pages' + (R.pen ? ' pen-' + R.pen : '');
+    hint.innerHTML = R.sel ? (R.pen ? `Highlighting as <b>${esc(type(R.pen).name)}</b>…` : `Which kind? <b>${esc(type(sug).name)}</b> looks right.`)
+      : R.pen ? `Highlighting as <b>${esc(type(R.pen).name)}</b>. Tap it again to stop.`
+      : 'Select text, then pick a colour.';
+  };
+
+  /* ----- making a highlight ----- */
+  const uid = () => 'h' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  const apply = (typeId, openEditor) => {
+    const sel = R.sel; if (!sel) return; const groups = rectsByPage(R, sel.range); if (!groups.length) { R.sel = null; status(); return; }
+    const made = groups.map((g, k) => ({ id: uid(), page: g.page, type: typeId, text: k === 0 ? sel.text : '(continued)', rects: g.rects, note: '', at: Date.now() }));
+    R.hls.push(...made); const s = window.getSelection && window.getSelection(); s && s.removeAllRanges && s.removeAllRanges(); R.sel = null;
+    made.forEach(h => drawHl(h.page - 1)); save(); status(); panel(); if (openEditor) editor(made[0]);
+  };
+  $$('.rd-t', $('#rd')).forEach(b => {
+    b.addEventListener('pointerdown', e => e.preventDefault());                     // keep the text selected while pressing
+    b.addEventListener('mousedown', e => e.preventDefault());
+    b.onclick = () => { const t = b.dataset.t; if (R.sel) { apply(t, !R.pen); } else { R.pen = R.pen === t ? null : t; status(); } };
+  });
+
+  /* ----- following the selection ----- */
+  let timer = null;
+  const onSel = () => {
+    clearTimeout(timer); timer = setTimeout(() => {
+      const s = window.getSelection ? window.getSelection() : null;
+      if (!s || s.isCollapsed || !s.rangeCount || !root.contains(s.getRangeAt(0).commonAncestorContainer)) { if (R.sel) { R.sel = null; status(); } return; }
+      const text = s.toString().replace(/\s+/g, ' ').trim(); if (text.length < 2) return;
+      R.sel = { range: s.getRangeAt(0).cloneRange(), text, suggested: suggestType(text) }; status();
+      if (R.pen) timer = setTimeout(() => apply(R.pen, false), 350);                 // pen mode: touch selections settle, then mark
+    }, 120);
+  };
+  const onUp = () => { if (R.pen) setTimeout(() => { if (R.sel && R.pen) apply(R.pen, false); }, 160); };
+  document.addEventListener('selectionchange', onSel); document.addEventListener('mouseup', onUp);
+  S.cleanups.push(() => { document.removeEventListener('selectionchange', onSel); document.removeEventListener('mouseup', onUp); clearTimeout(timer); R.io && R.io.disconnect(); window.removeEventListener('resize', onResize); closeEditor(); });
+  S.keys = e => { if (e.key >= '1' && e.key <= '4') { const t = HL_TYPES[+e.key - 1].id; if (R.sel) apply(t, !R.pen); else { R.pen = R.pen === t ? null : t; status(); } } else if (e.key === 'Escape' && R.pen) { R.pen = null; status(); } };
+
+  /* ----- clicking a highlight opens its note ----- */
+  function closeEditor() { if (R.pop) { R.pop.remove(); R.pop = null; } }
+  function editor(h) {
+    closeEditor(); const pg = R.pages[h.page - 1]; if (!pg) return; const wrap = $('#rd-wrap'), pr = pg.el.getBoundingClientRect(), wr = wrap.getBoundingClientRect(), rc = h.rects[0] || [0, 0, 0, 0];
+    const el = document.createElement('div'); el.className = 'rd-pop'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Edit highlight');
+    el.innerHTML = `<div class="rd-pop-t">${HL_TYPES.map(t => `<button class="rd-t small" data-t="${t.id}" style="--c:${t.color}" aria-pressed="${t.id === h.type}"><i></i>${esc(t.name)}</button>`).join('')}</div>
+      <p class="rd-quote">“${esc(h.text.length > 140 ? h.text.slice(0, 137) + '…' : h.text)}”</p>
+      <label class="sr" for="rd-note">Note</label><textarea id="rd-note" rows="3" placeholder="Add a note…">${esc(h.note)}</textarea>
+      <div class="row" style="margin-top:8px"><button class="btn small ghost" id="rd-del">Delete</button><span class="spacer"></span><button class="btn small primary" id="rd-ok">Done</button></div>`;
+    wrap.appendChild(el); R.pop = el;
+    const left = Math.max(8, Math.min((pr.left - wr.left) + rc[0] * pr.width, wr.width - 316)), top = (pr.top - wr.top) + (rc[1] + rc[3]) * pr.height + 10; el.style.left = left + 'px'; el.style.top = top + 'px';
+    let nt = null; const ta = $('#rd-note', el); ta.addEventListener('input', () => { h.note = ta.value; clearTimeout(nt); nt = setTimeout(() => { save(); drawHl(h.page - 1); panel(); }, 400); });
+    $$('.rd-t', el).forEach(b => { b.addEventListener('pointerdown', e => e.preventDefault()); b.onclick = () => { h.type = b.dataset.t; $$('.rd-t', el).forEach(x => x.setAttribute('aria-pressed', String(x === b))); drawHl(h.page - 1); save(); panel(); }; });
+    $('#rd-ok', el).onclick = () => { clearTimeout(nt); h.note = ta.value; save(); drawHl(h.page - 1); panel(); closeEditor(); };
+    $('#rd-del', el).onclick = () => { R.hls = R.hls.filter(x => x.id !== h.id); drawHl(h.page - 1); save(); status(); panel(); closeEditor(); };
+    el.addEventListener('keydown', e => { if (e.key === 'Escape') { e.stopPropagation(); $('#rd-ok', el).click(); } }); ta.focus({ preventScroll: true });
+  }
+  root.addEventListener('click', e => {
+    const s = window.getSelection && window.getSelection(); if (s && !s.isCollapsed) return;
+    const pageEl = e.target.closest && e.target.closest('.rd-page'); if (!pageEl) return; const i = +pageEl.dataset.i, r = pageEl.getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height, hit = R.hls.filter(h => h.page === i + 1 && rectHit(h.rects, x, y)).pop();
+    if (hit) editor(hit); else closeEditor();
+  });
+
+  /* ----- the list of everything you marked ----- */
+  function panel() {
+    const box = $('#rd-panel'); if (!box) return; $('#rd-n').textContent = R.hls.length ? String(R.hls.length) : '';
+    const groups = HL_TYPES.map(t => [t, R.hls.filter(h => h.type === t.id).sort((a, b) => a.page - b.page || a.at - b.at)]).filter(g => g[1].length);
+    box.innerHTML = groups.length ? `<div class="row" style="justify-content:space-between;margin-bottom:6px"><b>Your highlights</b><button class="btn small" id="rd-tonotes">Add all to my notes</button></div>` + groups.map(([t, list]) => `<div class="rd-grp" style="--c:${t.color}"><h4><i></i>${esc(t.name)} <span class="muted">${list.length}</span></h4>${list.map(h => `<div class="rd-item" data-id="${esc(h.id)}"><button class="linklike" data-go="${esc(h.id)}">“${esc(h.text.length > 150 ? h.text.slice(0, 147) + '…' : h.text)}”</button>${h.note ? `<p class="rd-itemnote">${esc(h.note)}</p>` : ''}<span class="muted">p. ${h.page}</span></div>`).join('')}</div>`).join('')
+      : '<p class="muted">Nothing highlighted yet.</p>';
+    $$('[data-go]', box).forEach(b => b.onclick = () => jump(R.hls.find(h => h.id === b.dataset.go)));
+    $('#rd-tonotes', box)?.addEventListener('click', async () => { await addHighlightsToNotes(p, R.hls); });
+  }
+  function jump(h) {
+    if (!h) return; const pg = R.pages[h.page - 1]; if (!pg) return; pg.el.scrollIntoView({ block: 'start', behavior: 'smooth' }); renderPage(h.page - 1);
+    setTimeout(() => { const g = $(`.hl[data-id="${h.id}"]`, pg.el); if (g) { g.classList.add('flash'); setTimeout(() => g.classList.remove('flash'), 1600); } }, 350);
+  }
+  $('#rd-list').onclick = () => { const box = $('#rd-panel'); box.hidden = !box.hidden; $('#rd-list').setAttribute('aria-expanded', String(!box.hidden)); panel(); };
+
+  /* ----- pages, drawn when they scroll into view ----- */
+  const first = await R.doc.getPage(1), vp1 = first.getViewport({ scale: 1 });
+  R.W = Math.max(280, Math.min(900, (root.clientWidth || 780)));
+  const build = () => {
+    root.innerHTML = ''; R.pages = [];
+    for (let i = 0; i < R.doc.numPages; i++) {
+      const el = document.createElement('div'); el.className = 'rd-page'; el.dataset.i = i; el.style.width = R.W + 'px'; el.style.height = Math.round(R.W * vp1.height / vp1.width) + 'px';
+      el.innerHTML = `<canvas class="rd-canvas" aria-hidden="true"></canvas><div class="rd-hl" aria-hidden="true"></div><div class="textLayer"></div><span class="rd-pn">${i + 1}</span>`;
+      root.appendChild(el); R.pages.push({ el, done: false });
+    }
+  };
+  async function renderPage(i) {
+    const pg = R.pages[i]; if (!pg || pg.done) return; pg.done = true;
+    try {
+      const page = await R.doc.getPage(i + 1), v1 = page.getViewport({ scale: 1 }), scale = R.W / v1.width, vp = page.getViewport({ scale });
+      pg.el.style.height = Math.round(vp.height) + 'px'; const cv = $('.rd-canvas', pg.el), dpr = Math.min(window.devicePixelRatio || 1, 2);
+      cv.width = Math.floor(vp.width * dpr); cv.height = Math.floor(vp.height * dpr); cv.style.width = Math.round(vp.width) + 'px'; cv.style.height = Math.round(vp.height) + 'px';
+      const ctx = cv.getContext('2d'); if (ctx) await page.render({ canvasContext: ctx, viewport: page.getViewport({ scale: scale * dpr }) }).promise;
+      const tl = $('.textLayer', pg.el); tl.style.setProperty('--scale-factor', String(scale)); const tc = await page.getTextContent();
+      try { await pdfjsLib.renderTextLayer({ textContentSource: tc, container: tl, viewport: vp, textDivs: [] }).promise; } catch (e) { await pdfjsLib.renderTextLayer({ textContent: tc, container: tl, viewport: vp, textDivs: [] }).promise; }
+      drawHl(i);
+    } catch (e) { console.warn('Could not draw page', i + 1, e); pg.done = false; }
+  }
+  build(); status(); panel(); drawAll();
+  if ('IntersectionObserver' in window) { R.io = new IntersectionObserver(es => es.forEach(en => { if (en.isIntersecting) renderPage(+en.target.dataset.i); }), { rootMargin: '700px 0px' }); R.pages.forEach(pg => R.io.observe(pg.el)); }
+  else { for (let i = 0; i < R.pages.length; i++) await renderPage(i); }
+  let rt = null, lastW = R.W;
+  function onResize() { clearTimeout(rt); rt = setTimeout(() => { const w = Math.max(280, Math.min(900, root.clientWidth || R.W)); if (Math.abs(w - lastW) < 30) return; lastW = R.W = w; closeEditor(); R.io && R.io.disconnect(); build(); drawAll(); if (R.io) R.pages.forEach(pg => R.io.observe(pg.el)); }, 250); }
+  window.addEventListener('resize', onResize);
+}
+
+/* rectangles of the current selection, grouped by the page they fall on */
+function rectsByPage(R, range) {
+  const crs = [...range.getClientRects()], out = [];
+  R.pages.forEach((pg, i) => {
+    const pr = pg.el.getBoundingClientRect(); if (!pr.width) return;
+    const mine = crs.filter(r => { const cx = r.left + r.width / 2, cy = r.top + r.height / 2; return cx >= pr.left && cx <= pr.right && cy >= pr.top && cy <= pr.bottom; });
+    const rects = normRects(mine, pr); if (rects.length) out.push({ page: i + 1, rects });
+  });
+  return out;
+}
+
+/* ---- highlights → notes (and exports) ---- */
+const hlLine = h => `- [${hlType(h.type).name}] “${String(h.text).replace(/\s+/g, ' ').trim()}” (p. ${h.page})${h.note ? ' — ' + String(h.note).replace(/\s+/g, ' ').trim() : ''}`;
+function highlightsMarkdown(r) {
+  const hs = arr(r.highlights); if (!hs.length) return '';
+  return '\n## Highlights\n' + HL_TYPES.map(t => { const l = hs.filter(h => h.type === t.id).sort((a, b) => a.page - b.page); return l.length ? `\n### ${t.name}\n${l.map(hlLine).join('\n')}\n` : ''; }).join('');
+}
+async function addHighlightsToNotes(p, hls) {
+  if (!hls.length) return toast('Nothing highlighted yet');
+  if (!p.id || p.id === 'demo') return toast('Highlights on the sample paper aren\'t saved. Analyze your own paper to keep them.');
+  const text = HL_TYPES.map(t => { const l = hls.filter(h => h.type === t.id).sort((a, b) => a.page - b.page); return l.length ? `${t.name}s\n${l.map(hlLine).join('\n')}` : ''; }).filter(Boolean).join('\n\n');
+  try { await lib.update(p.id, x => ({ notes: (x.notes ? x.notes.replace(/\s+$/, '') + '\n\n' : '') + 'Highlights\n' + text + '\n' })); toast('Added to your notes'); } catch (e) { toast('Could not save to your notes'); }
 }
 
 /* =====================================================================
@@ -3044,27 +3202,27 @@ function openSendMenu(ids) {
 /* ---------- the Connections screen ---------- */
 function openConnections(focus) {
   const c = syncCfg(), z = c.zotero, o = c.obsidian, fsOk = fsSupported();
-  const el = scrim(`<h2>Connections</h2><p class="muted">Link Paperlens to Zotero and Obsidian. Your keys and settings stay on this device, and nothing goes through any other server.</p>
+  const el = scrim(`<h2>Connections</h2><p class="muted">Your keys stay on this device.</p>
     <section class="conn" id="cz"><h3>Zotero</h3>
       <div id="cz-body"></div></section>
     <section class="conn" id="co"><h3>Obsidian</h3>
       <div class="field"><label for="ov">Vault name</label><input id="ov" autocomplete="off" value="${esc(o.vault)}" placeholder="The name shown at the top of your vault"></div>
       <div class="field"><label for="of">Folder for paper notes</label><input id="of" autocomplete="off" value="${esc(o.folder)}" placeholder="Papers"></div>
       <fieldset class="meth"><legend>How should notes get there?</legend>
-        ${fsOk ? `<label class="check"><input type="radio" name="om" value="fs" ${o.method === 'fs' ? 'checked' : ''}><span><b>Write straight into my vault folder</b><small>Best option. Also lets you edit notes in Obsidian and pull the changes back. Chrome or Edge on a computer.</small></span></label>` : ''}
-        <label class="check"><input type="radio" name="om" value="uri" ${o.method === 'uri' ? 'checked' : ''}><span><b>Open each note in Obsidian</b><small>Copies the note and opens it with an obsidian:// link. Works on phones and computers with Obsidian installed.</small></span></label>
-        <label class="check"><input type="radio" name="om" value="download" ${o.method === 'download' ? 'checked' : ''}><span><b>Download .md files</b><small>One note, or a zip for several. Drop them into your vault.</small></span></label></fieldset>
+        ${fsOk ? `<label class="check"><input type="radio" name="om" value="fs" ${o.method === 'fs' ? 'checked' : ''}><span><b>Write straight into my vault folder</b><small>Best option. Chrome or Edge on a computer.</small></span></label>` : ''}
+        <label class="check"><input type="radio" name="om" value="uri" ${o.method === 'uri' ? 'checked' : ''}><span><b>Open each note in Obsidian</b><small>Works on phones too.</small></span></label>
+        <label class="check"><input type="radio" name="om" value="download" ${o.method === 'download' ? 'checked' : ''}><span><b>Download .md files</b><small>Drop them into your vault.</small></span></label></fieldset>
       <div id="co-fs" class="row" style="margin:8px 0"><button class="btn small" id="co-pick" type="button">${o.dirName ? 'Change vault folder' : 'Choose vault folder'}</button><span class="muted" id="co-dir">${o.dirName ? 'Using: ' + esc(o.dirName) : 'No folder chosen yet'}</span></div>
-      <label class="check"><input type="checkbox" id="of-fc" ${o.flashcards ? 'checked' : ''}><span><b>Include flashcards</b><small>As Question::Answer lines for Obsidian's spaced-repetition plugins.</small></span></label>
+      <label class="check"><input type="checkbox" id="of-fc" ${o.flashcards ? 'checked' : ''}><span><b>Include flashcards</b><small>As Question::Answer lines.</small></span></label>
       <div class="row" style="margin-top:10px"><button class="btn small" id="co-save" type="button">Save Obsidian settings</button><button class="btn small" id="co-all" type="button">Send my whole library</button><button class="btn small" id="co-pull" type="button">Pull notes from Obsidian</button></div>
-      <p class="muted" style="font-size:13.5px;margin-top:10px">Only the parts between Paperlens's markers are managed. Anything else you write in a note is left alone.</p></section>
+      <p class="muted" style="font-size:13.5px;margin-top:10px">Only the marked sections are managed, so your own writing is safe.</p></section>
     <div class="row" style="margin-top:20px"><button class="btn primary" id="cx">Done</button></div>`, true);
   const drawZ = () => {
     const zz = syncCfg().zotero;
     $('#cz-body', el).innerHTML = zz.key && zz.userID ? `<p>Connected${zz.username ? ' as <b>' + esc(zz.username) + '</b>' : ''}.</p>
       <label class="check"><input type="checkbox" id="zauto" ${zz.auto ? 'checked' : ''}><span><b>Add new papers to Zotero automatically</b><small>Right after each analysis.</small></span></label>
       <div class="row" style="margin-top:10px"><button class="btn small" id="z-imp" type="button">Import from Zotero…</button><button class="btn small" id="z-sync" type="button">Sync with Zotero</button><button class="btn small" id="z-push" type="button">Push my whole library</button><button class="btn small ghost" id="z-off" type="button">Disconnect</button></div>
-      <p class="muted" style="font-size:13.5px;margin-top:10px">Sync adds tags, collections and a "Paperlens summary" note to your Zotero items, and brings in changes you made in Zotero. It never overwrites titles, authors or other details in Zotero.</p>`
+      <p class="muted" style="font-size:13.5px;margin-top:10px">Sync adds tags, folders and a summary note, and never overwrites your Zotero details.</p>`
       : `<ol class="steps-help"><li>Open <b>zotero.org/settings/keys/new</b> and sign in.</li><li>Tick <b>Allow library access</b>, <b>Allow notes access</b> and <b>Allow write access</b>, then save.</li><li>Paste the key here.</li></ol>
       <div class="field"><label for="zk">Zotero API key</label><input id="zk" type="password" autocomplete="off" placeholder="Paste your key"></div>
       <div class="row" style="margin-top:10px"><button class="btn primary small" id="z-go" type="button">Connect</button><span id="z-msg" role="status" class="muted" style="flex:1;min-width:160px"></span></div>`;
@@ -3364,7 +3522,6 @@ function playQuiz(mode) {
     stop(); S.keys = null;
     const pct = G.answered ? Math.round(G.right / G.answered * 100) : 0, prev = best.get(mode), isBest = prev == null || G.score > prev;
     if (isBest) best.set(mode, G.score);
-    if (isBest && G.score > 0) setTimeout(celebrate, 150);
     app().innerHTML = `<div class="done"><p class="muted">${G.lives <= 0 ? 'Out of lives' : 'Finished'}</p><div class="score-big"><span class="mark">${G.score}</span></div>
       <p>${G.right} of ${G.answered} correct (${pct}%) · ${esc(rankFor(pct))}${isBest ? ' · New best!' : ''}</p>
       <div class="row" style="justify-content:center">${G.missed.length ? `<button class="btn primary" id="keep">Turn ${G.missed.length} missed into flashcards</button>` : ''}<button class="btn ${G.missed.length ? '' : 'primary'}" id="again">Play again</button><button class="btn" id="hub">All games</button></div></div>`;
@@ -3404,7 +3561,7 @@ function playMatch() {
   });
   const finish = () => {
     stop(); const time = (Date.now() - t0) / 1000 + penalty, prev = best.get('match'), isBest = prev == null || time < prev;
-    if (isBest) { best.set('match', time); setTimeout(celebrate, 600); }
+    if (isBest) best.set('match', time);
     setTimeout(() => {
       app().innerHTML = `<div class="done"><p class="muted">All pairs matched</p><div class="score-big"><span class="mark">${time.toFixed(1)} s</span></div>
         <p>${penalty ? penalty / 2 + ' mistake' + (penalty > 2 ? 's' : '') + ' (+' + penalty + ' s)' : 'No mistakes'}${isBest ? ' · New best!' : ''}</p>
@@ -3412,427 +3569,6 @@ function playMatch() {
       $('#again').onclick = playMatch; $('#hub').onclick = () => showPaper('play');
     }, 450);
   };
-}
-
-/* =====================================================================
-   Paperlens — read & annotate the PDF
-   Highlights are colored by what they are: a claim, a question, evidence or method.
-   ===================================================================== */
-const ANN = {
-  claim:    { name: 'Claim',    color: '#ffe066', word: 'yellow', hint: 'Something the authors assert or conclude' },
-  question: { name: 'Question', color: '#8fe3a8', word: 'green',  hint: 'An open question, a doubt, or something to check' },
-  evidence: { name: 'Evidence', color: '#a8cbff', word: 'blue',   hint: 'Data, numbers and results that back a claim' },
-  method:   { name: 'Method',   color: '#dcc2ff', word: 'purple', hint: 'How the study was done' }
-};
-const ANN_KEYS = Object.keys(ANN);
-const trunc = (s, n) => { s = String(s || ''); return s.length > n ? s.slice(0, n - 1).replace(/\s+\S*$/, '') + '…' : s; };
-
-/* a quick first guess, made instantly on this device; AI can refine it when a key is set */
-function annGuess(text) {
-  const s = String(text).trim(), l = s.toLowerCase();
-  if (/\?["”')\]]*\s*$/.test(s) || /^(why|how|what|whether|which|who|when|where|is it|are there|does|do we|can|could|should|would)\b/i.test(s)
-    || /\b(unclear|unknown|remains? (to be|open|unclear)|open (question|problem)|future (work|research)|not (yet )?(known|understood|clear)|(do|does) not (know|explain)|we cannot|it is (not )?possible that|whether or not|limitation|caveat|uncertain|unresolved|warrants? further|needs? further|more research)\b/.test(l)) return 'question';
-  if (/^(stack|train|fit|estimate|measure|collect|sample|recruit|randomi[sz]e|apply|combine|build|compute|simulate|survey|interview|code|annotate|preprocess)\b/i.test(s)) return 'method';
-  if (/\b(we (use|used|train|trained|collect|collected|sample|sampled|measure|measured|apply|applied|employ|employed|design|designed|implement|implemented|fit|estimate|estimated|recruit|recruited|follow|followed|adopt|adopted|compute|computed|stack)|were (recruited|randomi[sz]ed|assigned|collected|trained|measured)|procedure|protocol|algorithm|pipeline|participants|questionnaire|interview|regression|randomi[sz]ed|sampling|architecture|hyperparameter|trained (on|with)|our (method|approach|model|design)|data (were|was) (collected|obtained))\b/.test(l)) return 'method';
-  if (/\d/.test(s) && /(%|±|\bp\s*[<=>]|\bn\s*=|\br\s*=|\bci\b|odds|bleu|accuracy|\bauc\b|\bf1\b|score|table\s*\d|fig(ure)?\.?\s*\d|significan|increase|decrease|improv|reduc|outperform|higher|lower|times|fold|\d+(\.\d+)?\s*(x|%))/.test(l)) return 'evidence';
-  if (/\b(results? (show|indicate|suggest)|data (show|suggest)|we (observe|observed|found)|was (associated|correlated)|correlat)\b/.test(l)) return 'evidence';
-  return 'claim';
-}
-async function annAskAI(a, p) {
-  if (!cfgReady() || ls.get('pl.annai', true) === false) return null;
-  const ctrl = new AbortController(), timer = setTimeout(() => ctrl.abort(), 20000);
-  try {
-    const { text } = await streamMessages({ max_tokens: 32, signal: ctrl.signal,
-      system: 'You label passages a reader highlighted in a research paper. Reply with exactly one word: claim, question, evidence or method.\nclaim: an assertion, interpretation or conclusion.\nquestion: an open question, uncertainty, limitation, or something a careful reader should question or check.\nevidence: data, statistics, measured results or observations offered in support.\nmethod: how the study was designed, carried out or analysed.',
-      messages: [{ role: 'user', content: `Paper: ${p.meta.title}\n\nHighlighted passage:\n"""${a.text.slice(0, 1500)}"""\n\nOne word:` }] });
-    const m = /\b(claim|question|evidence|method)\b/i.exec(text || ''); return m ? m[1].toLowerCase() : null;
-  } catch (e) { return null; } finally { clearTimeout(timer); }
-}
-
-/* ---------- storage: with the paper in the library, or on this device for the sample ---------- */
-const annKey = p => 'pl.ann.' + (p.id || 'tmp');
-async function annLoad(p) {
-  if (S.ann && S.ann.id === p.id) return S.ann.list;
-  let list = [];
-  try { const r = p.id && p.id !== 'demo' ? await lib.get(p.id) : null; list = arr(r && r.annots ? r.annots : ls.get(annKey(p), [])); } catch (e) {}
-  list = list.filter(a => a && ANN[a.cat] && arr(a.rects).length);
-  S.ann = { id: p.id, list }; return list;
-}
-let annTimer = null;
-function annSave(p, now) {
-  clearTimeout(annTimer);
-  const run = async () => {
-    annTimer = null; const list = (S.ann && S.ann.id === p.id ? S.ann.list : []).map(({ pending, ...a }) => a);
-    if (p.id && p.id !== 'demo') { try { if (await lib.update(p.id, { annots: list })) return; } catch (e) {} }
-    ls.set(annKey(p), list);
-  };
-  if (now) return run(); annTimer = setTimeout(run, 400);
-}
-function annBadge(p) {
-  const b = $('.tab[data-t="read"]'); if (!b || !S.ann || S.ann.id !== p.id) return;
-  const n = S.ann.list.length; b.innerHTML = 'Read &amp; annotate' + (n ? `<small>${n}</small>` : '');
-}
-function annMarkdown(p, list) {
-  const L = ['# Highlights: ' + p.meta.title, '', '*' + ANN_KEYS.map(k => ANN[k].name + ' = ' + ANN[k].word).join(' · ') + '*'];
-  for (const k of ANN_KEYS) {
-    const g = list.filter(a => a.cat === k); if (!g.length) continue;
-    L.push('', `## ${ANN[k].name}s (${g.length})`);
-    g.forEach(a => { L.push(`- ${a.star ? '★ ' : ''}"${a.text}" (p. ${a.page})`); if (a.note) L.push('  - Note: ' + a.note.replace(/\s*\n\s*/g, ' ')); });
-  }
-  return L.join('\n') + '\n';
-}
-
-/* ---------- the sample paper has no PDF, so build a small one from its summary to practise on ---------- */
-function makeTextPdf(blocks, footer) {
-  const W = 612, H = 792, M = 66, maxW = W - 2 * M;
-  const F = { h1: ['F2', 21, 27, .56], h2: ['F2', 13.5, 19, .56], p: ['F1', 11, 16, .5], meta: ['F3', 10, 14.5, .5] };
-  const ascii = s => String(s).replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/[–—]/g, '-').replace(/…/g, '...').replace(/×/g, 'x').replace(/[^\x20-\x7e]/g, '');
-  const str = s => '(' + s.replace(/[\\()]/g, '\\$&') + ')';
-  const pages = []; let ops = [], y = H - M;
-  const flush = () => { if (!ops.length) return; ops.push(`BT /F3 9 Tf ${M} 38 Td ${str(footer)} Tj ET`); pages.push(ops.join('\n')); ops = []; y = H - M; };
-  for (const b of blocks) {
-    const [f, size, lh, cw] = F[b.t], lines = []; let line = '';
-    for (const w of ascii(b.s).split(/\s+/).filter(Boolean)) { const t = line ? line + ' ' + w : w; if (t.length * size * cw > maxW && line) { lines.push(line); line = w; } else line = t; }
-    if (line) lines.push(line);
-    if (b.t === 'h2') { y -= 12; if (y - lh * 3 < M) flush(); }
-    for (const l of lines) { if (y - lh < M) flush(); y -= lh; ops.push(`BT /${f} ${size} Tf ${M} ${y.toFixed(1)} Td ${str(l)} Tj ET`); }
-    y -= b.t === 'p' ? 7 : b.t === 'h1' ? 8 : 3;
-  }
-  flush();
-  const objs = ['<< /Type /Catalog /Pages 2 0 R >>', '', '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>',
-    '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>', '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Oblique /Encoding /WinAnsiEncoding >>'];
-  const kids = pages.map(c => { objs.push(`<< /Length ${c.length} >>\nstream\n${c}\nendstream`); objs.push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents ${objs.length} 0 R >>`); return objs.length; });
-  objs[1] = `<< /Type /Pages /Kids [${kids.map(k => k + ' 0 R').join(' ')}] /Count ${kids.length} >>`;
-  let out = '%PDF-1.4\n'; const offs = [];
-  objs.forEach((o, i) => { offs.push(out.length); out += `${i + 1} 0 obj\n${o}\nendobj\n`; });
-  const x = out.length;
-  out += `xref\n0 ${objs.length + 1}\n0000000000 65535 f \n` + offs.map(o => String(o).padStart(10, '0') + ' 00000 n \n').join('') + `trailer\n<< /Size ${objs.length + 1} /Root 1 0 R >>\nstartxref\n${x}\n%%EOF`;
-  return new TextEncoder().encode(out);
-}
-async function samplePdf(p) {
-  if (S.samplePdf) return S.samplePdf;
-  const o = p.ov, t = s => mathToText(s || ''), B = [];
-  B.push({ t: 'h1', s: t(p.meta.title) }, { t: 'meta', s: [p.meta.authors, p.meta.venue].filter(Boolean).join(' - ') },
-    { t: 'meta', s: 'Practice pages for the highlighter, written from the Paperlens summary of this paper (not the original text).' });
-  B.push({ t: 'h2', s: 'Abstract' }, { t: 'p', s: t(o.tldr) }, { t: 'p', s: t(o.plain) });
-  B.push({ t: 'h2', s: '1  The problem' }, { t: 'p', s: t(o.problem) }, { t: 'p', s: t(o.why) });
-  B.push({ t: 'h2', s: '2  Approach' }, { t: 'p', s: t(o.approach) }, ...p.glossary.map(g => ({ t: 'p', s: t(g.term) + '. ' + t(g.definition) })));
-  B.push({ t: 'h2', s: '3  Results' }, ...o.findings.map(f => ({ t: 'p', s: t(f.t) })));
-  B.push({ t: 'h2', s: '4  Limitations' }, ...o.limits.map(l => ({ t: 'p', s: t(l) })));
-  const qs = p.figures.map(f => f.check).filter(Boolean);
-  if (qs.length) B.push({ t: 'h2', s: '5  Questions worth asking' }, ...qs.map(q => ({ t: 'p', s: t(q) })));
-  await ensurePdfJs();
-  return (S.samplePdf = await pdfjsLib.getDocument({ data: makeTextPdf(B, 'Paperlens sample - ' + mathToText(p.meta.title)) }).promise);
-}
-
-/* ---------- rectangles of a selection, stored as fractions of the page ---------- */
-function annRects(range) {
-  const out = [], root = range.commonAncestorContainer.nodeType === 3 ? range.commonAncestorContainer.parentNode : range.commonAncestorContainer;
-  const walk = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); let n;
-  while ((n = walk.nextNode())) {
-    if (!range.intersectsNode(n) || !n.parentElement?.closest('.textLayer') || !n.nodeValue.trim()) continue;
-    const r = document.createRange(); r.selectNodeContents(n);
-    if (n === range.startContainer) r.setStart(n, range.startOffset);
-    if (n === range.endContainer) r.setEnd(n, range.endOffset);
-    const pg = n.parentElement.closest('.ann-page'), pb = pg.getBoundingClientRect();
-    for (const c of r.getClientRects()) if (c.width > 1 && c.height > 1)
-      out.push({ p: +pg.dataset.n, x: (c.left - pb.left) / pb.width, y: (c.top - pb.top) / pb.height, w: c.width / pb.width, h: c.height / pb.height });
-  }
-  out.sort((a, b) => a.p - b.p || a.y - b.y || a.x - b.x);
-  const merged = [];
-  for (const r of out) {                                  // join pieces of the same line into one bar
-    const m = merged[merged.length - 1];
-    if (m && m.p === r.p && Math.abs((m.y + m.h / 2) - (r.y + r.h / 2)) < Math.min(m.h, r.h) * .5 && r.x <= m.x + m.w + .015) {
-      const x2 = Math.max(m.x + m.w, r.x + r.w), y1 = Math.min(m.y, r.y), y2 = Math.max(m.y + m.h, r.y + r.h);
-      m.x = Math.min(m.x, r.x); m.w = x2 - m.x; m.y = y1; m.h = y2 - y1;
-    } else merged.push({ ...r });
-  }
-  return merged.map(r => ({ p: r.p, x: +r.x.toFixed(4), y: +r.y.toFixed(4), w: +r.w.toFixed(4), h: +r.h.toFixed(4) }));
-}
-
-/* ---------- view: read & annotate ---------- */
-async function viewRead(p) {
-  app().classList.add('wide'); S.cleanups.push(() => app().classList.remove('wide'));
-  app().innerHTML = `<div class="ann-msg muted">Opening your highlights…</div>`;
-  const list = await annLoad(p); if (S.tab !== 'read') return;
-  const st = { filter: '', open: null, pdf: null };
-  const aiOn = () => cfgReady() && ls.get('pl.annai', true) !== false;
-  app().innerHTML = `
-  <div class="ann-top"><div><h2 style="font-size:26px">Read &amp; annotate</h2>
-    <p class="muted" style="margin-top:4px">Select any passage to highlight it. Paperlens works out what kind of passage it is and colors it for you. One tap changes it.</p></div></div>
-  <div class="ann-legend" id="ann-legend" role="toolbar" aria-label="Highlight colors. Choose one to show only those."></div>
-  <div class="ann-wrap">
-    <div class="ann-doc" id="ann-doc"><div class="ann-msg muted">Opening the PDF…</div></div>
-    <aside class="ann-side" id="ann-side" aria-label="Your highlights"></aside>
-  </div>`;
-  const doc = $('#ann-doc'), side = $('#ann-side'), legend = $('#ann-legend');
-  const shown = a => !st.filter || (st.filter === 'star' ? a.star : a.cat === st.filter);
-  const sortList = () => list.sort((a, b) => a.page - b.page || a.rects[0].y - b.rects[0].y || a.rects[0].x - b.rects[0].x);
-  const pageEl = n => $(`.ann-page[data-n="${n}"]`, doc);
-
-  /* legend: the colors, what they mean, and how many of each */
-  const drawLegend = () => {
-    const cnt = k => list.filter(a => a.cat === k).length, stars = list.filter(a => a.star).length;
-    legend.innerHTML = `<span class="ann-l-t">Colors</span>${ANN_KEYS.map((k, i) => `<button class="ann-chip" data-f="${k}" aria-pressed="${st.filter === k}" style="--c:${ANN[k].color}" title="${esc(ANN[k].hint)}. Press to show only these.">
-        <i aria-hidden="true"></i><b>${ANN[k].name}</b><span class="w">${ANN[k].word}</span><em>${cnt(k)}</em></button>`).join('')}
-      <button class="ann-chip star" data-f="star" aria-pressed="${st.filter === 'star'}" title="Highlights you starred as important"><b>★ Important</b><em>${stars}</em></button>
-      <span class="grow"></span>
-      ${cfgReady() ? `<label class="ann-ai" title="Ask your AI service to double-check each label (a tiny request per highlight)"><input type="checkbox" id="ann-ai" ${aiOn() ? 'checked' : ''}> ✨ AI check</label>` : ''}`;
-    $$('[data-f]', legend).forEach(b => b.onclick = () => { st.filter = st.filter === b.dataset.f ? '' : b.dataset.f; refresh(); });
-    $('#ann-ai', legend)?.addEventListener('change', e => { ls.set('pl.annai', e.target.checked); toast(e.target.checked ? 'AI will double-check each new highlight' : 'Labels are guessed on this device only'); });
-  };
-  /* side panel: every highlight, in reading order */
-  const drawSide = () => {
-    const vis = list.filter(shown);
-    side.innerHTML = `<div class="ann-side-h"><b>${list.length ? `${vis.length}${st.filter ? ' of ' + list.length : ''} highlight${vis.length === 1 ? '' : 's'}` : 'Your highlights'}</b>
-        ${st.filter ? `<button class="linklike muted" id="ann-all">Show all</button>` : list.length ? `<button class="linklike muted" id="ann-clear">Clear all</button>` : ''}</div>
-      <div class="ann-list">${vis.length ? vis.map(a => `<button class="ann-item" data-a="${a.id}" style="--c:${ANN[a.cat].color}">
-          <span class="ann-item-h"><i aria-hidden="true"></i><b>${ANN[a.cat].name}</b>${a.star ? '<span class="ann-st" aria-label="important">★</span>' : ''}<span class="muted">p. ${a.page}</span></span>
-          <span class="ann-q">${esc(trunc(a.text, 220))}</span>${a.note ? `<span class="ann-note">✎ ${esc(trunc(a.note, 160))}</span>` : ''}</button>`).join('')
-        : list.length ? '<p class="muted ann-empty">Nothing in this color yet.</p>'
-        : `<div class="ann-empty"><p><b>Try it:</b> drag across a sentence in the paper.</p>
-           <p class="ann-demo"><span style="--c:${ANN.claim.color}">We show that…</span> becomes a <b>claim</b>,<br><span style="--c:${ANN.question.color}">Does it hold for…?</span> a <b>question</b>,<br><span style="--c:${ANN.evidence.color}">accuracy rose 12%</span> <b>evidence</b>, and<br><span style="--c:${ANN.method.color}">we recruited 40…</span> <b>method</b>.</p></div>`}</div>
-      ${list.length ? `<div class="row ann-exp"><button class="btn small" id="ann-md">${ICON.dl}Export (.md)</button><button class="btn small" id="ann-notes">Send to my notes</button></div>` : ''}`;
-    $('#ann-all', side)?.addEventListener('click', () => { st.filter = ''; refresh(); });
-    $('#ann-clear', side)?.addEventListener('click', () => { if (!confirm(`Delete all ${list.length} highlights on this paper?`)) return; closePop(); list.length = 0; annSave(p); refresh(); });
-    $$('[data-a]', side).forEach(b => b.onclick = () => jump(list.find(a => a.id === b.dataset.a)));
-    $('#ann-md', side)?.addEventListener('click', () => download(slug(p.meta.title) + '-highlights.md', annMarkdown(p, list), 'text/markdown'));
-    $('#ann-notes', side)?.addEventListener('click', async () => {
-      if (!p.id || p.id === 'demo') return toast('Notes are kept for papers in your library. Use Export instead.');
-      const md = annMarkdown(p, list).replace(/^# .*\n/, '## Highlights\n');
-      const r = await lib.update(p.id, x => ({ notes: (x.notes ? x.notes.replace(/\s+$/, '') + '\n\n' : '') + md })).catch(() => null);
-      toast(r ? 'Highlights added to your notes' : 'Could not save to notes');
-    });
-  };
-  const paintPage = n => {
-    const el = pageEl(n); if (!el) return;
-    el.querySelector('.ann-hl').innerHTML = list.flatMap(a => a.rects.filter(r => r.p === n).map((r, i, rs) =>
-      `<i data-a="${a.id}" class="${shown(a) ? '' : 'dim'}${a.star ? ' star' : ''}${st.open === a ? ' on' : ''}" style="left:${r.x * 100}%;top:${r.y * 100}%;width:${r.w * 100}%;height:${r.h * 100}%;--c:${ANN[a.cat].color}">${a.note && i === rs.length - 1 ? '<b>✎</b>' : ''}</i>`)).join('');
-  };
-  const paintAll = () => $$('.ann-page', doc).forEach(el => paintPage(+el.dataset.n));
-  const refresh = () => { sortList(); drawLegend(); drawSide(); paintAll(); annBadge(p); };
-
-  /* the little card that opens on a highlight */
-  const an = k => (k === 'evidence' ? '' : 'a ') + `<b>${ANN[k].name.toLowerCase()}</b>`;
-  const how = a => a.by === 'you' ? `Marked by you as ${an(a.cat)}`
-    : a.by === 'ai' ? `✨ AI read this as ${an(a.cat)}`
-    : `✨ Looks like ${an(a.cat)}${a.pending ? ' <span class="muted">· checking…</span>' : ''}`;
-  const closePop = () => { $('.ann-pop')?.remove(); const was = st.open; st.open = null; if (was) was.rects.forEach(r => paintPage(r.p)); };
-  const placePop = () => {
-    const pop = $('.ann-pop'), a = st.open; if (!pop || !a) return;
-    if (matchMedia('(max-width:640px)').matches) { pop.classList.add('sheet'); return; }
-    const last = a.rects[a.rects.length - 1], el = pageEl(last.p); if (!el) return;
-    const b = el.getBoundingClientRect(), x = b.left + (last.x + last.w / 2) * b.width, yb = b.top + (last.y + last.h) * b.height, yt = b.top + a.rects[0].y * b.height;
-    const pw = pop.offsetWidth, ph = pop.offsetHeight, below = yb + 12 + ph < innerHeight - 8;
-    pop.style.left = Math.max(8, Math.min(innerWidth - pw - 8, x - pw / 2)) + 'px';
-    pop.style.top = (below ? yb + 12 : Math.max(8, yt - ph - 12)) + 'px';
-  };
-  const openPop = a => {
-    closePop(); st.open = a; a.rects.forEach(r => paintPage(r.p));
-    const pop = document.createElement('div'); pop.className = 'ann-pop'; pop.setAttribute('role', 'dialog'); pop.setAttribute('aria-label', 'Highlight');
-    const fill = () => {
-      pop.innerHTML = `<div class="ann-pop-h"><span class="ann-how">${how(a)}</span><button class="ann-x" aria-label="Close">×</button></div>
-        <div class="ann-cats" role="radiogroup" aria-label="What kind of passage is this?">${ANN_KEYS.map((k, i) => `<button role="radio" aria-checked="${a.cat === k}" data-c="${k}" style="--c:${ANN[k].color}"><i aria-hidden="true"></i>${ANN[k].name}<kbd>${i + 1}</kbd></button>`).join('')}</div>
-        <blockquote style="--c:${ANN[a.cat].color}">${esc(trunc(a.text, 240))}</blockquote>
-        <label class="sr" for="ann-n">Your note</label><textarea id="ann-n" rows="2" placeholder="Add a note: why it matters, what to check…">${esc(a.note)}</textarea>
-        <div class="ann-pop-a"><button class="btn small ${a.star ? 'on' : ''}" data-x="star" aria-pressed="${!!a.star}">${a.star ? '★ Important' : '☆ Important'}</button>
-          <button class="btn small" data-x="ask">Ask chat</button><button class="btn small" data-x="note">＋ note</button><span class="grow"></span>
-          <button class="btn small ghost danger" data-x="del" aria-label="Delete highlight">Delete</button></div>`;
-      $('.ann-x', pop).onclick = closePop;
-      $$('[data-c]', pop).forEach(b => b.onclick = () => setCat(a, b.dataset.c));
-      $('#ann-n', pop).addEventListener('input', e => { a.note = e.target.value; annSave(p); drawSide(); a.rects.forEach(r => paintPage(r.p)); });
-      $('#ann-n', pop).addEventListener('keydown', e => { if (e.key === 'Escape') { e.stopPropagation(); closePop(); } });
-      $$('[data-x]', pop).forEach(b => b.onclick = () => act(a, b.dataset.x));
-    };
-    pop.fill = fill; fill(); document.body.appendChild(pop); placePop();
-    requestAnimationFrame(() => pop.classList.add('in'));
-  };
-  const setCat = (a, c) => { if (!ANN[c]) return; a.cat = c; a.by = 'you'; a.pending = false; annSave(p); refresh(); if (st.open === a) { $('.ann-pop')?.fill(); placePop(); } };
-  const act = (a, x) => {
-    if (x === 'star') { a.star = !a.star; annSave(p); refresh(); $('.ann-pop')?.fill(); }
-    else if (x === 'del') { list.splice(list.indexOf(a), 1); closePop(); annSave(p); refresh(); toast('Highlight deleted'); }
-    else if (x === 'note') addToNotes(p, `[${ANN[a.cat].name}] "${a.text}"${a.note ? ' — ' + a.note : ''}`, a.page);
-    else if (x === 'ask') { S.chatDraft = `About this passage on p. ${a.page}: "${trunc(a.text, 600)}"\n\n`; closePop(); showPaper('chat'); }
-  };
-  const jump = a => {
-    const el = a && pageEl(a.page); if (!el) return;
-    const top = el.getBoundingClientRect().top + scrollY + a.rects[0].y * el.offsetHeight - innerHeight * .3;
-    scrollTo({ top: Math.max(0, top), behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
-    setTimeout(() => { if (S.tab === 'read') { openPop(a); $$(`.ann-hl i[data-a="${a.id}"]`, doc).forEach(i => { i.classList.remove('pop'); void i.offsetWidth; i.classList.add('pop'); }); } }, 450);
-  };
-  S.keys = e => {
-    const a = st.open; if (!a) return;
-    const k = +e.key; if (k >= 1 && k <= ANN_KEYS.length) { e.preventDefault(); setCat(a, ANN_KEYS[k - 1]); }
-    else if (e.key === 'Escape') closePop();
-    else if (e.key === 'Delete') { e.preventDefault(); act(a, 'del'); }
-    else if (e.key.toLowerCase() === 'i') act(a, 'star');
-  };
-  drawLegend(); drawSide();
-
-  /* make a highlight from the current selection */
-  const fab = document.createElement('button'); fab.className = 'ann-fab'; fab.hidden = true; fab.textContent = '✨ Highlight'; document.body.appendChild(fab);
-  const create = () => {
-    fab.hidden = true;
-    const sel = getSelection(); if (!sel || sel.isCollapsed || !sel.rangeCount) return;
-    const range = sel.getRangeAt(0); if (!doc.contains(range.commonAncestorContainer)) return;
-    const text = sel.toString().replace(/\s+/g, ' ').trim(); if (text.length < 2) return;
-    const rects = annRects(range); if (!rects.length) return;
-    sel.removeAllRanges();
-    const a = { id: 'a' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), text: text.slice(0, 4000), cat: annGuess(text), by: 'auto', note: '', star: false, ts: Date.now(), page: rects[0].p, rects };
-    list.push(a); annSave(p); refresh(); openPop(a);
-    $$(`.ann-hl i[data-a="${a.id}"]`, doc).forEach(i => i.classList.add('pop'));
-    if (aiOn()) {
-      a.pending = true; $('.ann-pop')?.fill();
-      annAskAI(a, p).then(c => {
-        a.pending = false; if (!list.includes(a) || a.by !== 'auto') return;
-        if (c && ANN[c]) { const changed = c !== a.cat; a.cat = c; a.by = 'ai'; annSave(p); refresh(); if (changed) toast('AI relabelled it as ' + (c === 'evidence' ? '' : 'a ') + ANN[c].name.toLowerCase()); }
-        if (st.open === a) { $('.ann-pop')?.fill(); placePop(); }
-      });
-    }
-  };
-  const coarse = matchMedia('(pointer:coarse)');
-  const onUp = e => { if (e.button > 0) return; doc.querySelectorAll('.textLayer.selecting').forEach(t => t.classList.remove('selecting')); if (!coarse.matches) setTimeout(create, 0); };
-  const onDown = e => { const tl = e.target.closest?.('.textLayer'); if (tl) tl.classList.add('selecting'); };
-  const onSel = () => {                                   // on touch screens, offer a button instead of guessing when the drag ends
-    if (!coarse.matches) return;
-    const sel = getSelection(); if (!sel || sel.isCollapsed || !sel.rangeCount || !doc.contains(sel.getRangeAt(0).commonAncestorContainer)) { fab.hidden = true; return; }
-    const r = sel.getRangeAt(0).getBoundingClientRect(); fab.hidden = false;
-    fab.style.left = Math.max(8, Math.min(innerWidth - 140, r.left + r.width / 2 - 65)) + 'px'; fab.style.top = Math.min(innerHeight - 60, r.bottom + 14) + 'px';
-  };
-  const onClick = e => {                                  // click a highlight to open it
-    if (!getSelection().isCollapsed) return;
-    const el = e.target.closest?.('.ann-page'); if (!el) return;
-    const b = el.getBoundingClientRect(), x = (e.clientX - b.left) / b.width, y = (e.clientY - b.top) / b.height, n = +el.dataset.n;
-    const hit = list.slice().reverse().find(a => a.rects.some(r => r.p === n && x >= r.x - .004 && x <= r.x + r.w + .004 && y >= r.y - .004 && y <= r.y + r.h + .004));
-    if (hit) { e.stopPropagation(); openPop(hit); }
-  };
-  const onOutside = e => { const pop = $('.ann-pop'); if (pop && !pop.contains(e.target) && !e.target.closest('.ann-page,.ann-item,.ann-chip,.ann-fab')) closePop(); };
-  fab.addEventListener('mousedown', e => e.preventDefault()); fab.onclick = create;
-  doc.addEventListener('mouseup', onUp); doc.addEventListener('mousedown', onDown); doc.addEventListener('click', onClick);
-  document.addEventListener('selectionchange', onSel); document.addEventListener('mousedown', onOutside);
-  addEventListener('scroll', placePop, { passive: true }); addEventListener('resize', placePop);
-  S.cleanups.push(() => {
-    closePop(); fab.remove(); if (annTimer) annSave(p, true);
-    document.removeEventListener('selectionchange', onSel); document.removeEventListener('mousedown', onOutside);
-    removeEventListener('scroll', placePop); removeEventListener('resize', placePop);
-  });
-
-  /* open the PDF: the paper's own, or practice pages for the sample */
-  await S.pdfReady; if (S.tab !== 'read') return;
-  let pdf = S.pdf, sample = false;
-  if (!pdf && p.id === 'demo') { try { pdf = await samplePdf(p); sample = true; } catch (e) { console.warn(e); } if (S.tab !== 'read') return; }
-  if (!pdf) {
-    doc.innerHTML = `<div class="ann-none"><h3>Open the PDF to start highlighting</h3>
-      <p class="muted">${S.srcText ? 'This paper was added as text, so there are no pages to mark up yet.' : 'The PDF for this paper isn\'t saved on this device.'} Attach it and your highlights will be kept with this paper.</p>
-      <label class="btn primary" style="margin-top:14px">${ICON.upload}Attach the PDF<input type="file" accept=".pdf,application/pdf" class="sr" id="ann-att"></label></div>`;
-    $('#ann-att').onchange = e => { const f = e.target.files[0]; if (f) { toast('Loading PDF…'); attachPdf(f).then(() => S.tab === 'read' && showPaper('read')); } };
-    return;
-  }
-  st.pdf = pdf;
-  const first = (await pdf.getPage(1)).getViewport({ scale: 1 });
-  doc.innerHTML = (sample ? `<div class="ann-sample"><b>Practice pages.</b> The sample has no PDF, so these pages are written from its summary. Your own papers open as the real PDF.</div>` : '')
-    + Array.from({ length: pdf.numPages }, (_, i) => `<div class="ann-page" data-n="${i + 1}" style="aspect-ratio:${first.width} / ${first.height}">
-      <canvas aria-hidden="true"></canvas><div class="ann-hl"></div><div class="textLayer"></div><span class="ann-pn">${i + 1}</span></div>`).join('');
-  paintAll();
-  const render = async el => {
-    if (el.dataset.state || S.tab !== 'read' || !el.isConnected) return; el.dataset.state = 'busy';
-    try {
-      const page = await pdf.getPage(+el.dataset.n), base = page.getViewport({ scale: 1 });
-      el.style.aspectRatio = base.width + ' / ' + base.height; el.dataset.w = base.width;
-      const scale = (el.clientWidth || 800) / base.width, dpr = Math.min(2, devicePixelRatio || 1), vp = page.getViewport({ scale: scale * dpr });
-      const c = el.querySelector('canvas'); c.width = Math.floor(vp.width); c.height = Math.floor(vp.height);
-      await page.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
-      const tl = el.querySelector('.textLayer'); tl.innerHTML = ''; tl.style.setProperty('--scale-factor', scale);
-      await pdfjsLib.renderTextLayer({ textContentSource: await page.getTextContent(), container: tl, viewport: page.getViewport({ scale }), textDivs: [] }).promise;
-      const end = document.createElement('div'); end.className = 'endOfContent'; tl.appendChild(end);
-      el.dataset.state = 'done'; el.classList.add('ready');
-    } catch (e) { console.warn(e); el.dataset.state = ''; }
-  };
-  let chain = Promise.resolve();
-  const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { io.unobserve(e.target); chain = chain.then(() => render(e.target)); } }), { rootMargin: '900px 0px' });
-  $$('.ann-page', doc).forEach(el => io.observe(el));
-  const ro = new ResizeObserver(() => $$('.ann-page[data-w]', doc).forEach(el => $('.textLayer', el).style.setProperty('--scale-factor', el.clientWidth / +el.dataset.w)));
-  ro.observe(doc);
-  S.cleanups.push(() => { io.disconnect(); ro.disconnect(); });
-}
-
-/* =====================================================================
-   Share card: a good-looking image of the paper's gist, made for posting
-   ===================================================================== */
-const LOGO_SVG = (id, size) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="${size}" height="${size}"><defs><linearGradient id="${id}b" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#16133f"/><stop offset="1" stop-color="#33287f"/></linearGradient><linearGradient id="${id}r" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffd93d"/><stop offset=".5" stop-color="#ff6fa5"/><stop offset="1" stop-color="#7c8bff"/></linearGradient><clipPath id="${id}c"><circle cx="28" cy="28" r="15"/></clipPath></defs><rect width="64" height="64" rx="16" fill="url(#${id}b)"/><g clip-path="url(#${id}c)"><rect x="10" y="10" width="36" height="36" fill="#fffdf6"/><rect class="lg-l1" x="13" y="17.5" width="27" height="5.5" rx="1.6" fill="#ffd93d"/><rect class="lg-l2" x="13" y="25.5" width="20" height="5.5" rx="1.6" fill="#5fdc8f"/><rect class="lg-l3" x="13" y="33.5" width="24" height="5.5" rx="1.6" fill="#8fc0ff"/><path d="M17 15.5a14 14 0 0 1 9-3" stroke="#fff" stroke-width="2.2" stroke-linecap="round" fill="none" opacity=".85"/></g><g class="lg-lens"><circle cx="28" cy="28" r="16" fill="none" stroke="url(#${id}r)" stroke-width="5"/><path d="M40 40l11 11" stroke="url(#${id}r)" stroke-width="7" stroke-linecap="round"/></g><path class="lg-spark" d="M52 8.5l1.5 3.8 3.8 1.5-3.8 1.5L52 19.1l-1.5-3.8-3.8-1.5 3.8-1.5z" fill="#ffd93d"/></svg>`;
-function wrapLines(ctx, text, maxW, maxLines) {
-  const words = String(text || '').split(/\s+/).filter(Boolean), lines = []; let line = '';
-  for (const w of words) { const t = line ? line + ' ' + w : w; if (ctx.measureText(t).width > maxW && line) { lines.push(line); line = w; if (lines.length === maxLines) break; } else line = t; }
-  if (lines.length < maxLines && line) lines.push(line);
-  else if (lines.length === maxLines && words.join(' ') !== lines.join(' ')) { let l = lines[maxLines - 1]; while (ctx.measureText(l + '…').width > maxW && l.includes(' ')) l = l.replace(/\s+\S*$/, ''); lines[maxLines - 1] = l + '…'; }
-  return lines;
-}
-async function makeShareCard(p) {
-  const W = 1080, H = 1350, c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
-  const serif = 'Charter, "Iowan Old Style", Georgia, serif', sans = 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
-  const g = x.createLinearGradient(0, 0, W, H); g.addColorStop(0, '#16133f'); g.addColorStop(1, '#33287f'); x.fillStyle = g; x.fillRect(0, 0, W, H);
-  const blob = (cx, cy, r, col) => { const rg = x.createRadialGradient(cx, cy, 0, cx, cy, r); rg.addColorStop(0, col); rg.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = rg; x.fillRect(0, 0, W, H); };
-  blob(980, 80, 560, 'rgba(255,111,165,.35)'); blob(60, 1300, 620, 'rgba(124,139,255,.35)'); blob(120, 160, 380, 'rgba(255,217,61,.14)');
-  const img = new Image(); img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(LOGO_SVG('sc', 96));
-  await new Promise(r => { img.onload = img.onerror = r; });
-  try { x.drawImage(img, 80, 76, 84, 84); } catch (e) {}
-  x.fillStyle = '#fff'; x.font = `700 44px ${serif}`; x.textBaseline = 'middle'; x.fillText('Paperlens', 184, 120);
-  x.textBaseline = 'alphabetic'; let y = 250;
-  const m = p.meta, tags = [m.field, m.type].filter(Boolean).slice(0, 2); let tx = 80;
-  x.font = `600 26px ${sans}`;
-  for (const t of tags) { const w = x.measureText(t).width + 36; x.fillStyle = 'rgba(255,255,255,.14)'; x.beginPath(); x.roundRect(tx, y - 34, w, 48, 24); x.fill(); x.fillStyle = '#fff'; x.fillText(t, tx + 18, y); tx += w + 12; }
-  y += tags.length ? 90 : 20;
-  x.fillStyle = '#fff'; x.font = `700 62px ${serif}`;
-  for (const l of wrapLines(x, mathToText(m.title), W - 160, 4)) { x.fillText(l, 80, y); y += 74; }
-  if (m.authors) {
-    x.font = `400 28px ${sans}`; x.fillStyle = 'rgba(255,255,255,.7)'; const au = m.authors.split(/\s*,\s*/), venue = m.venue ? ' · ' + m.venue : '';
-    let line = m.authors + venue; if (x.measureText(line).width > W - 160 && au.length > 2) line = au[0] + ' et al.' + venue;
-    x.fillText(wrapLines(x, line, W - 160, 1)[0] || '', 80, y + 4); y += 50;
-  }
-  y += 40; x.font = `700 24px ${sans}`; x.fillStyle = '#ffd93d'; x.fillText('THE GIST', 80, y); y += 58;
-  x.font = `400 40px ${serif}`;
-  const gist = wrapLines(x, mathToText(p.ov.tldr || m.one_liner || ''), W - 180, Math.max(2, Math.min(7, Math.floor((H - 330 - y) / 58))));
-  for (const l of gist) { const w = x.measureText(l).width; x.fillStyle = '#ffe066'; x.beginPath(); x.roundRect(72, y - 40, w + 18, 54, 6); x.fill(); x.fillStyle = '#121a2f'; x.fillText(l, 81, y); y += 62; }
-  const hl = S.ann && S.ann.id === p.id ? S.ann.list : [];
-  let fy = H - 200;
-  if (hl.length) {
-    x.font = `600 28px ${sans}`; let hx = 80;
-    for (const k of ANN_KEYS) { const n = hl.filter(a => a.cat === k).length; if (!n) continue; const t = n + ' ' + ANN[k].name.toLowerCase() + (n === 1 ? '' : 's'), w = x.measureText(t).width + 56;
-      x.fillStyle = 'rgba(255,255,255,.1)'; x.beginPath(); x.roundRect(hx, fy - 36, w, 52, 26); x.fill(); x.fillStyle = ANN[k].color; x.beginPath(); x.arc(hx + 24, fy - 10, 9, 0, 7); x.fill(); x.fillStyle = '#fff'; x.fillText(t, hx + 42, fy); hx += w + 12; }
-    x.font = `400 24px ${sans}`; x.fillStyle = 'rgba(255,255,255,.65)'; x.fillText('My highlights', 80, fy - 56);
-  }
-  x.fillStyle = 'rgba(255,255,255,.18)'; x.fillRect(80, H - 120, W - 160, 2);
-  x.font = `600 28px ${sans}`; x.fillStyle = '#fff'; x.fillText('Understand any paper in minutes', 80, H - 66);
-  x.font = `400 26px ${sans}`; x.fillStyle = 'rgba(255,255,255,.7)'; const u = 'ria-bhandari.github.io/paperlens'; x.fillText(u, W - 80 - x.measureText(u).width, H - 66);
-  return new Promise(r => c.toBlob(r, 'image/png'));
-}
-async function openShareCard(p) {
-  const el = scrim(`<h2>Share the gist</h2><p class="muted">A card made for posting. It shows the title, the gist${S.ann && S.ann.id === p.id && S.ann.list.length ? ' and your highlight counts' : ''}, never your notes.</p>
-    <div class="share-prev" id="sc-prev"><span class="muted">Drawing…</span></div>
-    <div class="row" style="margin-top:16px"><button class="btn primary" id="sc-share" hidden>Share…</button><button class="btn" id="sc-dl" disabled>${ICON.dl}Download PNG</button><button class="btn" id="sc-copy" disabled hidden>Copy image</button><button class="btn ghost" id="sc-x">Close</button></div>`);
-  $('#sc-x', el).onclick = () => el.remove();
-  const blob = await makeShareCard(p); if (!el.isConnected || !blob) return;
-  const url = URL.createObjectURL(blob), name = slug(p.meta.title) + '-paperlens.png', file = new File([blob], name, { type: 'image/png' });
-  $('#sc-prev', el).innerHTML = `<img src="${url}" alt="Share card for ${esc(p.meta.title)}">`;
-  const dl = $('#sc-dl', el); dl.disabled = false; dl.onclick = () => download(name, blob);
-  if (navigator.canShare && navigator.canShare({ files: [file] })) { const b = $('#sc-share', el); b.hidden = false; b.onclick = () => navigator.share({ files: [file], title: p.meta.title, text: 'Read with Paperlens' }).catch(() => {}); }
-  if (window.ClipboardItem && navigator.clipboard?.write) { const b = $('#sc-copy', el); b.hidden = false; b.disabled = false; b.onclick = () => navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]).then(() => toast('Image copied'), () => toast('Copy failed. Use Download instead.')); }
-}
-
-/* ---------- a small celebration for a personal best ---------- */
-function celebrate() {
-  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  const c = document.createElement('canvas'), x = c.getContext('2d'), dpr = Math.min(2, devicePixelRatio || 1);
-  c.className = 'confetti'; c.width = innerWidth * dpr; c.height = innerHeight * dpr; document.body.appendChild(c); x.scale(dpr, dpr);
-  const cols = [ANN.claim.color, ANN.question.color, ANN.evidence.color, ANN.method.color, '#ff6fa5'];
-  const bits = Array.from({ length: 150 }, () => ({ x: innerWidth / 2 + (Math.random() - .5) * 200, y: innerHeight * .35, vx: (Math.random() - .5) * 16, vy: -Math.random() * 15 - 4, r: Math.random() * 6.28, vr: (Math.random() - .5) * .3, s: 6 + Math.random() * 7, c: cols[Math.random() * cols.length | 0] }));
-  const t0 = performance.now();
-  const tick = t => {
-    const age = t - t0; x.clearRect(0, 0, innerWidth, innerHeight); x.globalAlpha = Math.max(0, 1 - age / 2200);
-    for (const b of bits) { b.vy += .45; b.vx *= .99; b.x += b.vx; b.y += b.vy; b.r += b.vr; x.save(); x.translate(b.x, b.y); x.rotate(b.r); x.fillStyle = b.c; x.fillRect(-b.s / 2, -b.s / 4, b.s, b.s / 2); x.restore(); }
-    age < 2200 ? requestAnimationFrame(tick) : c.remove();
-  };
-  requestAnimationFrame(tick);
 }
 
 /* ---------- boot ---------- */
