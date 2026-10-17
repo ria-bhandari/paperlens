@@ -56,7 +56,7 @@ Anthropic is the most thoroughly tested option. The others use the standard Open
 
 ## Updates and checking your version
 
-Open **Settings** (the gear icon): the version appears under **App version** (currently 2026.10.11). If something you expect is missing, press **Update app**. It clears the saved copy of the app and loads the newest one, and your papers, notes and settings are kept.
+Open **Settings** (the gear icon): the version appears under **App version** (currently 2026.10.12). If something you expect is missing, press **Update app**. It clears the saved copy of the app and loads the newest one, and your papers, notes and settings are kept.
 
 ## Connect Zotero and Obsidian
 

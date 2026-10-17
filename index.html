@@ -15,7 +15,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Paperlens">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="app-version" content="2026.10.11">
+<meta name="app-version" content="2026.10.12">
 <meta name="author" content="Ria Bhandari">
 <meta name="copyright" content="© 2026 Ria Bhandari. All rights reserved.">
 <meta name="description" content="Understand any research paper fast: overview, key figures, mind map, flashcards and games.">
@@ -487,6 +487,12 @@ fieldset.meth legend{font-weight:600;font-size:14px;margin-bottom:4px;padding:0}
 @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 .btn.primary:hover{box-shadow:0 6px 18px color-mix(in srgb,var(--blue) 32%,transparent);transform:translateY(-1px)}
 .btn.primary:active{transform:translateY(1px);box-shadow:none}
+
+/* welcome headline: a marker stroke under the word (text colour untouched), softer in dark mode */
+.hero .mark{color:inherit;padding:0 .06em;margin:0 -.06em;border-radius:0;--band:var(--mark);background-image:linear-gradient(100deg,transparent 0,var(--band) 2.5%,var(--band) 97%,transparent 100%);background-size:100% .5em;background-position:0 90%;background-repeat:no-repeat}
+:root[data-theme=dark] .hero .mark{--band:color-mix(in srgb,var(--mark) 55%,transparent)}
+.hero .mark.swipe{animation-name:swipeHero}
+@keyframes swipeHero{from{background-size:0 .5em}to{background-size:100% .5em}}
 
 </style>
 </head>
@@ -1362,7 +1368,7 @@ document.addEventListener('keydown', e => {
 });
 
 /* ---------- version + clean refresh ---------- */
-const APP_VERSION = '2026.10.11';
+const APP_VERSION = '2026.10.12';
 function reloadApp() { location.replace(location.pathname + '?u=' + Date.now()); }
 async function refreshApp() {                                  // clears the saved copy of the APP only; papers, notes and settings are untouched
   try { const regs = (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) ? await navigator.serviceWorker.getRegistrations() : []; await Promise.all(regs.map(r => r.unregister())); } catch (e) {}
