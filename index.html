@@ -15,7 +15,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Paperlens">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="app-version" content="2026.10.12">
+<meta name="app-version" content="2026.10.13">
 <meta name="author" content="Ria Bhandari">
 <meta name="copyright" content="© 2026 Ria Bhandari. All rights reserved.">
 <meta name="description" content="Understand any research paper fast: overview, key figures, mind map, flashcards and games.">
@@ -488,11 +488,8 @@ fieldset.meth legend{font-weight:600;font-size:14px;margin-bottom:4px;padding:0}
 .btn.primary:hover{box-shadow:0 6px 18px color-mix(in srgb,var(--blue) 32%,transparent);transform:translateY(-1px)}
 .btn.primary:active{transform:translateY(1px);box-shadow:none}
 
-/* welcome headline: a marker stroke under the word (text colour untouched), softer in dark mode */
-.hero .mark{color:inherit;padding:0 .06em;margin:0 -.06em;border-radius:0;--band:var(--mark);background-image:linear-gradient(100deg,transparent 0,var(--band) 2.5%,var(--band) 97%,transparent 100%);background-size:100% .5em;background-position:0 90%;background-repeat:no-repeat}
-:root[data-theme=dark] .hero .mark{--band:color-mix(in srgb,var(--mark) 55%,transparent)}
-.hero .mark.swipe{animation-name:swipeHero}
-@keyframes swipeHero{from{background-size:0 .5em}to{background-size:100% .5em}}
+/* welcome headline: one word set heavier, no highlight */
+.bolder{font-weight:900;-webkit-text-stroke:.03em currentColor}
 
 </style>
 </head>
@@ -1368,7 +1365,7 @@ document.addEventListener('keydown', e => {
 });
 
 /* ---------- version + clean refresh ---------- */
-const APP_VERSION = '2026.10.12';
+const APP_VERSION = '2026.10.13';
 function reloadApp() { location.replace(location.pathname + '?u=' + Date.now()); }
 async function refreshApp() {                                  // clears the saved copy of the APP only; papers, notes and settings are untouched
   try { const regs = (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) ? await navigator.serviceWorker.getRegistrations() : []; await Promise.all(regs.map(r => r.unregister())); } catch (e) {}
@@ -1592,7 +1589,7 @@ function showHome() {
   teardown(); S.paper = null; S.view = 'home'; enterView(); $('#tabs').hidden = true; document.title = 'Paperlens';
   app().innerHTML = `
   <section class="hero">
-    <h1>Read any paper in the time it takes to make <span class="mark swipe">coffee</span>.</h1>
+    <h1>Read any paper in the time it takes to make <strong class="bolder">coffee</strong>.</h1>
     <p>Drop in a PDF and get the gist, the figures that matter, a mind map, flashcards and a game that makes it stick. Works in any field.</p>
     <ol class="how" aria-label="How it works"><li><i style="--c:#ffe066"></i>Drop in a paper</li><li><i style="--c:#8ce99a"></i>Read and highlight it</li><li><i style="--c:#8ecbff"></i>Remember what matters</li></ol>
   </section>
